@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {ThemeToggler} from "./ThemeToggler.jsx";
+import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
 
 const Header = () => {
@@ -160,7 +160,7 @@ const Header = () => {
                   Sign Up
                 </a>
                 <div>
-                  {/*<ThemeToggler />*/}
+                  <ThemeToggler />
                 </div>
               </div>
             </div>
