@@ -1,21 +1,19 @@
-import './App.css'
-import Home from "./App/page.jsx";
-import Footer from "./components/Footer/index.jsx";
-import Header from "./components/Header/index.jsx";
-import {Providers} from "./App/providers.jsx";
-
+import "./App.css";
+import Footer from "./views/FrontOffice/components/Footer/index.jsx";
+import Header from "./views/FrontOffice/components/Header/index.jsx";
+import { Providers } from "./providers.jsx";
+import RoutesPath from "./routesPath.jsx";
 
 function App() {
-
-    return (
-        <>
-            <Providers>
-                <Header/>
-                <Home/>
-                <Footer/>
-            </Providers>
-        </>
-    )
+  return (
+    <>
+      <Providers>
+        <Header />
+        <RoutesPath />
+        <Footer />
+      </Providers>
+    </>
+  );
 }
 
-export default App
+export default App;
