@@ -1,7 +1,7 @@
 import{ useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import SidebarLinkGroup from './SidebarLinkGroup.jsx';
-import Logo from '../../images/BackOffice/logo/logo.svg';
+import Logo from '../../../../../public/images/logo/LinkUpTournementWhite.png';
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
