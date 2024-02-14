@@ -51,14 +51,14 @@ const Header = () => {
                 } `}
                to={"/"}>
                 <img
-                  src="/images/logo/logo-2.svg"
+                  src="/images/logo/LinkUpTournement.png"
                   alt="logo"
                   width={140}
                   height={30}
                   className="w-full dark:hidden"
                 />
                 <img
-                  src="/images/logo/logo.svg"
+                  src="/images/logo/LinkUpTournementWhite.png"
                   alt="logo"
                   width={140}
                   height={30}
