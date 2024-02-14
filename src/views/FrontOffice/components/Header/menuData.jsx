@@ -25,6 +25,12 @@ const menuData = [
   },
   {
     id: 4,
+    title: "Tournament",
+    path: "/getAllTournament",
+    newTab: false,
+  },
+  {
+    id: 5,
     title: "Pages",
     newTab: false,
     submenu: [
