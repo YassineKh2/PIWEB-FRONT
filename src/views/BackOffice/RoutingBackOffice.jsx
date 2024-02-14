@@ -33,7 +33,7 @@ export default function RoutingBackOffice() {
         <>
             <Routes>
                 <Route
-                    index
+                    path="/backOffice"
                     element={
                         <>
                             <PageTitle title="eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template" />
