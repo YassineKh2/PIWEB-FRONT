@@ -2,6 +2,7 @@ import axios from "axios";
 
 const apiURL = "http://localhost:3000/tournament";
 
+
 export async function addTournament(tournamentData) {
   try {
     const response = await axios.post(`${apiURL}/add`, tournamentData);
