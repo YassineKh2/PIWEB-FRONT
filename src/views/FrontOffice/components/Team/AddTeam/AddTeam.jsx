@@ -74,6 +74,25 @@ export default function AddTeam() {
                                                     htmlFor="name"
                                                     className="mb-3 block text-sm font-medium text-dark dark:text-white"
                                                 >
+                                                    Image
+                                                </label>
+                                                <div className="flex flex-col">
+                                                    <input
+                                                        {...register("image")}
+                                                        type="input"
+                                                        name="image"
+                                                        placeholder="Team Name"
+                                                        className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                    />
+                                                    {errors.name &&
+                                                        <p className="text-danger mb-2">{errors.name.message}</p>}
+                                                </div>
+                                            </div>
+                                            <div className="mb-8">
+                                                <label
+                                                    htmlFor="name"
+                                                    className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                >
                                                     Your Name
                                                 </label>
                                                 <div className="flex flex-col">
