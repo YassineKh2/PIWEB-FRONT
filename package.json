@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@g-loot/react-tournament-brackets": "^1.0.31-rc",
+    "@mui/material": "^5.15.10",
     "apexcharts": "^3.45.2",
     "axios": "^1.6.7",
     "date-fns": "^3.3.1",
