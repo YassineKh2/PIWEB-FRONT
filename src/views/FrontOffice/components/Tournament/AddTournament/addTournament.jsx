@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 function AddTournament() {
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
-  const [tournamentType, setTournamentType] = useState("");
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
