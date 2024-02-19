@@ -152,7 +152,7 @@ function DisplayAllTournaments() {
         ],
       },
 
-      // Add more matches as needed
+      // ConsultTeams more matches as needed
     ];
 
     setMatches(updatedMatches);

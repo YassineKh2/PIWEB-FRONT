@@ -3,7 +3,7 @@ import DefaultLayout from '../DefaultLayout';
 
 const Calendar = () => {
   return (
-    <DefaultLayout>
+    <>
       <Breadcrumb pageName="Calendar" />
 
       {/* <!-- ====== Calendar Section Start ====== --> */}
@@ -267,7 +267,7 @@ const Calendar = () => {
         </table>
       </div>
       {/* <!-- ====== Calendar Section End ====== --> */}
-    </DefaultLayout>
+    </>
   );
 };
 
