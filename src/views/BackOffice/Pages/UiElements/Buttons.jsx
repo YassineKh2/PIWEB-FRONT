@@ -5,7 +5,7 @@ import DefaultLayout from '../../DefaultLayout';
 
 const Buttons = () => {
   return (
-    <DefaultLayout>
+    <>
       <Breadcrumb pageName="Buttons" />
 
       {/* <!-- Normal Button Items --> */}
@@ -465,7 +465,7 @@ const Buttons = () => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
+    </>
   );
 };
 

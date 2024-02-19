@@ -158,7 +158,7 @@ export default function AddTeam() {
                                                         className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                                                     >
                                                         <option disabled selected>
-                                                            Select Country
+                                                            Select your Country
                                                         </option>
                                                         {Countries.map((country, index) => (
                                                             <option key={index} value={country.iso2}>
@@ -186,6 +186,9 @@ export default function AddTeam() {
                                                         name="state"
                                                         className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                                                     >
+                                                        <option disabled selected>
+                                                            Select your State
+                                                        </option>
                                                         {States.map((state, index) => (
                                                             <option key={index} value={state.iso2}>
                                                                 {state.name}
@@ -213,6 +216,9 @@ export default function AddTeam() {
                                                         name="city"
                                                         className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                                                     >
+                                                        <option disabled selected>
+                                                            Select your City
+                                                        </option>
                                                         {Cites.map((city, index) => (
                                                             <option key={index} value={city.iso2}>
                                                                 {city.name}

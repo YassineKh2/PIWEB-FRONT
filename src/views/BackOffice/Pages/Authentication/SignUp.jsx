@@ -6,7 +6,7 @@ import DefaultLayout from '../../DefaultLayout';
 
 const SignUp = () => {
   return (
-    <DefaultLayout>
+    <>
       <Breadcrumb pageName="Sign Up" />
 
       <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -349,7 +349,7 @@ const SignUp = () => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
+    </>
   );
 };
 
