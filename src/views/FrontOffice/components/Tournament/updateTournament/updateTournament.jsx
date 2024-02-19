@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
-import { addTournament } from "../../../../../Services/FrontOffice/apiTournament";
-import { useNavigate } from "react-router-dom";
+import {
+  addTournament,
+  updateTournament,
+} from "../../../../../Services/FrontOffice/apiTournament";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
 
-function AddTournament() {
+function UpdateTournament() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const formattedStartDate = new Date(state.tournament.startDate)
+    .toISOString()
+    .split("T")[0];
+  const formattedEndDate = new Date(state.tournament.endDate)
+    .toISOString()
+    .split("T")[0];
   const [image, setImage] = useState(null);
+  const [Teams, setTeams] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState([]);
   const [Tournament, setTournament] = useState({
-    name: "",
-    description: "",
-    startDate: new Date(),
-    endDate: new Date(),
-    location: "",
-    image: "",
-    tournamentType: "",
-    nbTeamPartipate: 0,
+    _id: state.tournament._id,
+    name: state.tournament.name,
+    description: state.tournament.description,
+    startDate: state.tournament.startDate,
+    endDate: state.tournament.endDate,
+    location: state.tournament.location,
+    image: state.tournament.image,
+    tournamentType: state.tournament.tournamentType,
+    nbTeamPartipate: state.tournament.nbTeamPartipate,
   });
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
   const handlechange = (e) => {
@@ -33,6 +47,14 @@ function AddTournament() {
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
   };
+  const handleTeamChange = (e) => {
+    const selectedOptions = Array.from(
+      e.target.selectedOptions,
+      (option) => option.value
+    );
+    setSelectedTeams(selectedOptions);
+    console.log(selectedTeams);
+  };
   useEffect(() => {
     if (image && image.name) {
       setTournament((prevTournament) => ({
@@ -41,13 +63,26 @@ function AddTournament() {
       }));
     }
   }, [image]);
+  const getTeams = async () => {
+    const res = getAllTeams()
+      .then((res) => {
+        setTeams(res.teams);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  useEffect(() => {
+    getTeams();
+  }, []);
 
-  const add = async (e) => {
+  const update = async (e) => {
     e.preventDefault();
     const fileReader = new FileReader();
     fileReader.onloadend = function () {
       const base64Image = fileReader.result.split(",")[1]; // Extract base64 encoded image data
       const imageData = {
+        _id: state.tournament._id,
         name: Tournament.name,
         description: Tournament.description,
         location: Tournament.location,
@@ -55,14 +90,13 @@ function AddTournament() {
         endDate: Tournament.endDate,
         tournamentType: Tournament.tournamentType,
         nbTeamPartipate: Tournament.nbTeamPartipate,
-        image: base64Image,
-        filename: Tournament.image,
+        teams: selectedTeams,
       };
-
-      const res = addTournament(imageData)
+      console.log(imageData);
+      const res = updateTournament(imageData)
         .then(() => {
-          console.log("ajout passe");
-          navigate("/getAllTournament")
+          console.log("update passe");
+          navigate("/getAllTournament");
         })
         .catch((error) => {
           console.log(error.response.data.message);
@@ -76,7 +110,7 @@ function AddTournament() {
 
   return (
     <>
-      <div className="flex justify-center items-center h-screen mt-16">
+      <div className="flex justify-center items-center h-screen mt-40 mb-30">
         <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
           <div
             className="wow fadeInUp relative z-10 rounded-md bg-primary/[3%] p-8 dark:bg-primary/10 sm:p-11 lg:p-8 xl:p-11"
@@ -90,7 +124,7 @@ function AddTournament() {
             }}
           >
             <h3 className="mb-4 text-2xl font-bold leading-tight text-black dark:text-white">
-              Add New Tournament
+              Update Tournament Information
             </h3>
             <form role="form" encType="multipart/form-data">
               <div className="flex mb-4 w-full">
@@ -99,12 +133,14 @@ function AddTournament() {
                   name="name"
                   placeholder="Tournament Name"
                   onChange={(e) => handlechange(e)}
-                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                  defaultValue={state.tournament.name}
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
                 />
                 <input
                   type="text"
                   name="location"
                   placeholder="Tournament Location"
+                  defaultValue={state.tournament.location}
                   onChange={(e) => handlechange(e)}
                   className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
                 />
@@ -113,6 +149,7 @@ function AddTournament() {
               <textarea
                 name="description"
                 placeholder="Tournament Description"
+                defaultValue={state.tournament.description}
                 onChange={(e) => handlechange(e)}
                 className="mb-4 w-full flex-grow rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50" // Added mb-4 for margin-bottom
               />
@@ -121,6 +158,7 @@ function AddTournament() {
                 <input
                   type="date"
                   name="startDate"
+                  defaultValue={formattedStartDate}
                   onChange={(e) =>
                     handleStartDateChange(new Date(e.target.value))
                   }
@@ -129,6 +167,7 @@ function AddTournament() {
                 <input
                   type="date"
                   name="endDate"
+                  defaultValue={formattedEndDate}
                   onChange={(e) =>
                     handleEndDateChange(new Date(e.target.value))
                   }
@@ -155,7 +194,7 @@ function AddTournament() {
                     id="tournamentType"
                     name="tournamentType"
                     onChange={(e) => handlechange(e)}
-                    value={Tournament.tournamentType}
+                    defaultValue={state.tournament.tournamentType}
                     className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
                   >
                     <option value="" disabled>
@@ -179,6 +218,7 @@ function AddTournament() {
                     type="number"
                     id="teamCount"
                     name="nbTeamPartipate"
+                    defaultValue={state.tournament.nbTeamPartipate}
                     min="4"
                     placeholder="Enter number of teams"
                     onChange={(e) => handlechange(e)}
@@ -186,10 +226,30 @@ function AddTournament() {
                   />
                 </div>
               </div>
+              <div>
+                <label htmlFor="teams" className="text-lg font-semibold mb-2">
+                  Select Teams:
+                </label>
+                <select
+                  id="teams"
+                  name="teams"
+                  multiple
+                  onChange={handleTeamChange}
+                  defaultValue={selectedTeams}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  {Teams != null &&
+                    Teams.map((team) => (
+                      <option key={team._id} value={team._id}>
+                        {team.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
               <input
                 type="submit"
                 value="Subscribe"
-                onClick={(e) => add(e)}
+                onClick={(e) => update(e)}
                 className="duration-80 mb-4 w-full cursor-pointer rounded-md border border-transparent bg-primary py-3 px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
               />
             </form>
@@ -335,4 +395,4 @@ function AddTournament() {
   );
 }
 
-export default AddTournament;
+export default UpdateTournament;

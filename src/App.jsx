@@ -7,7 +7,7 @@ import { Providers } from "./providers.jsx";
 import RoutesPath from "./routesPath.jsx";
 import ECommerce from "./views/BackOffice/Pages/Dashbord/ECommerce.jsx";
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx";
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 
 function App() {
   const location = useLocation();
@@ -25,12 +25,14 @@ function App() {
       "/addTournament",
       "/getAllTournament",
       "/tournamentDetails/:id",
+      "/updatetournament",
+      "/team",
       "/", // add other FrontOffice paths as needed
     ];
 
     // Check if the current path is in the array
     for (i = 0; i < frontOfficePaths.length; i++) {
-      if (frontOfficePaths[i] == currentPath) setShouldDisplayHeader(true);
+      if (frontOfficePaths[i] === currentPath) setShouldDisplayHeader(true);
     }
   }, [location.pathname]);
   return (

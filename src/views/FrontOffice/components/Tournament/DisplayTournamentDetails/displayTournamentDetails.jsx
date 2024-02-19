@@ -23,11 +23,13 @@ import {
   SVGViewer,
   SingleEliminationBracket,
 } from "@g-loot/react-tournament-brackets";
+import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
 
 function DisplayAllTournaments() {
   const { id } = useParams();
   const [Tournament, setTournament] = useState({});
   const [Teams, setTeams] = useState([]);
+  const [RealTeams, setRealTeams] = useState([]);
   const [Matches, setMatches] = useState([]);
   const [refresh, setRefresh] = useState(false);
 
@@ -43,7 +45,30 @@ function DisplayAllTournaments() {
   useEffect(() => {
     getTournamentDetail();
   }, []);
+  useEffect(() => {
+    if (Tournament && Tournament.teams) {
+      const fetchTeamDetails = async () => {
+        const teamDetails = await Promise.all(
+          Tournament.teams.map(async (teamId) => {
+            try {
+              const response = await getTeamDetails(teamId);
+              // Replace with your API function
+              return response.team; // Assuming the team details are in 'team' property
+            } catch (error) {
+              console.error(
+                `Error fetching team details for team ID ${teamId}:`,
+                error
+              );
+              return null;
+            }
+          })
+        );
+        setRealTeams(teamDetails);
+      };
 
+      fetchTeamDetails();
+    }
+  }, [Tournament]);
   const changeScore = (teamId, score) => {
     console.log(teamId, score);
   };
@@ -171,7 +196,7 @@ function DisplayAllTournaments() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {Teams.map((team, index) => (
+                {RealTeams.map((team, index) => (
                   <TableRow key={index} className="bg-gray dark:bg-gray-800">
                     <TableCell className="font-bold">{index + 1}</TableCell>
                     <TableCell className="flex gap-2 items-center">

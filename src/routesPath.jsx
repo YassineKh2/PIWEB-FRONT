@@ -7,6 +7,8 @@ import Home from "./views/FrontOffice/HomePage/page.jsx";
 import AddTournament from "./views/FrontOffice/components/Tournament/AddTournament/addTournament.jsx";
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
+import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
+import UpdateTournament from "./views/FrontOffice/components/Tournament/updateTournament/updateTournament.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -18,6 +20,8 @@ function RoutesPath() {
         <Route path="/addTournament" element={<AddTournament />} />
         <Route path="/getAllTournament" element={<DisplayAllTournaments />} />
         <Route path="/tournamentDetails/:id" element={<DisplayTournamentDetails />} />
+        <Route path="/updatetournament" element={<UpdateTournament />} />
+        <Route path="/team" element={<AddTeam />} />
         <Route path="/" element={<Home />} />
       </Routes>
     </div>
