@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import { addTournament } from "../../../../../Services/FrontOffice/apiTournament";
 import { useNavigate } from "react-router-dom";
+import {
+  GetCitybyStateAndCountry,
+  GetCountries,
+  GetStateByCountry,
+} from "../../../../../Services/APis/CountryAPI";
 
 function AddTournament() {
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
+  const [Countries, setCountries] = useState([]);
+  const [SelectedCountry, setSelectedCountries] = useState("");
+  const [States, setStates] = useState([]);
+  const [SelectedStates, setSelectedStates] = useState("");
+  const [Cities, setCities] = useState([]);
+  const [SelectedCities, setSelectedCities] = useState("");
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -14,6 +25,9 @@ function AddTournament() {
     image: "",
     tournamentType: "",
     nbTeamPartipate: 0,
+    country: "",
+    state: "",
+    city: "",
   });
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
   const handlechange = (e) => {
@@ -25,6 +39,42 @@ function AddTournament() {
     setTournament({ ...Tournament, startDate: formattedDate });
   };
 
+  const handleCountryChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "location") {
+      setSelectedCountries(value);
+    }
+    setTournament({ ...Tournament, country: value });
+  };
+  const handleStateChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedStates(value);
+    setTournament({ ...Tournament, state: value });
+  };
+  const handleCitiesChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedCities(value);
+    setTournament({ ...Tournament, city: value });
+  };
+  useEffect(() => {
+    if (SelectedCountry) {
+      GetStateByCountry(SelectedCountry).then((response) => {
+        setStates(response);
+      });
+    }
+  }, [SelectedCountry]);
+  useEffect(() => {
+    console.log(SelectedCities);
+  }, [SelectedCities]);
+  useEffect(() => {
+    if (SelectedStates) {
+      GetCitybyStateAndCountry(SelectedCountry, SelectedStates).then(
+        (response) => {
+          setCities(response);
+        }
+      );
+    }
+  }, [SelectedStates]);
   const handleEndDateChange = (date) => {
     const isoDateString = date.toISOString();
     const formattedDate = isoDateString.substring(0, 10);
@@ -33,6 +83,11 @@ function AddTournament() {
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
   };
+  useEffect(() => {
+    GetCountries().then((response) => {
+      setCountries(response);
+    });
+  }, []);
   useEffect(() => {
     if (image && image.name) {
       setTournament((prevTournament) => ({
@@ -57,12 +112,15 @@ function AddTournament() {
         nbTeamPartipate: Tournament.nbTeamPartipate,
         image: base64Image,
         filename: Tournament.image,
+        country: Tournament.country,
+        state: Tournament.state,
+        city: Tournament.city,
       };
 
       const res = addTournament(imageData)
         .then(() => {
           console.log("ajout passe");
-          navigate("/getAllTournament")
+          navigate("/getAllTournament");
         })
         .catch((error) => {
           console.log(error.response.data.message);
@@ -101,15 +159,58 @@ function AddTournament() {
                   onChange={(e) => handlechange(e)}
                   className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
                 />
-                <input
+                {/*<input
                   type="text"
                   name="location"
                   placeholder="Tournament Location"
                   onChange={(e) => handlechange(e)}
                   className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
-                />
+          />*/}
+                <select
+                  onChange={(e) => handleCountryChange(e)}
+                  name="location"
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                >
+                  <option disabled selected>
+                    Select Country
+                  </option>
+                  {Countries.map((country, index) => (
+                    <option key={index} value={country.iso2}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-
+              <div className="flex mb-4 w-full">
+                <select
+                  onChange={(e) => handleStateChange(e)}
+                  name="state"
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                >
+                  <option disabled selected>
+                    Select State
+                  </option>
+                  {States.map((country, index) => (
+                    <option key={index} value={country.iso2}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  onChange={(e) => handleCitiesChange(e)}
+                  name="citie"
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                >
+                  <option disabled selected>
+                    Select Citie
+                  </option>
+                  {Cities.map((country, index) => (
+                    <option key={index} value={country.iso2}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <textarea
                 name="description"
                 placeholder="Tournament Description"

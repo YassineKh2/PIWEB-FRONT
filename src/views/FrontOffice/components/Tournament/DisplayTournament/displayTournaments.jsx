@@ -59,7 +59,7 @@ function DisplayAllTournaments() {
                   </a>
                 </h3>
                 <p className=" border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
-                  Location : {tournament.location}
+                  Location : {tournament.city}
                 </p>
                 <p className="mt-4 mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
                   Number of Teams : {tournament.nbTeamPartipate}
