@@ -8,6 +8,7 @@ import AddTournament from "./views/FrontOffice/components/Tournament/AddTourname
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
 import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
+import AddReservation from "./views/FrontOffice/components/Reservation/AddReservation.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -19,6 +20,7 @@ function RoutesPath() {
         <Route path="/addTournament" element={<AddTournament />} />
         <Route path="/getAllTournament" element={<DisplayAllTournaments />} />
         <Route path="/tournamentDetails/:id" element={<DisplayTournamentDetails />} />
+        <Route path="/addReservation" element={<AddReservation />} />
         <Route path="/team" element={<AddTeam />} />
         <Route path="/" element={<Home />} />
       </Routes>

@@ -19,8 +19,8 @@ const menuData = [
   },
   {
     id: 3,
-    title: "Support",
-    path: "/contact",
+    title: "Reservation",
+    path: "/addReservation",
     newTab: false,
   },
   {
