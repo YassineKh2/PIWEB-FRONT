@@ -13,8 +13,8 @@ const menuData = [
   },
   {
     id: 33,
-    title: "Blog",
-    path: "/blog",
+    title: "Our Sponsors",
+    path: "/addsp",
     newTab: false,
   },
   {
@@ -23,6 +23,7 @@ const menuData = [
     path: "/addReservation",
     newTab: false,
   },
+  
   {
     id: 4,
     title: "Tournament",

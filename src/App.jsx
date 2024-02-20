@@ -27,6 +27,7 @@ function App() {
       "/tournamentDetails/:id",
       "/team",
       "/addReservation",
+      "/addsp",
       "/", // add other FrontOffice paths as needed
     ];
 

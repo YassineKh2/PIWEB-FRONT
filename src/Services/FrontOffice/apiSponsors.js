@@ -2,7 +2,7 @@ import axios from "axios";
 
 const apiURL = "http://localhost:3000/sponsors";
 
-export async function addReservation(spData) {
+export async function addSponsors(spData) {
   try {
     const response = await axios.post(`${apiURL}/add`, spData);
     return response.data;
