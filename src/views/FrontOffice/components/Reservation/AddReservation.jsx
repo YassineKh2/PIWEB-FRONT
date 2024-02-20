@@ -31,7 +31,7 @@ function AddReservation() {
       // Afficher la fenêtre pop-up de confirmation
       Swal.fire({
         title: 'Merci!',
-        text: 'Merci de finaliser le paiement.',
+        text: 'Merci de finaliser le.',
         icon: 'success',
         confirmButtonText: 'OK'
       });
