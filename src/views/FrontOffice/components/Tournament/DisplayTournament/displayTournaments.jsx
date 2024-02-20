@@ -59,7 +59,7 @@ function DisplayAllTournaments() {
                   </a>
                 </h3>
                 <p className=" border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
-                  Location : {tournament.location}
+                  Location : {tournament.city}
                 </p>
                 <p className="mt-4 mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
                   Number of Teams : {tournament.nbTeamPartipate}
@@ -112,12 +112,24 @@ function DisplayAllTournaments() {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => navigate(`/tournamentDetails/${tournament._id}`)}
-                className="mb-4 -mt-4 mr-4 ease-in-up hidden rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8 ml-auto "
-              >
-                Details
-              </button>
+              <div className="flex">
+                <button
+                  onClick={() =>
+                    navigate(`/tournamentDetails/${tournament._id}`)
+                  }
+                  className="mb-4 -mt-4 ease-in-up hidden rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8 ml-35 "
+                >
+                  Details
+                </button>
+                <button
+                  onClick={() =>
+                    navigate(`/updatetournament`, { state: { tournament } })
+                  }
+                  className="mb-4 -mt-4 mr-4 ease-in-up hidden rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8 ml-auto "
+                >
+                  Update
+                </button>
+              </div>
             </div>
           </div>
         ))}

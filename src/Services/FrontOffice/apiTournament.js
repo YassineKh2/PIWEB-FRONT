@@ -11,6 +11,18 @@ export async function addTournament(tournamentData) {
     throw error;
   }
 }
+export async function updateTournament(tournamentData) {
+  try {
+    const response = await axios.put(
+      `${apiURL}/updatetournament`,
+      tournamentData
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 export async function getAllTournaments() {
   try {
     const response = await axios.get(`${apiURL}/getTournaments`);

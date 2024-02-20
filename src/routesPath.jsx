@@ -7,17 +7,33 @@ import Home from "./views/FrontOffice/HomePage/page.jsx";
 import AddTournament from "./views/FrontOffice/components/Tournament/AddTournament/addTournament.jsx";
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
+import UpdateTournament from "./views/FrontOffice/components/Tournament/updateTournament/updateTournament.jsx";
+import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
+import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
 function RoutesPath() {
   return (
     <div>
       <Routes>
-        <Route path="/signin" element={<SigninPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/addTournament" element={<AddTournament />} />
-        <Route path="/getAllTournament" element={<DisplayAllTournaments />} />
-        <Route path="/tournamentDetails/:id" element={<DisplayTournamentDetails />} />
+        <Route path="signin" element={<SigninPage />} />
+        <Route path="signup" element={<SignupPage />} />
+        <Route path="about" element={<About />} />
+        <Route path="blog" element={<Blog />} />
+          <Route
+              path="tournament/*"
+              element={
+                  <>
+                      <RoutingTournaments/>
+                  </>
+              }
+          />
+        <Route
+            path="team/*"
+            element={
+              <>
+                <RoutingTeams/>
+              </>
+            }
+        />
         <Route path="/" element={<Home />} />
       </Routes>
     </div>
