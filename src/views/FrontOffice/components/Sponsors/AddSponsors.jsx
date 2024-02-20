@@ -1,7 +1,8 @@
-import React, {useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { addSponsors } from "../../../../Services/FrontOffice/apiSponsors";
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
+import * as yup from 'yup';
 
 function AddSponsors() {
   const navigate = useNavigate();
@@ -13,14 +14,35 @@ function AddSponsors() {
     contact: "",
     adresse: ""
   });
+  const [errors, setErrors] = useState({
+    name: "",
+    description: "",
+    contact: "",
+    adresse: ""
+  });
 
-  const handleChange = (e) => {
+  const schema = yup.object().shape({
+    name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
+    description: yup.string().required("Description is required"),
+    contact: yup.number().required("Contact is required").typeError("Contact must be a number").test('len', 'Contact must be exactly 8 digits', val => String(val).length === 8),
+    adresse: yup.string().required("Adresse is required")
+  });
+
+  const handleChange = async (e) => {
     const { name, value } = e.target;
     setSponsor({ ...sponsor, [name]: value });
+    try {
+      await yup.reach(schema, name).validate(value);
+      setErrors({ ...errors, [name]: "" });
+    } catch (error) {
+      setErrors({ ...errors, [name]: error.message });
+    }
   };
+
   const handleLogoChange = (e) => {
     setLogo(e.target.files[0]);
   };
+
   useEffect(() => {
     if (logo && logo.name) {
       setSponsor((prevSponsor) => ({
@@ -33,10 +55,9 @@ function AddSponsors() {
   const add = async (e) => {
     e.preventDefault();
     try {
+      await schema.validate(sponsor, { abortEarly: false });
       const res = await addSponsors(sponsor);
       console.log("Sponsor added successfully");
-   
-      
       // Display confirmation popup
       Swal.fire({
         title: 'Thank You!',
@@ -46,6 +67,14 @@ function AddSponsors() {
       });
     } catch (error) {
       console.error("Error adding sponsor:", error);
+      // Affichage des erreurs de validation
+      const errorMessage = error.errors.join("<br>");
+      Swal.fire({
+        title: 'Validation Error',
+        html: errorMessage,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     }
   };
 
@@ -67,6 +96,7 @@ function AddSponsors() {
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
               />
+              {errors.name && <div className="text-red-500">{errors.name}</div>}
             </div>
        
             <div className="mb-4">
@@ -78,6 +108,7 @@ function AddSponsors() {
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
               />
+              {errors.description && <div className="text-red-500">{errors.description}</div>}
             </div>
             <div className="mb-4">
               <label htmlFor="logo" className="text-body-color block mb-1 font-serif">Logo:</label>
@@ -85,9 +116,10 @@ function AddSponsors() {
                 type="file"
                 name="logo"
                 accept="logo/*"
-                onChange={(e) => handleLogoChange (e)}
+                onChange={(e) => handleLogoChange(e)}
                 className="mb-4 w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50" // Added mb-4 for margin-bottom
               />
+              {errors.logo && <div className="text-red-500">{errors.logo}</div>}
             </div>
             <div className="mb-4">
               <label htmlFor="contact" className="text-body-color block mb-1 font-serif">Contact:</label>
@@ -99,6 +131,7 @@ function AddSponsors() {
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
               />
+              {errors.contact && <div className="text-red-500">{errors.contact}</div>}
             </div>
             <div className="mb-4">
               <label htmlFor="adresse" className="text-body-color block mb-1 font-serif">Adresse:</label>
@@ -110,6 +143,7 @@ function AddSponsors() {
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
               />
+              {errors.adresse && <div className="text-red-500">{errors.adresse}</div>}
             </div>
             <div className="flex justify-center">
               <input
