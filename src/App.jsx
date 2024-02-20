@@ -40,7 +40,7 @@ function App() {
         <Providers>
           <Header />
           <RoutesPath />
-          <Footer />
+          <Footer/>
         </Providers>
       )}
       <RoutingBackOffice />
