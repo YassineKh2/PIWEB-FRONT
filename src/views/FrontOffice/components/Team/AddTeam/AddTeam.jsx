@@ -33,7 +33,7 @@ export default function AddTeam() {
     const {
         register,
         handleSubmit,
-        formState: {errors, isSubmitting},
+        formState: {errors, isSubmitting,dirtyFields},
         setError,
         watch
     } = useForm({
