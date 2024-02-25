@@ -31,6 +31,9 @@ function App() {
             "/", // add other FrontOffice paths as needed
         ];
 
+
+    
+
         // Check if the current path is in the array
         for (i = 0; i < frontOfficePaths.length; i++) {
             if (frontOfficePaths[i] === currentPath) setShouldDisplayHeader(true);
@@ -48,6 +51,7 @@ function App() {
             <RoutingBackOffice/>
         </>
     );
+
 }
 
 export default App;
