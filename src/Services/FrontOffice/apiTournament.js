@@ -32,6 +32,15 @@ export async function getAllTournaments() {
     throw error;
   }
 }
+export async function getLatestTournamentId() {
+  try {
+    const response = await axios.get(`${apiURL}/latestTournamentId`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 
 export async function getTournamentDetails(id) {
   try {
