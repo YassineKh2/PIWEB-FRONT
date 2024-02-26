@@ -13,6 +13,8 @@ import Alerts from "./Pages/UiElements/Alerts.jsx";
 import Buttons from "./Pages/UiElements/Buttons.jsx";
 import SignIn from "./Pages/Authentication/SignIn.jsx";
 import SignUp from "./Pages/Authentication/SignUp.jsx";
+import AllReservation from "./components/Reservation/AllReservation.jsx";
+import AllSponsors from "./components/Sponsors/AllSponsors.jsx";
 
 export default function RoutingBackOffice() {
     const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function RoutingBackOffice() {
                     path="/calendar"
                     element={
                         <>
-                            <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <PageTitle title="Reservation | TailAdmin - Tailwind CSS Admin Dashboard Template" />
                             <Calendar />
                         </>
                     }
@@ -78,20 +80,20 @@ export default function RoutingBackOffice() {
                     }
                 />
                 <Route
-                    path="/tables"
+                    path= "/allReservation"
                     element={
                         <>
-                            <PageTitle title="Tables | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                            <Tables />
+                            <PageTitle title="Reservation | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <AllReservation />
                         </>
                     }
                 />
                 <Route
-                    path="/settings"
+                    path="/allSponsors"
                     element={
                         <>
-                            <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                            <Settings />
+                            <PageTitle title=" Sponsors | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <AllSponsors />
                         </>
                     }
                 />

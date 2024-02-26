@@ -21,3 +21,37 @@ export async function getAllSponsors() {
     throw error;
   }
 }
+export async function getbyName(name) {
+  try {
+    const response = await axios.get(`${apiURL}/getbyname/${name}`);
+    console.log("Response:", response.data); 
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+export async function triDesc() {
+  try {
+    const response = await axios.get(`${apiURL}/tridesc`);
+    console.log("Response:", response.data); 
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export async function triAsc() {
+  try {
+    const response = await axios.get(`${apiURL}/triasc`);
+    console.log("Response:", response.data); 
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+
+

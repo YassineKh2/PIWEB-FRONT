@@ -34,7 +34,7 @@ function AddSponsors() {
     try {
       await yup.reach(schema, name).validate(value);
       setErrors({ ...errors, [name]: "" });
-    } catch (error) {
+    } catch (error) {9620
       setErrors({ ...errors, [name]: error.message });
     }
   };

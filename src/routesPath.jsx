@@ -10,6 +10,8 @@ import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/
 import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
 import AddReservation from "./views/FrontOffice/components/Reservation/AddReservation.jsx";
 import AddSponsors from "./views/FrontOffice/components/Sponsors/AddSponsors.jsx";
+import AllReservation from "./views/BackOffice/components/Reservation/AllReservation.jsx"
+import AllSponsors from "./views/BackOffice/components/Sponsors/AllSponsors.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -23,6 +25,8 @@ function RoutesPath() {
         <Route path="/tournamentDetails/:id" element={<DisplayTournamentDetails />} />
         <Route path="/addReservation" element={<AddReservation />} />
         <Route path="/addsp" element={<AddSponsors/>} />
+        <Route path="/allReservation" element={<AllReservation/>} />
+        <Route path="/allSponsors" element={<AllSponsors/>} />
 
         <Route path="/team" element={<AddTeam />} />
         <Route path="/" element={<Home />} />

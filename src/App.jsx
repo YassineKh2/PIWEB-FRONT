@@ -6,6 +6,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Providers } from "./providers.jsx";
 import RoutesPath from "./routesPath.jsx";
 import ECommerce from "./views/BackOffice/Pages/Dashbord/ECommerce.jsx";
+
+
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx";
 import  { useEffect, useState } from "react";
 
@@ -28,6 +30,7 @@ function App() {
       "/team",
       "/addReservation",
       "/addsp",
+   
       "/", // add other FrontOffice paths as needed
     ];
 
