@@ -23,7 +23,7 @@ function DisplayAllTournaments() {
   return (
     <>
       <button
-        onClick={() => navigate("/addTournament")}
+        onClick={() => navigate("/tournament/add")}
         className="mt-24 ease-in-up hidden rounded-md bg-primary py-3 px-8 text-base font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-9 lg:px-6 xl:px-9 ml-auto mr-10"
       >
         create Tournament
@@ -115,7 +115,7 @@ function DisplayAllTournaments() {
               <div className="flex">
                 <button
                   onClick={() =>
-                    navigate(`/tournamentDetails/${tournament._id}`)
+                    navigate(`/tournament/details/${tournament._id}`)
                   }
                   className="mb-4 -mt-4 ease-in-up hidden rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8 ml-35 "
                 >
@@ -123,7 +123,7 @@ function DisplayAllTournaments() {
                 </button>
                 <button
                   onClick={() =>
-                    navigate(`/updatetournament`, { state: { tournament } })
+                    navigate(`/tournament/update`, { state: { tournament } })
                   }
                   className="mb-4 -mt-4 mr-4 ease-in-up hidden rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8 ml-auto "
                 >
