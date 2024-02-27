@@ -27,10 +27,14 @@ function App() {
             "/tournament/details/:id",
             "/team",
             "/team/add",
+            "/team/dashboard",
             "/team/update",
             "/listhotels",
             "/", // add other FrontOffice paths as needed
         ];
+
+
+
 
         // Check if the current path is in the array
         for (i = 0; i < frontOfficePaths.length; i++) {
@@ -49,6 +53,7 @@ function App() {
             <RoutingBackOffice/>
         </>
     );
+
 }
 
 export default App;

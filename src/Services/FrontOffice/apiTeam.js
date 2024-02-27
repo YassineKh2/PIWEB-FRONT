@@ -30,6 +30,7 @@ export async function getTeamDetails(id) {
     throw error;
   }
 }
+
 export async function updateTeam(teamData) {
   try {
     const response = await axios.put(`${apiURL}/update`,teamData);
