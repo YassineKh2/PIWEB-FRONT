@@ -1,11 +1,13 @@
 export default function Games() {
+
+
+
+
     return (
-
-
         <>
 
-
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+
                 <div
                     className="flex flex-column sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between pb-4">
                     <div>
@@ -107,6 +109,9 @@ export default function Games() {
                                placeholder="Search for items"/>
                     </div>
                 </div>
+
+
+
                 <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>

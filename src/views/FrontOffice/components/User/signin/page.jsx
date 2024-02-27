@@ -13,10 +13,10 @@ function SigninPage () {
     try {
       const userData = { email, password };
       const response = await signin(userData);
-     if(response.user.role=='A'){
+     if(response.user.role==='A'){
       navigate('/backoffice', { replace: true } );
      }
-     else if(response.user.role=='C'){
+     else if(response.user.role==='C'){
       navigate('/');
      }// Handle response data accordingly
     } catch (error) {
