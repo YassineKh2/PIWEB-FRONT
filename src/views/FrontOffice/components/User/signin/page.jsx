@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { signin }  from "../../../../../Services/apiUser"; // Import the signin function
 import { useNavigate } from "react-router-dom";
 
-function SigninPage () {
+function SigninPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,16 +13,28 @@ function SigninPage () {
     try {
       const userData = { email, password };
       const response = await signin(userData);
-     if(response.user.role=='A'){
-      navigate('/backoffice', { replace: true } );
-     }
-     else if(response.user.role=='C'){
-      navigate('/');
-     }// Handle response data accordingly
+      
+     
+      if (response.token) {
+       
+        localStorage.setItem('token', response.token);
+
+        
+        if (response.user.role === 'A') {
+          navigate('/backoffice', { replace: true });
+        } else if (response.user.role === 'C') {
+          navigate('/');
+          //console.log(localStorage);
+        }
+      } else {
+        
+        setError("Token not found");
+      }
     } catch (error) {
-      setError(error.error); // Display the error message
+      setError(error.error); // Afficher le message d'erreur
     }
   };
+
 
   return (
     <>
