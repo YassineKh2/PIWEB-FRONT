@@ -10,6 +10,8 @@ import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/
 import UpdateTournament from "./views/FrontOffice/components/Tournament/updateTournament/updateTournament.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
+import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
+
 function RoutesPath() {
   return (
     <div>
@@ -31,6 +33,14 @@ function RoutesPath() {
             element={
               <>
                 <RoutingTeams/>
+              </>
+            }
+        />
+         <Route
+            path="listhotels/*"
+            element={
+              <>
+                <RoutingHotels/>
               </>
             }
         />

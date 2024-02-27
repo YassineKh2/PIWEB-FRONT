@@ -28,6 +28,7 @@ function App() {
             "/team",
             "/team/add",
             "/team/update",
+            "/listhotels",
             "/", // add other FrontOffice paths as needed
         ];
 
