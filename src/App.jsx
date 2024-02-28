@@ -26,6 +26,8 @@ function App() {
             "/tournament/showAll",
             "/tournament/details/:id",
             "/team",
+            "/team/matches",
+            "/team/tournaments",
             "/team/add",
             "/team/dashboard",
             "/team/update",
