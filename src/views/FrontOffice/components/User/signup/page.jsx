@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { signup } from "../../../../../Services/apiUser";
 import { useNavigate } from "react-router-dom";
+
 function SignupPage() {
 const navigate = useNavigate();
 
@@ -11,7 +12,7 @@ const navigate = useNavigate();
     password: '',
     birthDate: '',
     cin: '',
-  });
+});
 
   const handleChange = (e) => {
     setUser({ ...User, [e.target.name]: e.target.value });
