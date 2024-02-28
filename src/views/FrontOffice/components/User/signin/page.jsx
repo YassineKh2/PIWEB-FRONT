@@ -13,6 +13,7 @@ function SigninPage() {
     try {
       const userData = { email, password };
       const response = await signin(userData);
+
       
      
       if (response.token) {
@@ -30,6 +31,7 @@ function SigninPage() {
         
         setError("Token not found");
       }
+
     } catch (error) {
       setError(error.error); // Afficher le message d'erreur
     }

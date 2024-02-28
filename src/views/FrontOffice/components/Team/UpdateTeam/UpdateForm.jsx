@@ -1,34 +1,35 @@
 import {useForm} from "react-hook-form";
-import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
+import {updateTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {GetCountries , GetStateByCountry,GetCitybyStateAndCountry} from "../../../../../Services/APis/CountryAPI.js";
-import {DatePickerDemo} from "./DatePicker.jsx";
+import {DatePickerDemo} from "../AddTeam/DatePicker.jsx";
 import { AiOutlinePicture  as Picture } from "react-icons/ai";
 
 const schema = yup.object().shape({
-    name: yup.string().required().min(3),
-    nameAbbreviation: yup.string().max(3).min(3).required(),
+    _id: yup.string(),
+    name: yup.string().min(3).required(),
+    nameAbbreviation: yup.string().min(3).max(3).required(),
+    foundedIn: yup.date().required(),
     country: yup.string().required(),
     state: yup.string().required(),
     city: yup.string().required(),
-    foundedIn: yup.date()
 });
 
 
-export default function AddTeam() {
+export default function UpdateForm({team}) {
     const [Countries, setCountries] = useState([]);
     const [States, setStates] = useState([]);
     const [Cites, setCites] = useState([]);
-    const [date, setDate] = useState();
-
+    const [date, setDate] = useState(team.foundedIn);
 
     useEffect(() => {
         GetCountries().then((response) => {
             setCountries(response);
         });
     }, []);
+
 
     const {
         register,
@@ -37,8 +38,12 @@ export default function AddTeam() {
         setError,
         watch
     } = useForm({
-        resolver: yupResolver(schema)
+        resolver: yupResolver(schema),
+        defaultValues: team
     });
+
+    console.log(team)
+
 
     const selectedCountry = watch("country",true);
     const selectedState = watch("state",true);
@@ -66,7 +71,7 @@ export default function AddTeam() {
 
         try {
             data.foundedIn = date;
-            await addTeam(data);
+            await updateTeam(data);
         } catch (error) {
             setError("root", {
                 message: error.message
@@ -157,13 +162,19 @@ export default function AddTeam() {
                                                         name="country"
                                                         className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                                                     >
-                                                        <option disabled selected>
+                                                        <option disabled>
                                                             Select your Country
                                                         </option>
                                                         {Countries.map((country, index) => (
-                                                            <option key={index} value={country.iso2}>
-                                                                {country.name}
-                                                            </option>
+
+                                                            (country.iso2 === team.country) ?
+                                                                <option key={index} value={country.iso2} selected>
+                                                                    {country.name}
+                                                                </option> :
+                                                                <option key={index} value={country.iso2}>
+                                                                    {country.name}
+                                                                </option>
+
 
                                                         ))}
                                                     </select>
@@ -190,9 +201,14 @@ export default function AddTeam() {
                                                             Select your State
                                                         </option>
                                                         {States.map((state, index) => (
-                                                            <option key={index} value={state.iso2}>
-                                                                {state.name}
-                                                            </option>
+
+                                                            (state.iso2 === team.state) ?
+                                                                <option key={index} value={state.iso2} selected>
+                                                                    {state.name}
+                                                                </option> :
+                                                                <option key={index} value={state.iso2}>
+                                                                    {state.name}
+                                                                </option>
 
                                                         ))}
                                                     </select>
@@ -220,10 +236,13 @@ export default function AddTeam() {
                                                             Select your City
                                                         </option>
                                                         {Cites.map((city, index) => (
-                                                            <option key={index} value={city.iso2}>
-                                                                {city.name}
-                                                            </option>
-
+                                                            (city.name === team.city) ?
+                                                                <option key={index} value={city.iso2} selected>
+                                                                    {city.name}
+                                                                </option> :
+                                                                <option key={index} value={city.iso2}>
+                                                                    {city.name}
+                                                                </option>
                                                         ))}
                                                     </select>
                                                     {errors.city &&
