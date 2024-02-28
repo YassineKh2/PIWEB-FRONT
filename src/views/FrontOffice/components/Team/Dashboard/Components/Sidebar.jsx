@@ -1,6 +1,7 @@
 import { TbTournament } from "react-icons/tb";
 import { IoIosFootball  as Football} from "react-icons/io";
 import {Link} from "react-router-dom";
+import { ImProfile  as Profile} from "react-icons/im";
 
 export default function Sidebar() {
     return (
@@ -95,6 +96,13 @@ export default function Sidebar() {
                             </Link>
                         </li>
 
+                        <li>
+                            <Link to="profile"
+                                  className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                                <Profile size={20}/>
+                                <span className="flex-1 ms-3 whitespace-nowrap">Profile</span>
+                            </Link>
+                        </li>
                         <li>
                             <a href="#"
                                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">

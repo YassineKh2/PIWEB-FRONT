@@ -30,6 +30,7 @@ function App() {
             "/team/tournaments",
             "/team/add",
             "/team/dashboard",
+            "/team/profile",
             "/team/update",
             "/", // add other FrontOffice paths as needed
         ];

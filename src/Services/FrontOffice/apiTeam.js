@@ -4,8 +4,14 @@ const apiURL = "http://localhost:3000/team";
 
 export async function addTeam(teamData) {
   try {
-    const response = await axios.post(`${apiURL}/add`, teamData);
+    console.log(teamData)
+    const response = await axios.post(`${apiURL}/add`, teamData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
     return response.data;
+
   } catch (error) {
     console.error(error);
     throw error;

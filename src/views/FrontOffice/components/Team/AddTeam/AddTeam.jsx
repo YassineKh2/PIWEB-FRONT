@@ -3,9 +3,9 @@ import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useEffect, useState} from "react";
-import {GetCountries , GetStateByCountry,GetCitybyStateAndCountry} from "../../../../../Services/APis/CountryAPI.js";
+import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry} from "../../../../../Services/APis/CountryAPI.js";
 import {DatePickerDemo} from "./DatePicker.jsx";
-import { AiOutlinePicture  as Picture } from "react-icons/ai";
+import {AiOutlinePicture as Picture} from "react-icons/ai";
 
 const schema = yup.object().shape({
     name: yup.string().required().min(3),
@@ -13,6 +13,7 @@ const schema = yup.object().shape({
     country: yup.string().required(),
     state: yup.string().required(),
     city: yup.string().required(),
+    image: yup.string(),
     foundedIn: yup.date()
 });
 
@@ -42,6 +43,7 @@ export default function AddTeam() {
 
     const selectedCountry = watch("country",true);
     const selectedState = watch("state",true);
+    const image = watch("image",true);
 
 
     useEffect(() => {
@@ -65,6 +67,8 @@ export default function AddTeam() {
     const onSubmit = async (data) => {
 
         try {
+            data.image = image[0];
+            data.imagename = image[0].name;
             data.foundedIn = date;
             await addTeam(data);
         } catch (error) {
@@ -93,9 +97,9 @@ export default function AddTeam() {
                                 </p>
                                 <form onSubmit={handleSubmit(onSubmit)}>
                                     <div className="rounded-full bg-amber-50 p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
-                                        <input type="file" accept="image/*" id="imageUpload"
+                                        <input {...register("image")} type="file" name="image" accept="image/*" id="image"
                                                className="hidden"/>
-                                        <label htmlFor={"imageUpload"} className="flex items-baseline justify-center"><Picture  className="text-black-2"></Picture></label>
+                                        <label htmlFor={"image"} className="flex items-baseline justify-center"><Picture  className="text-black-2"></Picture></label>
                                     </div>
 
                                     <div className="-mx-4 flex flex-wrap">
