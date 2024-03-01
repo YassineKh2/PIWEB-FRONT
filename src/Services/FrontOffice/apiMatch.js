@@ -11,3 +11,12 @@ export async function addMatch(matchData) {
     throw error;
   }
 }
+export async function getTournamentMatches(id) {
+  try {
+    const response = await axios.get(`${apiURL}/getMatches/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

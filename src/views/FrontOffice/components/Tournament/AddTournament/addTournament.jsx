@@ -11,6 +11,8 @@ import {
 } from "../../../../../Services/APis/CountryAPI";
 import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
+import { MailCheck } from "lucide-react";
+import { Card, CardContent } from "@mui/material";
 
 function AddTournament() {
   const navigate = useNavigate();
@@ -148,7 +150,7 @@ function AddTournament() {
     const fileReader = new FileReader();
 
     fileReader.onloadend = async function () {
-      const base64Image = fileReader.result.split(",")[1]; // Extract base64 encoded image data
+      const base64Image = fileReader.result.split(",")[1];
       const imageData = {
         name: Tournament.name,
         description: Tournament.description,
@@ -166,38 +168,29 @@ function AddTournament() {
       };
 
       try {
-        // Await the result of addTournament
         await addTournament(imageData);
         const latestTournamentId = await getLatestTournamentId();
 
-        // Move the teamFixtureAssignments code here
         const numTeams = selectedTeams.length;
-        //const teamFixtureAssignments = generateTeamFixtureAssignments(numTeams);
+        let fixtureNumber = 1;
+        let fixtureNextTeam = 1;
+        let teamsParticipate = [];
+        let matchFixture = [];
+        let Fixtures = {};
+        const matches = [];
+        let teamsMatches = {}; // Object to store matches for each team
 
+        for (let i = 0; i < numTeams; i++) {
+          const teamId = selectedTeams[i];
+          teamsMatches[teamId] = [];
+        }
+        for (let i = 1; i <= numTeams - 1; i++) {
+          Fixtures[i] = [];
+        }
         for (let i = 0; i < numTeams; i++) {
           for (let j = i + 1; j < numTeams; j++) {
             const idTeam1 = selectedTeams[i];
             const idTeam2 = selectedTeams[j];
-
-            // Retrieve assigned fixtures for each team
-            /*const fixturesTeam1 = teamFixtureAssignments[idTeam1];
-            const fixturesTeam2 = teamFixtureAssignments[idTeam2];
-
-            // Find a common fixture for both teams
-            const commonFixture = findCommonFixture(
-              fixturesTeam1,
-              fixturesTeam2
-            );
-
-            // Remove the common fixture from the lists
-            const updatedFixturesTeam1 = fixturesTeam1.filter(
-              (fixture) => fixture !== commonFixture
-            );
-            const updatedFixturesTeam2 = fixturesTeam2.filter(
-              (fixture) => fixture !== commonFixture
-            );*/
-
-            // Create match data
             const matchData = {
               win: "",
               loss: "",
@@ -209,17 +202,64 @@ function AddTournament() {
               idTeam2,
               idTournament: latestTournamentId.latestTournamentId,
             };
-
-            // Call your function to send match data
             await addMatch(matchData);
-
-            // Update the fixtures for each team
-           /* teamFixtureAssignments[idTeam1] = updatedFixturesTeam1;
-            teamFixtureAssignments[idTeam2] = updatedFixturesTeam2;*/
+            /*matches.push(matchData);
+            teamsMatches[idTeam1].push(matchData);
+            teamsMatches[idTeam2].push(matchData);*/
           }
         }
 
-        // Navigate after setting the state
+        /*let j = 1;
+        for (let i = 0; i < matches.length; i++) {
+          if (Fixtures[j] === numTeams / 2) {
+            j++;
+            teamsParticipate = [];
+          }
+          
+          if (
+            !teamsParticipate.includes(matches[i].idTeam1) &&
+            !teamsParticipate.includes(matches[i].idTeam2)
+          ) {
+            Fixtures[j].push(matches[i]);
+            console.log("hjhjhjh");
+            console.log(matches[i].idTeam1);
+            teamsParticipate.push(matches[i].idTeam1);
+            teamsParticipate.push(matches[i].idTeam2);
+            console.log(teamsParticipate);
+          }
+        }*/
+        /*
+        let fix = [];
+        var i = 0;
+        var matchNumbers = selectedTeams.length / 2;
+        while (matches.length > 0) {
+          let j = 0;
+
+          if (matchNumbers >= 0) {
+            if (
+              !teamsParticipate.includes(matches[i].idTeam1) ||
+              !teamsParticipate.includes(matches[i].idTeam2)
+            ) {
+              Fixtures[i + 1].push(matches[i]);
+              console.log(Fixtures);
+              matches.splice(i, 1);
+              console.log(matches);
+              teamsParticipate.push(matches[i].idTeam1);
+              teamsParticipate.push(matches[i].idTeam2);
+              console.log(matches);
+              matchNumbers--;
+            } else {
+              i++;
+            }
+          } else {
+            teamsParticipate = [];
+            matchNumbers = selectedTeams.length / 2 ;
+            i = 0;
+          }
+        }*/
+
+        //console.log(Fixtures);
+
         navigate("/tournament/showAll");
       } catch (error) {
         console.log(error.response.data.message);
@@ -230,37 +270,11 @@ function AddTournament() {
       fileReader.readAsDataURL(image);
     }
   };
-/*
-  const findCommonFixture = (array1, array2) => {
-    for (const fixture of array1) {
-      if (array2.includes(fixture)) {
-        return fixture;
-      }
-    }
-    throw new Error("No common fixture found.");
-  };
-  const generateFixtureNames = (numFixtures) => {
-    const fixtureNames = [];
-    for (let i = 1; i <= numFixtures; i++) {
-      fixtureNames.push(`Fixture ${i}`);
-    }
-    return fixtureNames;
-  };
-  // Function to generate an object of team fixture assignments
-  const generateTeamFixtureAssignments = (numTeams) => {
-    const teamFixtureAssignments = {};
-    for (let i = 0; i < numTeams; i++) {
-      teamFixtureAssignments[selectedTeams[i]] = generateFixtureNames(
-        numTeams - 1
-      );
-      console.log(teamFixtureAssignments);
-    }
-    return teamFixtureAssignments;
-  };*/
 
   return (
     <>
-      <div className="flex justify-center items-center h-screen mt-36 mb-20">
+   
+      <div className="flex justify-center items-center h-screen mt-22 mb-20">
         <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
           <div
             className="wow fadeInUp relative z-10 rounded-md bg-primary/[3%] p-8 dark:bg-primary/10 sm:p-11 lg:p-8 xl:p-11"

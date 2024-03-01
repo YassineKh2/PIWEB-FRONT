@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   // Navbar toggle
@@ -39,7 +39,7 @@ const Header = () => {
         className={`header top-0 left-0 z-40 flex w-full items-center bg-transparent ${
           sticky
             ? "!fixed !z-[9999] !bg-white !bg-opacity-80 shadow-sticky backdrop-blur-sm !transition dark:!bg-primary dark:!bg-opacity-20"
-            : "absolute"
+            : "relative"
         }`}
       >
         <div className="container">
@@ -49,7 +49,8 @@ const Header = () => {
                 className={`header-logo block w-full ${
                   sticky ? "py-5 lg:py-2" : "py-8"
                 } `}
-               to={"/"}>
+                to={"/"}
+              >
                 <img
                   src="/images/logo/LinkUpTournement.png"
                   alt="logo"
@@ -112,7 +113,8 @@ const Header = () => {
                           <>
                             <Link
                               onClick={() => handleSubmenu(index)}
-                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:opacity-70 dark:text-white lg:mr-0 lg:inline-flex lg:py-6 lg:px-0">
+                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:opacity-70 dark:text-white lg:mr-0 lg:inline-flex lg:py-6 lg:px-0"
+                            >
                               {menuItem.title}
                               <span className="pl-3">
                                 <svg width="15" height="14" viewBox="0 0 15 14">
@@ -148,7 +150,8 @@ const Header = () => {
               <div className="flex items-center justify-end pr-16 lg:pr-0">
                 <Link
                   className="hidden py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
-                 to={'/signin'}>
+                  to={"/signin"}
+                >
                   Sign In
                 </Link>
                 <Link
