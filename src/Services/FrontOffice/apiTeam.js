@@ -77,5 +77,15 @@ export async function getTournaments(tournamentsid) {
   }
 }
 
+export async function getTeamByUser(userId) {
+    try {
+        const response = await axios.post(`${apiURL}/getTeam/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
 
 

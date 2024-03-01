@@ -6,7 +6,7 @@ export default function Dashboard() {
 
     return (
         <>
-            <div className="mb-10">
+            <div className="mb-10 ">
                 {/* <!-- ===== Page Wrapper Start ===== --> */}
                 <div className="flex h-screen overflow-hidden">
                     {/* <!-- ===== Sidebar Start ===== --> */}

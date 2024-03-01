@@ -63,6 +63,7 @@ export default function TournamentCards() {
 
     return (
         <>
+            {tournaments ? <h1>Join Tournaments and it will show here </h1> :
 
 
             <div className="md:flex">
@@ -131,7 +132,7 @@ export default function TournamentCards() {
                 </div>
 
             </div>
-
+            }
         </>
     )
 }

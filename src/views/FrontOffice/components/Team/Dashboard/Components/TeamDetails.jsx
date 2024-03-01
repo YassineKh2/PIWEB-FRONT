@@ -1,6 +1,25 @@
+import {jwtDecode} from 'jwt-decode';
+import {useEffect, useState} from "react";
+import {getTeamByUser} from "../../../../../../Services/FrontOffice/apiTeam.js";
 
 export default function TeamDetails() {
     const backPath = "http://localhost:3000/public/images/teams"
+    const [team,setTeam] = useState();
+
+
+
+    const userToken = localStorage.getItem('token');
+    const decodedToken = jwtDecode(userToken);
+
+    useEffect(() => {
+        getTeamByUser(decodedToken.userId).then((response)=>
+        {
+            setTeam(response.team[0])
+        })
+
+    },[])
+
+
 
 
     return (
@@ -8,10 +27,10 @@ export default function TeamDetails() {
            <div className="bg-white max-w-2xl shadow overflow-hidden sm:rounded-lg dark:bg-neutral-800">
                <div className="px-4 py-5 sm:px-6">
                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                       User database
+                       Team Information
                    </h3>
                    <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-                       Details and informations about user.
+                      Here is the information about your team
                    </p>
                </div>
                <div className="border-t border-gray-200">
@@ -22,15 +41,17 @@ export default function TeamDetails() {
                                Team Name
                            </dt>
 
-                           <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 dark:text-white">
-                               Mickael Poulaz
+                           <dd className=" gap-6 mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 dark:text-white">
+
+                               {team?.name} <text className="font-semibold">( {team?.nameAbbreviation} )</text>
 
                            </dd>
+
 
                        </div>
                        <div
                            className="dark:bg-neutral-700 bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                           <dt className="text-sm font-medium text-gray-500 dark:text-gray-300">
+                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-300">
                               Image
                            </dt>
 
@@ -53,7 +74,7 @@ export default function TeamDetails() {
                                Total Wins
                            </dt>
                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 dark:text-white">
-                               67
+                               {team?.wins}
                            </dd>
                        </div>
                        <div
@@ -62,7 +83,7 @@ export default function TeamDetails() {
                                Ranking
                            </dt>
                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 dark:text-white">
-                               1000
+                               {team?.ranking}
                            </dd>
                        </div>
 
