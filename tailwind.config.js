@@ -33,7 +33,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        black: "#090E34",
+        backofficeblack: "#090E34",
         dark: "#1D2144",
         primary: "#4A6CF7",
         yellow: "#FBB040",
