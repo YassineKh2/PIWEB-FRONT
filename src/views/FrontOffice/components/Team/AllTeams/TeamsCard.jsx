@@ -5,6 +5,7 @@ import {FaHeartBroken as BrokenHeart } from "react-icons/fa";
 
 
 import {useEffect, useState} from "react";
+import {updateUser} from "../../../../../Services/apiUser.js";
 
 
 export default function TeamsCard({team,user}) {
@@ -23,20 +24,29 @@ export default function TeamsCard({team,user}) {
             }
         )
 
-    })
-
-
+    },[])
 
     const like = () => {
     followedTeams.push(team._id);
+    user.followedTeams = followedTeams
+    updateUser(user).then(()=>{
+        console.log("Liked team :",team.name)
+    })
     setLiked(true);
+
+
 
     }
 
 
     const unlike = () => {
         followedTeams.pop(team._id);
+        user.followedTeams = followedTeams
+        updateUser(user).then(()=>{
+            console.log("Unliked team :",team.name)
+        })
         setLiked(false);
+
     }
 
 
@@ -52,13 +62,13 @@ export default function TeamsCard({team,user}) {
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
                                 size={25}
+                                onClick={unlike}
                                 className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
                             />
                             :
                             <FullHeart
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
-                                onClick={unlike}
                                 size={25}
                                 className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
                             />
@@ -69,13 +79,13 @@ export default function TeamsCard({team,user}) {
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
                                 size={25}
-                                className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
+                                onClick={like}
+                                className="text-red-600 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
                             />
                             :
                             <EmptyHeart
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
-                                onClick={like}
                                 size={25}
                                 className="text-gray-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
                             />
@@ -83,10 +93,10 @@ export default function TeamsCard({team,user}) {
                 }
 
 
-                <Link className="px-10 pt-10" to="/teamDetail">
+                <Link className="px-10 pt-10" to="/team/profile">
                     <img src={path + team?.image} alt="team image" className="rounded-xl h-60"/>
                 </Link>
-                <h2 className="font-semibold dark:text-gray-600">{team?.name}</h2>
+                <h2 className="font-semibold dark:text-gray-600" >{team?.name}</h2>
                 <p className="p-4 dark:text-gray-800">Team Description comes here normally :p</p>
             </div>
 

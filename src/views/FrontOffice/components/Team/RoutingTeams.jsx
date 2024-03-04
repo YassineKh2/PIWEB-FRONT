@@ -4,6 +4,7 @@ import AddTeam from "./AddTeam/AddTeam.jsx";
 import RoutingDashboardTeam from "./Dashboard/RoutingDashboardTeam.jsx";
 import LiveStream from "../LiveStreaming/LiveStream.jsx";
 import ShowAllTeams from "./AllTeams/ShowAllTeams.jsx";
+import ShowTeam from "./ShowTeam/ShowTeam.jsx";
 
 
 export default function RoutingTeams() {
@@ -47,6 +48,14 @@ export default function RoutingTeams() {
                 element={
                     <>
                         <ShowAllTeams/>
+                    </>
+                }
+            />
+            <Route
+                path="profile"
+                element={
+                    <>
+                        <ShowTeam/>
                     </>
                 }
             />
