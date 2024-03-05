@@ -1,5 +1,6 @@
 
 import axios from 'axios';
+import geocodingData from './Geocoding';
 
 let accessToken = null;
 
@@ -20,38 +21,38 @@ const getAccessToken = async () => {
   }
 };
 
-// HotelAPI.js
+const getHotelsByGeoCode = async (latitude, longitude, radius) => {
+  if (!latitude || !longitude) {
+   
+    throw new Error('Latitude and longitude are required.');
+  }
+  if (!radius) {
+    radius = 100;
+  }
 
-const getHotelsByGeoCode = async (latitude, longitude, radius ) => {
-    if (!latitude || !longitude) {
-      throw new Error('Latitude and longitude are required.');
-      if(!radius)
-      radius=100
-    }
-  
-    if (!accessToken) {
-      await getAccessToken();
-    }
-  
-    try {
-      const response = await axios.get('https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-geocode', {
-        params: {
-          latitude,
-          longitude,
-          radius,
-        },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-  
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching hotels:', error.message);
-      throw new Error('Error fetching hotels');
-    }
-  };
-  
-  export default {
-    getHotelsByGeoCode  };
-  
+  if (!accessToken) {
+    await getAccessToken();
+  }
+
+  try {
+    const hotelResponse = await axios.get('https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-geocode', {
+      params: {
+        latitude,
+        longitude,
+        radius,
+      },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return hotelResponse.data;
+  } catch (error) {
+    console.error('Error fetching hotels:', error.message);
+    throw new Error('Error fetching hotels');
+  }
+};
+
+export default {
+  getHotelsByGeoCode,
+};

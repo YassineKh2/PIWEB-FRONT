@@ -11,6 +11,7 @@ import {
 } from "../../../../../Services/APis/CountryAPI";
 import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
+import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
 
 function AddTournament() {
   const navigate = useNavigate();
@@ -143,6 +144,8 @@ function AddTournament() {
   useEffect(() => {
     getTeams();
   }, []);
+
+  
   const add = async (e) => {
     e.preventDefault();
     const fileReader = new FileReader();
@@ -219,8 +222,15 @@ function AddTournament() {
           }
         }
 
+        const hotelSearch = {
+         city:Tournament.city,
+          idTournament: latestTournamentId.latestTournamentId,
+        };
+        navigate("/listhotels",{state:{hotelSearch}});
+        getGeocodingData(hotelSearch.city);
+        console.log()
         // Navigate after setting the state
-        navigate("/tournament/showAll");
+      //  navigate("/tournament/showAll");
       } catch (error) {
         console.log(error.response.data.message);
       }
