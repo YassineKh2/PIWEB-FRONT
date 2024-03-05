@@ -19,6 +19,7 @@ function App() {
         const frontOfficePaths = [
             "/signin",
             "/signup",
+            "/profile",
             "/about",
             "/blog",
             "/tournament/update",

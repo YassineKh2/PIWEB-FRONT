@@ -1,7 +1,7 @@
 import {Route, Routes} from "react-router-dom";
 import UpdateTeam from "./UpdateTeam/UpdateTeam.jsx";
 import AddTeam from "./AddTeam/AddTeam.jsx";
-import Dashboard from "../Team/Dashboard/Dashboard.jsx";
+import Dashboard from "../Team/Dashboard/Components/Games.jsx";
 
 export default function RoutingTeams() {
 

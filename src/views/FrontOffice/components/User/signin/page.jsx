@@ -24,7 +24,7 @@ function SigninPage() {
         if (response.user.role === 'A') {
           navigate('/backoffice', { replace: true });
         } else if (response.user.role === 'C') {
-          navigate('/');
+          navigate('/profile');
           //console.log(localStorage);
         }
       } else {

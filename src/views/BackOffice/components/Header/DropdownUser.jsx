@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link,  Navigate, useNavigate } from 'react-router-dom';
 
 import UserOne from '../../images/BackOffice/user/user-01.png';
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const navigate = useNavigate();
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
+  const deleteToken = () => {
+    localStorage.removeItem("token");
+    navigate('/signin')
+  };
   // close on click outside
   useEffect(() => {
     const clickHandler = ({ target }) => {
@@ -153,7 +157,8 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+        
+        <button  onClick={deleteToken} className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
           <svg
             className="fill-current"
             width="22"
@@ -180,3 +185,4 @@ const DropdownUser = () => {
 };
 
 export default DropdownUser;
+//onClick={deleteToken()}

@@ -82,6 +82,12 @@ const menuData = [
         path: "/error",
         newTab: false,
       },
+      {
+        id: 49,
+        title: "Profile",
+        path: "/profile",
+        newTab: false,
+      },
     ],
   },
 ];
