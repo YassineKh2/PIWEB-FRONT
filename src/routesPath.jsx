@@ -15,6 +15,8 @@ import AllSponsors from "./views/BackOffice/components/Sponsors/AllSponsors.jsx"
 import AffTicket from "./views/FrontOffice/components/Ticket/AffTicket.jsx"
 import UpReservation from "./views/FrontOffice/components/Reservation/UpReservation.jsx";
 import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
+import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
+import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -35,6 +37,26 @@ function RoutesPath() {
         <Route path="/upres" element={<UpReservation/>}/>
 
         <Route path="/team" element={<AddTeam />} />
+        <Route path="signin" element={<SigninPage />} />
+        <Route path="signup" element={<SignupPage />} />
+        <Route path="about" element={<About />} />
+        <Route path="blog" element={<Blog />} />
+          <Route
+              path="tournament/*"
+              element={
+                  <>
+                      <RoutingTournaments/>
+                  </>
+              }
+          />
+        <Route
+            path="team/*"
+            element={
+              <>
+                <RoutingTeams/>
+              </>
+            }
+        />
         <Route path="/" element={<Home />} />
       </Routes>
     </div>

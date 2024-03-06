@@ -1,10 +1,29 @@
 import { useEffect, useState } from "react";
-import { addTournament } from "../../../../../Services/FrontOffice/apiTournament";
+import {
+  addTournament,
+  getLatestTournamentId,
+} from "../../../../../Services/FrontOffice/apiTournament";
 import { useNavigate } from "react-router-dom";
+import {
+  GetCitybyStateAndCountry,
+  GetCountries,
+  GetStateByCountry,
+} from "../../../../../Services/APis/CountryAPI";
+import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
+import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
 
 function AddTournament() {
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
+  const [Countries, setCountries] = useState([]);
+  const [SelectedCountry, setSelectedCountries] = useState("");
+  const [States, setStates] = useState([]);
+  const [SelectedStates, setSelectedStates] = useState("");
+  const [Cities, setCities] = useState([]);
+  const [SelectedCities, setSelectedCities] = useState("");
+  const [Teams, setTeams] = useState([]);
+  const [LastTournamentId, setLastTournamentId] = useState("");
+  const [selectedTeams, setSelectedTeams] = useState([]);
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -14,8 +33,30 @@ function AddTournament() {
     image: "",
     tournamentType: "",
     nbTeamPartipate: 0,
+    country: "",
+    state: "",
+    city: "",
+  });
+  const [Match, setMatch] = useState({
+    win: "",
+    loss: "",
+    matchDate: new Date(),
+    scoreTeam1: null,
+    scoreTeam2: null,
+    fixture: "",
+    idTeam1: {},
+    idTeam2: {},
+    idTournament: {},
   });
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
+  const handleTeamChange = (e) => {
+    const selectedOptions = Array.from(
+      e.target.selectedOptions,
+      (option) => option.value
+    );
+
+    setSelectedTeams(selectedOptions);
+  };
   const handlechange = (e) => {
     setTournament({ ...Tournament, [e.target.name]: e.target.value });
   };
@@ -25,6 +66,41 @@ function AddTournament() {
     setTournament({ ...Tournament, startDate: formattedDate });
   };
 
+  const handleCountryChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "location") {
+      setSelectedCountries(value);
+    }
+    setTournament({ ...Tournament, country: value });
+  };
+  const handleStateChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedStates(value);
+    setTournament({ ...Tournament, state: value });
+  };
+  const handleCitiesChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedCities(value);
+    setTournament({ ...Tournament, city: value });
+  };
+  useEffect(() => {
+    if (SelectedCountry) {
+      setCities([]);
+      GetStateByCountry(SelectedCountry).then((response) => {
+        setStates(response);
+      });
+    }
+  }, [SelectedCountry]);
+
+  useEffect(() => {
+    if (SelectedStates) {
+      GetCitybyStateAndCountry(SelectedCountry, SelectedStates).then(
+        (response) => {
+          setCities(response);
+        }
+      );
+    }
+  }, [SelectedStates]);
   const handleEndDateChange = (date) => {
     const isoDateString = date.toISOString();
     const formattedDate = isoDateString.substring(0, 10);
@@ -34,6 +110,11 @@ function AddTournament() {
     setImage(e.target.files[0]);
   };
   useEffect(() => {
+    GetCountries().then((response) => {
+      setCountries(response);
+    });
+  }, []);
+  useEffect(() => {
     if (image && image.name) {
       setTournament((prevTournament) => ({
         ...prevTournament,
@@ -41,11 +122,32 @@ function AddTournament() {
       }));
     }
   }, [image]);
-
+  const getTeams = async () => {
+    const res = getAllTeams()
+      .then((res) => {
+        setTeams(res.teams);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  const getLastTournamentId = async () => {
+    const res = getLatestTournamentId()
+      .then((res) => {
+        return res.latestTournamentId;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  useEffect(() => {
+    getTeams();
+  }, []);
   const add = async (e) => {
     e.preventDefault();
     const fileReader = new FileReader();
-    fileReader.onloadend = function () {
+
+    fileReader.onloadend = async function () {
       const base64Image = fileReader.result.split(",")[1]; // Extract base64 encoded image data
       const imageData = {
         name: Tournament.name,
@@ -55,28 +157,110 @@ function AddTournament() {
         endDate: Tournament.endDate,
         tournamentType: Tournament.tournamentType,
         nbTeamPartipate: Tournament.nbTeamPartipate,
+        teams: selectedTeams,
         image: base64Image,
         filename: Tournament.image,
+        country: Tournament.country,
+        state: Tournament.state,
+        city: Tournament.city,
       };
 
-      const res = addTournament(imageData)
-        .then(() => {
-          console.log("ajout passe");
-          navigate("/getAllTournament")
-        })
-        .catch((error) => {
-          console.log(error.response.data.message);
-        });
+      try {
+        // Await the result of addTournament
+        await addTournament(imageData);
+        const latestTournamentId = await getLatestTournamentId();
+
+        // Move the teamFixtureAssignments code here
+        const numTeams = selectedTeams.length;
+        //const teamFixtureAssignments = generateTeamFixtureAssignments(numTeams);
+
+        for (let i = 0; i < numTeams; i++) {
+          for (let j = i + 1; j < numTeams; j++) {
+            const idTeam1 = selectedTeams[i];
+            const idTeam2 = selectedTeams[j];
+
+            // Retrieve assigned fixtures for each team
+            /*const fixturesTeam1 = teamFixtureAssignments[idTeam1];
+            const fixturesTeam2 = teamFixtureAssignments[idTeam2];
+
+            // Find a common fixture for both teams
+            const commonFixture = findCommonFixture(
+              fixturesTeam1,
+              fixturesTeam2
+            );
+
+            // Remove the common fixture from the lists
+            const updatedFixturesTeam1 = fixturesTeam1.filter(
+              (fixture) => fixture !== commonFixture
+            );
+            const updatedFixturesTeam2 = fixturesTeam2.filter(
+              (fixture) => fixture !== commonFixture
+            );*/
+
+            // Create match data
+            const matchData = {
+              win: "",
+              loss: "",
+              matchDate: new Date(),
+              scoreTeam1: null,
+              scoreTeam2: null,
+              fixture: "",
+              idTeam1,
+              idTeam2,
+              idTournament: latestTournamentId.latestTournamentId,
+            };
+
+            // Call your function to send match data
+            await addMatch(matchData);
+
+            // Update the fixtures for each team
+           /* teamFixtureAssignments[idTeam1] = updatedFixturesTeam1;
+            teamFixtureAssignments[idTeam2] = updatedFixturesTeam2;*/
+          }
+        }
+
+        // Navigate after setting the state
+        navigate("/tournament/showAll");
+      } catch (error) {
+        console.log(error.response.data.message);
+      }
     };
 
     if (image) {
       fileReader.readAsDataURL(image);
     }
   };
+/*
+  const findCommonFixture = (array1, array2) => {
+    for (const fixture of array1) {
+      if (array2.includes(fixture)) {
+        return fixture;
+      }
+    }
+    throw new Error("No common fixture found.");
+  };
+  const generateFixtureNames = (numFixtures) => {
+    const fixtureNames = [];
+    for (let i = 1; i <= numFixtures; i++) {
+      fixtureNames.push(`Fixture ${i}`);
+    }
+    return fixtureNames;
+  };
+  // Function to generate an object of team fixture assignments
+  const generateTeamFixtureAssignments = (numTeams) => {
+    const teamFixtureAssignments = {};
+    for (let i = 0; i < numTeams; i++) {
+      teamFixtureAssignments[selectedTeams[i]] = generateFixtureNames(
+        numTeams - 1
+      );
+      console.log(teamFixtureAssignments);
+    }
+    return teamFixtureAssignments;
+  };*/
 
   return (
     <>
-      <div className="flex justify-center items-center h-screen mt-16">
+      <div className="flex justify-center items-center h-screen mt-36 mb-20">
         <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
           <div
             className="wow fadeInUp relative z-10 rounded-md bg-primary/[3%] p-8 dark:bg-primary/10 sm:p-11 lg:p-8 xl:p-11"
@@ -99,17 +283,53 @@ function AddTournament() {
                   name="name"
                   placeholder="Tournament Name"
                   onChange={(e) => handlechange(e)}
-                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
-                />
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Tournament Location"
-                  onChange={(e) => handlechange(e)}
-                  className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                  className="mr-2 w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
                 />
               </div>
-
+              <div className="flex mb-4 w-full">
+                <select
+                  onChange={(e) => handleCountryChange(e)}
+                  name="location"
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                >
+                  <option disabled selected>
+                    Select Country
+                  </option>
+                  {Countries.map((country, index) => (
+                    <option key={index} value={country.iso2}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  onChange={(e) => handleStateChange(e)}
+                  name="state"
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                >
+                  <option disabled selected>
+                    Select State
+                  </option>
+                  {States.map((country, index) => (
+                    <option key={index} value={country.iso2}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  onChange={(e) => handleCitiesChange(e)}
+                  name="citie"
+                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                >
+                  <option disabled selected>
+                    Select City
+                  </option>
+                  {Cities.map((country, index) => (
+                    <option key={index} value={country.iso2}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <textarea
                 name="description"
                 placeholder="Tournament Description"
@@ -185,6 +405,26 @@ function AddTournament() {
                     className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
                   />
                 </div>
+              </div>
+              <div>
+                <label htmlFor="teams" className="text-lg font-semibold mb-2">
+                  Select Teams:
+                </label>
+                <select
+                  id="teams"
+                  name="teams"
+                  multiple
+                  onChange={handleTeamChange}
+                  defaultValue={selectedTeams}
+                  className="w-full p-2 border border-gray-300 rounded-md mb-5"
+                >
+                  {Teams != null &&
+                    Teams.map((team) => (
+                      <option key={team._id} value={team._id}>
+                        {team.name}
+                      </option>
+                    ))}
+                </select>
               </div>
               <input
                 type="submit"

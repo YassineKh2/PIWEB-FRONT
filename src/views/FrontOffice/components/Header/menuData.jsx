@@ -27,11 +27,17 @@ const menuData = [
   {
     id: 4,
     title: "Tournament",
-    path: "/getAllTournament",
+    path: "/tournament/showAll",
     newTab: false,
   },
   {
     id: 5,
+    title: "Teams",
+    path: "/team/all",
+    newTab: false,
+  },
+  {
+    id: 6,
     title: "Pages",
     newTab: false,
     submenu: [

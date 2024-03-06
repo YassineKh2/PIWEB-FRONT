@@ -1,4 +1,43 @@
-const SigninPage = () => {
+import React, { useState } from 'react';
+import { signin }  from "../../../../../Services/apiUser"; // Import the signin function
+import { useNavigate } from "react-router-dom";
+
+function SigninPage() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSignin = async (e) => {
+    e.preventDefault();
+    try {
+      const userData = { email, password };
+      const response = await signin(userData);
+
+      
+     
+      if (response.token) {
+       
+        localStorage.setItem('token', response.token);
+
+        
+        if (response.user.role === 'A') {
+          navigate('/backoffice', { replace: true });
+        } else if (response.user.role === 'C') {
+          navigate('/');
+          //console.log(localStorage);
+        }
+      } else {
+        
+        setError("Token not found");
+      }
+
+    } catch (error) {
+      setError(error.error); // Afficher le message d'erreur
+    }
+  };
+
+
   return (
     <>
       <section className="relative z-10 overflow-hidden pt-36 pb-16 md:pb-20 lg:pt-[180px] lg:pb-28">
@@ -68,6 +107,8 @@ const SigninPage = () => {
                       name="email"
                       placeholder="Enter your Email"
                       className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div className="mb-8">
@@ -82,6 +123,8 @@ const SigninPage = () => {
                       name="password"
                       placeholder="Enter your Password"
                       className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
                   <div className="mb-8 flex flex-col justify-between sm:flex-row sm:items-center">
@@ -128,7 +171,10 @@ const SigninPage = () => {
                     </div>
                   </div>
                   <div className="mb-6">
-                    <button className="flex w-full items-center justify-center rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
+                    <button
+                      className="flex w-full items-center justify-center rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp"
+                      onClick={handleSignin}
+                    >
                       Sign in
                     </button>
                   </div>
@@ -203,6 +249,7 @@ const SigninPage = () => {
       </section>
     </>
   );
+
 };
 
 export default SigninPage;
