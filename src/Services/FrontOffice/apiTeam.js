@@ -4,8 +4,7 @@ const apiURL = "http://localhost:3000/team";
 
 export async function addTeam(teamData) {
   try {
-    console.log(teamData)
-    const response = await axios.post(`${apiURL}/add`, teamData, {
+      const response = await axios.post(`${apiURL}/add`, teamData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -59,7 +58,6 @@ export async function deleteTeam(id) {
 export async function getMatchesByTeam(id) {
   try {
     const response = await axios.get(`${apiURL}/matches/${id}`);
-    console.log(response.data)
     return response.data;
   } catch (error) {
     console.error(error);
@@ -79,13 +77,21 @@ export async function getTournaments(tournamentsid) {
 
 export async function getTeamByUser(userId) {
     try {
-        const response = await axios.post(`${apiURL}/getTeam/${userId}`);
+        const response = await axios.get(`${apiURL}/getTeamByUser/${userId}`);
         return response.data;
     } catch (error) {
         console.error(error);
         throw error;
     }
 }
-
+export async function getTeam(teamId) {
+  try {
+    const response = await axios.get(`${apiURL}/getTeam/${teamId}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 
 
