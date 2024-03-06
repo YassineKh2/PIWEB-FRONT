@@ -12,6 +12,9 @@ import AddReservation from "./views/FrontOffice/components/Reservation/AddReserv
 import AddSponsors from "./views/FrontOffice/components/Sponsors/AddSponsors.jsx";
 import AllReservation from "./views/BackOffice/components/Reservation/AllReservation.jsx"
 import AllSponsors from "./views/BackOffice/components/Sponsors/AllSponsors.jsx";
+import AffTicket from "./views/FrontOffice/components/Ticket/AffTicket.jsx"
+import UpReservation from "./views/FrontOffice/components/Reservation/UpReservation.jsx";
+import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -27,6 +30,9 @@ function RoutesPath() {
         <Route path="/addsp" element={<AddSponsors/>} />
         <Route path="/allReservation" element={<AllReservation/>} />
         <Route path="/allSponsors" element={<AllSponsors/>} />
+        <Route path="/BTicket" element={<BTicket/>} />
+        <Route path="/ticket" element={<AffTicket/>}/>
+        <Route path="/upres" element={<UpReservation/>}/>
 
         <Route path="/team" element={<AddTeam />} />
         <Route path="/" element={<Home />} />

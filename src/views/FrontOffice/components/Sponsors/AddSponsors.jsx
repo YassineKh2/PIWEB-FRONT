@@ -20,6 +20,7 @@ function AddSponsors() {
     contact: "",
     adresse: ""
   });
+  const [showForm, setShowForm] = useState(false); // State to control form visibility
 
   const schema = yup.object().shape({
     name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
@@ -34,7 +35,7 @@ function AddSponsors() {
     try {
       await yup.reach(schema, name).validate(value);
       setErrors({ ...errors, [name]: "" });
-    } catch (error) {9620
+    } catch (error) {
       setErrors({ ...errors, [name]: error.message });
     }
   };
@@ -42,15 +43,6 @@ function AddSponsors() {
   const handleLogoChange = (e) => {
     setLogo(e.target.files[0]);
   };
-
-  useEffect(() => {
-    if (logo && logo.name) {
-      setSponsor((prevSponsor) => ({
-        ...prevSponsor,
-        logo: logo.name,
-      }));
-    }
-  }, [logo]);
 
   const add = async (e) => {
     e.preventDefault();
@@ -85,7 +77,19 @@ function AddSponsors() {
           <h3 className="mb-4 text-2xl font-bold leading-tight text-black dark:text-white font-serif">
             Add Sponsor
           </h3>
-          <form>
+          <div className="flex items-center">
+  <p className="mr-4 text-blue-500 font-bold">Do you have a sponsor to add?</p>
+  <div className="flex items-center">
+    <input type="radio" id="yes" name="sponsorOption" value="yes" onClick={() => setShowForm(true)} />
+    <label htmlFor="yes" className="mr-2">Yes</label>
+    <input type="radio" id="no" name="sponsorOption" value="no" onClick={() => setShowForm(false)} />
+    <label htmlFor="no" className="mr-4">No</label>
+  </div>
+</div>
+
+
+          {showForm && (
+            <form>
             <div className="mb-4">
               <label htmlFor="name" className="text-body-color block mb-1 font-serif">Name:</label>
               <input
@@ -168,6 +172,7 @@ function AddSponsors() {
               />
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>

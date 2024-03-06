@@ -11,6 +11,27 @@ export async function addReservation(reservationData) {
     throw error;
   }
 }
+export async function updateReservation(id, newData) {
+  try {
+    const response = await axios.put(`${apiURL}/update/${id}`, newData); 
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+
+export async function deleteres(id) {
+  try {
+    const response = await axios.delete(`${apiURL}/delete/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 
 export async function getAllReservation() {
   try {
@@ -25,6 +46,16 @@ export async function getAllReservation() {
 export async function getbyId(id) {
   try {
     const response = await axios.get(`${apiURL}/getbyid/${id}`);
+    console.log("Response:", response.data); 
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+export async function getbyplace(nbplace) {
+  try {
+    const response = await axios.get(`${apiURL}/getbyplace/${nbplace}`);
     console.log("Response:", response.data); 
     return response.data;
   } catch (error) {

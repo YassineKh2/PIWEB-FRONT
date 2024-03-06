@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllReservation, triDesc, triAsc } from "../../../../Services/FrontOffice/apiReservation";
+import { getAllReservation, triDesc, triAsc,getbyplace } from "../../../../Services/FrontOffice/apiReservation";
 import { FaSortUp, FaSortDown } from "react-icons/fa";
 import DefaultLayout from "../../DefaultLayout";
 
@@ -47,7 +47,7 @@ function AllReservation() {
   };
 
   const filteredReservations = reservations.filter((reservation) =>
-    reservation._id.toLowerCase().includes(searchTerm.toLowerCase())
+    reservation.nbplace.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -85,7 +85,7 @@ function AllReservation() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 dark:bg-meta-4">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+              
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nombre de places</th>
                 {/* Ajoutez plus de colonnes pour d'autres détails sur la réservation si nécessaire */}
@@ -94,7 +94,7 @@ function AllReservation() {
             <tbody className="bg-white divide-y divide-gray-200 dark:bg-boxdark dark:divide-gray-700">
               {filteredReservations.map((reservation) => (
                 <tr key={reservation._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{reservation._id}</td>
+          
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{reservation.date}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{reservation.nbplace}</td>
                   {/* Ajoutez plus de cellules pour d'autres détails sur la réservation si nécessaire */}

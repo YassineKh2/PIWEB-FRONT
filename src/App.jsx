@@ -30,7 +30,8 @@ function App() {
       "/team",
       "/addReservation",
       "/addsp",
-   
+   "/ticket",
+   "/upres",
       "/", // add other FrontOffice paths as needed
     ];
 

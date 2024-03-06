@@ -3,10 +3,10 @@ import { addReservation } from "../../../../Services/FrontOffice/apiReservation"
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 
-function AddReservation() {
+function UpReservation() {
   const navigate = useNavigate();
   const [reservation, setReservation] = useState({
-    date: new Date().toISOString().split('T')[0], // System date
+    date: new Date().toISOString().split('T')[0], 
     nbplace: "",
   });
 
@@ -37,7 +37,7 @@ function AddReservation() {
       
       const res = await addReservation(reservation);
       console.log("Successful addition");
-      navigate("/getAllTournament");
+      navigate("/ticket");
       
       // Display confirmation popup
       Swal.fire({
@@ -68,23 +68,23 @@ function AddReservation() {
                 value={reservation.date}
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                disabled // Disable date field
+                disabled 
               />
             </div>
             <div className="mb-4">
               <label htmlFor="nbplace" className="text-body-color block mb-1 font-serif">Seat Number:</label>
               <input
-                type="text" // Change type to "text" to accept characters and numbers
+                type="text" 
                 id="nbplace"
                 name="nbplace"
                 placeholder="Seat Number"
                 value={reservation.nbplace}
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                required // Make nbplace field required
+                required 
               />
             </div>
-            <div className="flex justify-center"> {/* Add flex and justify-center classes */}
+            <div className="flex justify-center"> 
               <input
                 type="submit"
                 value="Confirm"
@@ -114,4 +114,4 @@ function AddReservation() {
   );
 }
 
-export default AddReservation;
+export default UpReservation;

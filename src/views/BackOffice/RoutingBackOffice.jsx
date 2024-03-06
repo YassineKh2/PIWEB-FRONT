@@ -15,6 +15,7 @@ import SignIn from "./Pages/Authentication/SignIn.jsx";
 import SignUp from "./Pages/Authentication/SignUp.jsx";
 import AllReservation from "./components/Reservation/AllReservation.jsx";
 import AllSponsors from "./components/Sponsors/AllSponsors.jsx";
+import BTicket from "./components/ticket/BTicket.jsx";
 
 export default function RoutingBackOffice() {
     const [loading, setLoading] = useState(true);
@@ -53,11 +54,11 @@ export default function RoutingBackOffice() {
                     }
                 />
                 <Route
-                    path="/profile"
+                    path="/BTicket"
                     element={
                         <>
-                            <PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                            <Profile />
+                            <PageTitle title="Ticket | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <BTicket />
                         </>
                     }
                 />
@@ -97,6 +98,7 @@ export default function RoutingBackOffice() {
                         </>
                     }
                 />
+                
                 <Route
                     path="/chart"
                     element={
