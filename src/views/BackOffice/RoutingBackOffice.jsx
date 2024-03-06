@@ -13,6 +13,9 @@ import Alerts from "./Pages/UiElements/Alerts.jsx";
 import Buttons from "./Pages/UiElements/Buttons.jsx";
 import SignIn from "./Pages/Authentication/SignIn.jsx";
 import SignUp from "./Pages/Authentication/SignUp.jsx";
+import AllReservation from "./components/Reservation/AllReservation.jsx";
+import AllSponsors from "./components/Sponsors/AllSponsors.jsx";
+import BTicket from "./components/ticket/BTicket.jsx";
 import DefaultLayout from "./DefaultLayout.jsx";
 import RoutingTeamsBack from "./components/Team/RoutingTeamsBack.jsx";
 //import RoutingUsersBack from "./components/User/DisplayUser/displayUser.jsx";
@@ -84,6 +87,33 @@ export default function RoutingBackOffice() {
                             </>
                         }
                     />
+                      <Route
+                    path="BTicket"
+                    element={
+                        <>
+                            <PageTitle title="Ticket | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <BTicket />
+                        </>
+                    }
+                />
+                    <Route
+                    path= "allReservation"
+                    element={
+                        <>
+                            <PageTitle title="Reservation | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <AllReservation />
+                        </>
+                    }
+                />
+                <Route
+                    path="allSponsors"
+                    element={
+                        <>
+                            <PageTitle title=" Sponsors | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                            <AllSponsors />
+                        </>
+                    }
+                />
 
                     <Route
                         path="tables"
