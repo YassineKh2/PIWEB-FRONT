@@ -16,10 +16,34 @@ export default function RoutingTeams() {
                 }
             />
             <Route
+                path="stream"
+                element={
+                    <>
+                        <LiveStream />
+                    </>
+                }
+            />
+            <Route
                 path="update"
                 element={
                     <>
                         <UpdateTeam/>
+                    </>
+                }
+            />
+            <Route
+                path="all"
+                element={
+                    <>
+                        <ShowAllTeams/>
+                    </>
+                }
+            />
+            <Route
+                path="profile"
+                element={
+                    <>
+                        <ShowTeam/>
                     </>
                 }
             />

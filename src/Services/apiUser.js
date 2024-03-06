@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:3000/user'; 
+const BASE_URL = 'http://localhost:3000/user';
 
 
   export async function signup (userData)  {
@@ -12,9 +12,31 @@ const BASE_URL = 'http://localhost:3000/user';
     }
   }
 
+
+  export async function addAdmin (userData)  {
+    try {
+      const response = await axios.post(`${BASE_URL}/addAdmin`, userData);
+      return response.data;
+    } catch (error) {
+      throw error.response.data;
+    }
+  }
+
+
+ /* export async function signin(userData) {
+    try {
+      const response = await axios.post(`${BASE_URL}/signin`, userData);
+      return response.data;
+    } catch (error) {
+      throw error.response.data;
+    }
+  }*/
+
   export async function signin(userData) {
     try {
       const response = await axios.post(`${BASE_URL}/signin`, userData);
+      // Stockage du token JWT dans le localStorage
+      localStorage.setItem('token', response.data.token);
       return response.data;
     } catch (error) {
       throw error.response.data;
@@ -48,5 +70,14 @@ const BASE_URL = 'http://localhost:3000/user';
       throw error.response.data;
     }
   }
+export async function getUserData (userId) {
+  try {
+    const response = await axios.get(`${BASE_URL}/getuser/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+}
+
 
 

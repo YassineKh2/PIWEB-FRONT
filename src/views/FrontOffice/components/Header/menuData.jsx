@@ -31,6 +31,12 @@ const menuData = [
   },
   {
     id: 5,
+    title: "Teams",
+    path: "/team/all",
+    newTab: false,
+  },
+  {
+    id: 6,
     title: "Pages",
     newTab: false,
     submenu: [
