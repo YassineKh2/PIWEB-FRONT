@@ -26,13 +26,16 @@ function App() {
             "/tournament/showAll",
             "/tournament/details/:id",
             "/team",
+            "/team/matches",
+            "/team/tournaments",
             "/team/add",
+            "/team/dashboard",
             "/team/update",
             "/", // add other FrontOffice paths as needed
         ];
 
 
-    
+
 
         // Check if the current path is in the array
         for (i = 0; i < frontOfficePaths.length; i++) {

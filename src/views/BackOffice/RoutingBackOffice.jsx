@@ -15,6 +15,8 @@ import SignIn from "./Pages/Authentication/SignIn.jsx";
 import SignUp from "./Pages/Authentication/SignUp.jsx";
 import DefaultLayout from "./DefaultLayout.jsx";
 import RoutingTeamsBack from "./components/Team/RoutingTeamsBack.jsx";
+//import RoutingUsersBack from "./components/User/DisplayUser/displayUser.jsx";
+import RoutingUsersBack from "./components/User/RoutingUser.jsx";
 
 export default function RoutingBackOffice() {
     const [loading, setLoading] = useState(true);
@@ -44,6 +46,16 @@ export default function RoutingBackOffice() {
                         </>
                     }
                 >
+
+                    <Route
+                        path="users/*"
+                        element={
+                            <>
+                                <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                <RoutingUsersBack/>
+                            </>
+                        }
+                    />
                     <Route
                         path=""
                         element={

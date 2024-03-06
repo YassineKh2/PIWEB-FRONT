@@ -30,6 +30,7 @@ export async function getTeamDetails(id) {
     throw error;
   }
 }
+
 export async function updateTeam(teamData) {
   try {
     const response = await axios.put(`${apiURL}/update`,teamData);
@@ -49,4 +50,26 @@ export async function deleteTeam(id) {
     throw error;
   }
 }
+export async function getMatchesByTeam(id) {
+  try {
+    const response = await axios.get(`${apiURL}/matches/${id}`);
+    console.log(response.data)
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export async function getTournaments(tournamentsid) {
+  try {
+    const response = await axios.post(`${apiURL}/tournament`,tournamentsid);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+
 

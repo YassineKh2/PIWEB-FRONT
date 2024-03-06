@@ -20,3 +20,15 @@ export async function getTournamentMatches(id) {
     throw error;
   }
 }
+export async function updateMatchScore(matchData) {
+  try {
+    const response = await axios.put(
+      `${apiURL}/updatematch`,
+      matchData
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
