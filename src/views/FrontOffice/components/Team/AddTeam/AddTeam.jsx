@@ -42,7 +42,12 @@ const steps = [
         name: 'Players And Coaches',
         fields: ['']
     },
-    {id: 'Step 4', name: 'Choosing Your Plan'}
+    {
+        id: 'Step 4',
+        name: 'Additional Information',
+        fields: ['']
+    },
+    {id: 'Step 5', name: 'Choosing Your Plan'}
 ]
 
 
@@ -132,6 +137,12 @@ export default function AddTeam() {
             data.imagename = image[0].name;
             data.foundedIn = date;
             await addTeam(data);
+            //Hot submit cyrine
+
+
+            //hot submit cyrine
+
+
             navigate('/team/all')
 
 
@@ -183,7 +194,7 @@ export default function AddTeam() {
                                 ))}
                             </ol>
                         </nav>
-                        {currentStep !== 3 && (
+                        {currentStep !== 4 && (
                             <div className="-mx-4 flex justify-center flex-wrap">
 
                                 <div className="w-full px-4 lg:w-7/12 xl:w-8/12">
@@ -201,6 +212,7 @@ export default function AddTeam() {
                                             {currentStep === 0 && "Start your journey with us by registering your team."}
                                             {currentStep === 1 && "Enter your team's description details here."}
                                             {currentStep === 2 && "Add your players and coaches here."}
+                                            {currentStep === 3 && "Add your sponsors and other details here."}
                                         </p>
 
                                         {currentStep === 0 && (
@@ -488,9 +500,26 @@ export default function AddTeam() {
                                         )}
 
 
+                                        {/* SPONSORSS CYRINE */}
+                                        {currentStep === 3 && (
+                                            <motion.div
+                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
+                                                animate={{x: 0, opacity: 1}}
+                                                transition={{duration: 0.3, ease: 'easeInOut'}}
+                                            >
 
-                                    </div>
-                                    <div className='mt-8 pt-5'>
+
+
+
+
+
+                                                Hello
+                                            </motion.div>
+                                        )}
+                                        {/* SPONSORSS CYRINE */}
+
+
+
 
                                     </div>
                                 </div>
@@ -499,7 +528,7 @@ export default function AddTeam() {
                     </div>
 
 
-                    {currentStep === 3 && (
+                    {currentStep === 4 && (
                         <motion.div
                             initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
                             animate={{x: 0, opacity: 1}}
