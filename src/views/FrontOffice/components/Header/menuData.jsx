@@ -13,16 +13,17 @@ const menuData = [
   },
   {
     id: 33,
-    title: "Blog",
-    path: "/blog",
+    title: "Our Sponsors",
+    path: "/addsp",
     newTab: false,
   },
   {
     id: 3,
-    title: "Support",
-    path: "/contact",
+    title: "Reservation",
+    path: "/addReservation",
     newTab: false,
   },
+  
   {
     id: 4,
     title: "Tournament",
@@ -31,6 +32,12 @@ const menuData = [
   },
   {
     id: 5,
+    title: "Teams",
+    path: "/team/all",
+    newTab: false,
+  },
+  {
+    id: 6,
     title: "Pages",
     newTab: false,
     submenu: [
