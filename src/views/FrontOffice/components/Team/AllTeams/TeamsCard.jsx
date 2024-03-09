@@ -1,49 +1,43 @@
 import {Link} from "react-router-dom";
-import {FaRegHeart as EmptyHeart} from "react-icons/fa";
-import {FaHeart as  FullHeart } from "react-icons/fa";
-import {FaHeartBroken as BrokenHeart } from "react-icons/fa";
+import {FaHeart as FullHeart, FaHeartBroken as BrokenHeart, FaRegHeart as EmptyHeart} from "react-icons/fa";
 
 
 import {useEffect, useState} from "react";
 import {updateUser} from "../../../../../Services/apiUser.js";
 
 
-export default function TeamsCard({team,user}) {
+export default function TeamsCard({team, user}) {
     const path = "http://localhost:3000/public/images/teams/";
     const [followedTeams, setTeams] = useState(user.followedTeams);
     const [liked, setLiked] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
 
 
-    useEffect(()=>{
+    useEffect(() => {
         followedTeams.map((follow) => {
-                if(follow === team._id)
-                {
+                if (follow === team._id) {
                     setLiked(true);
                 }
             }
         )
 
-    },[])
+    }, [])
 
     const like = () => {
-    followedTeams.push(team._id);
-    user.followedTeams = followedTeams
-    updateUser(user).then(()=>{
-        console.log("Liked team :",team.name)
-    })
-    setLiked(true);
-
-
-
+        followedTeams.push(team._id);
+        user.followedTeams = followedTeams
+        updateUser(user).then(() => {
+            console.log("Liked team :", team.name)
+        })
+        setLiked(true);
     }
 
 
     const unlike = () => {
         followedTeams.pop(team._id);
         user.followedTeams = followedTeams
-        updateUser(user).then(()=>{
-            console.log("Unliked team :",team.name)
+        updateUser(user).then(() => {
+            console.log("Unliked team :", team.name)
         })
         setLiked(false);
 
@@ -74,7 +68,7 @@ export default function TeamsCard({team,user}) {
                             />
                     )
 
-                  :(isHovered ?
+                    : (isHovered ?
                             <FullHeart
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
@@ -93,11 +87,11 @@ export default function TeamsCard({team,user}) {
                 }
 
 
-                <Link className="px-10 pt-10" to="/team/profile">
+                <Link className="px-10 pt-10" to={"/team/profile/"+team._id}>
                     <img src={path + team?.image} alt="team image" className="rounded-xl h-60"/>
                 </Link>
-                <h2 className="font-semibold dark:text-gray-600" >{team?.name}</h2>
-                <p className="p-4 dark:text-gray-800">Team Description comes here normally :p</p>
+                <h2 className="font-semibold dark:text-gray-600">{team?.name}</h2>
+                <p className="p-4 dark:text-gray-800">{team?.slogan}</p>
             </div>
 
         </>

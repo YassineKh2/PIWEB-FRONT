@@ -1,5 +1,5 @@
 const PricingBox = (props) => {
-  const { price, duration, packageName, subtitle, children } = props;
+  const { price, duration, packageName, subtitle, children ,type,isSubmitting,formRef} = props;
 
   return (
     <div className="w-full">
@@ -18,22 +18,45 @@ const PricingBox = (props) => {
         </div>
         <p className="mb-7 text-base text-body-color">{subtitle}</p>
         <div className="mb-8 border-b border-body-color border-opacity-10 pb-8 dark:border-white dark:border-opacity-10">
-          <button className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
-            Get Started
-          </button>
+          {type === "free" && (
+
+                <button
+                    disabled={isSubmitting}
+                    onClick={() => formRef.current.submit()}
+                    className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
+                    {isSubmitting ? "Loading..." : "Get Started"}</button>
+
+
+          )}
+          {type === "basic" && (
+              <button
+                  className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
+               Go Beyond
+              </button>
+
+          )}
+          {type === "plus" && (
+              <button
+                  className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
+                Unlock your potential
+              </button>
+
+          )}
+
+
         </div>
         <div>{children}</div>
         <div className="absolute bottom-0 right-0 z-[-1]">
           <svg
-            width="179"
-            height="158"
-            viewBox="0 0 179 158"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+              width="179"
+              height="158"
+              viewBox="0 0 179 158"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              opacity="0.5"
-              d="M75.0002 63.256C115.229 82.3657 136.011 137.496 141.374 162.673C150.063 203.47 207.217 197.755 202.419 167.738C195.393 123.781 137.273 90.3579 75.0002 63.256Z"
+                opacity="0.5"
+                d="M75.0002 63.256C115.229 82.3657 136.011 137.496 141.374 162.673C150.063 203.47 207.217 197.755 202.419 167.738C195.393 123.781 137.273 90.3579 75.0002 63.256Z"
               fill="url(#paint0_linear_70:153)"
             />
             <path

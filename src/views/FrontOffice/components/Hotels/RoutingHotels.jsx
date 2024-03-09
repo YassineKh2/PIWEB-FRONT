@@ -1,5 +1,5 @@
 import {Route, Routes} from "react-router-dom";
-import DisplayHotelList from "./DisplayHotelsList/DisplayHotelList.jsx";
+import AddHotels from "./AddHotels/AddHotels.jsx";
 
 
 export default function RoutingHotels() {
@@ -10,7 +10,7 @@ export default function RoutingHotels() {
                index
                 element={
                     <>
-                    <DisplayHotelList />
+                    <AddHotels/>
                     
                     </>
                 }

@@ -14,6 +14,8 @@ const HotelList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [hotelsPerPage] = useState(10); // Number of hotels to display per page
   const [selectedHotels, setSelectedHotels] = useState([]);
+  const [addedHotelsId, setaddedHotelsId] = useState([]);
+
 
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
@@ -40,7 +42,7 @@ const HotelList = () => {
   
   const toggleHotelSelection = (hotelId) => {
     //setError(null);
-    setShowErrorNotification(null);
+    //setShowErrorNotification(null);
     setShowSuccessNotification(null);
 // Toggle the selection status of the hotel
     setSelectedHotels((prevSelected) =>
@@ -58,9 +60,12 @@ const HotelList = () => {
     hotelsToAdd.forEach((hotel) => {
       addHotelToDatabase(hotel,idTournament);
     });
-  
+    const updatedHotelData = hotelData.filter((hotel) => !selectedHotels.includes(hotel.hotelId));
+    setHotelData(updatedHotelData);
     // Clear the selected hotels
     setSelectedHotels([]);
+    //fetchData();
+    
   };
   
 
@@ -80,8 +85,8 @@ const HotelList = () => {
         // Hotel already exists, display a user-friendly message
         console.error('Hotel already exists:', error.response.data.message);
       //setError('Hotel already exists');
-      setShowErrorNotification(true);
-      setTimeout(hideNotifications, 2000);
+      //setShowErrorNotification(true);
+     // setTimeout(hideNotifications, 2000);
 
       } else {
         console.error('Error adding hotel to database:', error);
@@ -96,6 +101,7 @@ const HotelList = () => {
 
     const fetchData = async () => {
       setLoading(true);
+      const addedHotelsIds = await HotelService.getHotelIds(idTournament); 
 
       try {
         const geocodingData = await getGeocodingData(city);
@@ -108,7 +114,9 @@ const HotelList = () => {
         console.log('API Response:', response);
 
         if (response) {
-          setHotelData(response.data);
+         const filteredhotels = response.data.filter((hotel) => !addedHotelsIds.includes(hotel.hotelId));
+
+          setHotelData(filteredhotels);
           setError(null);
         } else {
           setHotelData([]);

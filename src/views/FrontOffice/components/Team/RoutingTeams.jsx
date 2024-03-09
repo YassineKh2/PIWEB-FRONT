@@ -40,7 +40,7 @@ export default function RoutingTeams() {
                 }
             />
             <Route
-                path="profile"
+                path="profile/:id"
                 element={
                     <>
                         <ShowTeam/>
