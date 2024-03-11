@@ -1,4 +1,4 @@
-import {useForm} from "react-hook-form";
+import {useFieldArray, useForm} from "react-hook-form";
 import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
@@ -18,19 +18,27 @@ const schema = yup.object().shape({
     country: yup.string().required(),
     state: yup.string().required(),
     city: yup.string().required(),
+    zipcode: yup.number().required(),
     description: yup.string().required(),
     nickname: yup.string(),
     slogan: yup.string(),
     founder: yup.string().required(),
     image: yup.string(),
-    foundedIn: yup.date()
+    foundedIn: yup.date(),
+    players:yup.array().of(
+        yup.object({
+            name:yup.string().required(),
+            email:yup.string().email().required()
+        })
+    ),
+    coaches:yup.array()
 });
 
 const steps = [
     {
         id: 'Step 1',
         name: 'General Information',
-        fields: ['name', 'nameAbbreviation', 'country', 'state', 'city', 'image']
+        fields: ['name', 'nameAbbreviation', 'country', 'state', 'city', 'image','zipcode']
     },
     {
         id: 'Step 2',
@@ -103,10 +111,24 @@ export default function AddTeam() {
         formState: {errors, isSubmitting, dirtyFields},
         setError,
         watch,
-        trigger
+        trigger,
+        control
     } = useForm({
-        resolver: yupResolver(schema)
+        resolver: yupResolver(schema),
+        defaultValues:{
+            players:[{name:"",email:""}]
+        }
     });
+
+
+    const {fields,append, remove} = useFieldArray({
+      control,
+      name:"players"
+    })
+
+
+
+
 
     const selectedCountry = watch("country", true);
     const selectedState = watch("state", true);
@@ -365,6 +387,28 @@ export default function AddTeam() {
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <div className="w-full px-4 md:w-1/2">
+                                                        <div className="mb-8">
+                                                            <label
+                                                                htmlFor="email"
+                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                            >
+                                                                Zip Code
+                                                            </label>
+                                                            <div className="flex flex-col">
+                                                                <input
+                                                                    {...register("zipcode")}
+                                                                    type="number"
+                                                                    name="zipcode"
+                                                                    placeholder="Zip Code"
+                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                />
+                                                                {errors.zipcode &&
+                                                                    <p className="text-danger">{errors.zipcode.message}</p>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </motion.div>
                                         )}
@@ -495,6 +539,29 @@ export default function AddTeam() {
                                                 animate={{x: 0, opacity: 1}}
                                                 transition={{duration: 0.3, ease: 'easeInOut'}}
                                             >
+
+                                                {fields.map((field,index)=>{
+                                                return(
+                                                    <>
+                                                        <input
+                                                            {...register(`field.${index}.name`)}
+                                                            type="text"
+                                                            name="slogan"
+                                                            placeholder="Player's name"
+                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                        />
+                                                        <input
+                                                            {...register(`field.${index}.email`)}
+                                                            type="text"
+                                                            name="slogan"
+                                                            placeholder="Player's Email"
+                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                        />
+                                                    </>
+                                                )
+                                                })}
+
+
                                                 Players And Coaches goes here
                                             </motion.div>
                                         )}
