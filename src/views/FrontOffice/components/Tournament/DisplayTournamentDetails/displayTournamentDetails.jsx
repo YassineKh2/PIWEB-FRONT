@@ -208,7 +208,6 @@ function DisplayAllTournaments() {
   const [sortStandings, setSortStandings] = useState([]);
   const updateStandings = () => {
     const standings = initializeStats(); // Assuming you have an initializeStats function
-    console.log(standings);
     RealMatches.forEach((match) => {
       const team1Id = match.team1._id;
       const team2Id = match.team2._id;
