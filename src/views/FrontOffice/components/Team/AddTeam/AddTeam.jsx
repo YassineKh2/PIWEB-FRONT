@@ -1,8 +1,7 @@
 import {useFieldArray, useForm} from "react-hook-form";
-import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {useEffect, useRef, useState} from "react";
+import {Suspense, useEffect, useRef, useState} from "react";
 import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry} from "../../../../../Services/APis/CountryAPI.js";
 import {DatePickerDemo} from "./DatePicker.jsx";
 import {AiOutlinePicture as Picture} from "react-icons/ai";
@@ -10,7 +9,10 @@ import {motion} from 'framer-motion'
 import SectionTitle from "../../../HomePage/components/Common/SectionTitle.jsx";
 import PricingBox from "./PricingBoxTeam.jsx";
 import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
+import {FaTrash as Trash} from "react-icons/fa6";
+import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
+
 
 const schema = yup.object().shape({
     name: yup.string().required().min(3),
@@ -25,20 +27,20 @@ const schema = yup.object().shape({
     founder: yup.string().required(),
     image: yup.string(),
     foundedIn: yup.date(),
-    players:yup.array().of(
+    players: yup.array().of(
         yup.object({
-            name:yup.string().required(),
-            email:yup.string().email().required()
+            playername: yup.string().required(),
+            email: yup.string().email().required()
         })
     ),
-    coaches:yup.array()
+    coaches: yup.array()
 });
 
 const steps = [
     {
         id: 'Step 1',
         name: 'General Information',
-        fields: ['name', 'nameAbbreviation', 'country', 'state', 'city', 'image','zipcode']
+        fields: ['name', 'nameAbbreviation', 'country', 'state', 'city', 'image', 'zipcode']
     },
     {
         id: 'Step 2',
@@ -103,31 +105,31 @@ export default function AddTeam() {
             setCurrentStep(step => step - 1)
         }
     }
-
+    const Player = {
+        playername: '',
+        email: ''
+    }
 
     const {
         register,
         handleSubmit,
-        formState: {errors, isSubmitting, dirtyFields},
+        formState: {errors, isSubmitting},
         setError,
         watch,
         trigger,
         control
     } = useForm({
         resolver: yupResolver(schema),
-        defaultValues:{
-            players:[{name:"",email:""}]
+        defaultValues: {
+            players: [Player]
         }
     });
 
 
-    const {fields,append, remove} = useFieldArray({
-      control,
-      name:"players"
+    const {fields, append, remove} = useFieldArray({
+        control,
+        name: "players"
     })
-
-
-
 
 
     const selectedCountry = watch("country", true);
@@ -165,8 +167,7 @@ export default function AddTeam() {
             //hot submit cyrine
 
 
-            navigate('/team/all')
-
+            // navigate('/team/all')
 
 
         } catch (error) {
@@ -538,31 +539,84 @@ export default function AddTeam() {
                                                 initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
                                                 animate={{x: 0, opacity: 1}}
                                                 transition={{duration: 0.3, ease: 'easeInOut'}}
+                                                className="bg-gray-200 p-10 rounded-3xl dark:bg-blue-950 "
                                             >
 
-                                                {fields.map((field,index)=>{
-                                                return(
-                                                    <>
-                                                        <input
-                                                            {...register(`field.${index}.name`)}
-                                                            type="text"
-                                                            name="slogan"
-                                                            placeholder="Player's name"
-                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                        />
-                                                        <input
-                                                            {...register(`field.${index}.email`)}
-                                                            type="text"
-                                                            name="slogan"
-                                                            placeholder="Player's Email"
-                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                        />
-                                                    </>
-                                                )
+                                                {fields.map((field, index) => {
+                                                    return (
+                                                        <>
+                                                            <div className="-mx-4 " key={field.id}>
+                                                                <div className="flex items-center justify-between mb-4">
+                                                                    <h1 className="bg-gray-300 rounded-3xl px-3 py-2 dark:bg-blue-600">{index}</h1>
+                                                                    <Trash size={25} className="text-red-600"
+                                                                           onClick={() => {
+                                                                               remove(index)
+                                                                           }}/>
+                                                                </div>
+                                                                <div className="flex flex-wrap">
+                                                                    <div className="w-full px-4 md:w-1/2">
+                                                                        <div className="mb-8">
+                                                                            <label
+                                                                                htmlFor="name"
+                                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                            >
+                                                                                Name
+                                                                            </label>
+                                                                            <div className="flex flex-col">
+                                                                                <input
+                                                                                    {...register(`players.${index}.playername`)}
+                                                                                    type="text"
+                                                                                    name={`players.${index}.playername`}
+                                                                                    placeholder="Player Name"
+                                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                />
+
+                                                                                {errors.players?.[index]?.playername &&
+                                                                                    <p className="text-danger mb-2">{errors.players?.[index]?.playername?.message}</p>}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="w-full px-4 md:w-1/2">
+                                                                        <div className="mb-8">
+                                                                            <label
+                                                                                htmlFor="email"
+                                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                            >
+                                                                                Email
+                                                                            </label>
+
+                                                                            <div className="flex flex-col">
+                                                                                <input
+                                                                                    {...register(`players.${index}.email`)}
+                                                                                    type="email"
+                                                                                    name={`players.${index}.email`}
+                                                                                    placeholder="Players Email"
+                                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                />
+                                                                                {errors.players?.[index]?.email &&
+                                                                                    <p className="text-danger">{errors.players?.[index]?.email?.message}</p>}
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </div>
+
+                                                                </div>
+                                                            </div>
+
+                                                        </>
+
+                                                    )
                                                 })}
-
-
-                                                Players And Coaches goes here
+                                                <button
+                                                    type="button" onClick={() => {
+                                                    append(Player)
+                                                }}
+                                                    className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800">
+                                                    <span
+                                                     className="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
+                                                            Add
+                                                    </span>
+                                                </button>
                                             </motion.div>
                                         )}
 
@@ -576,16 +630,10 @@ export default function AddTeam() {
                                             >
 
 
-
-
-
-
                                                 Hello
                                             </motion.div>
                                         )}
                                         {/* SPONSORSS CYRINE */}
-
-
 
 
                                     </div>
@@ -666,13 +714,13 @@ export default function AddTeam() {
                                             isSubmitting={isSubmitting}
                                             formRef={formRef}
                                         >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Limited Team Management" status="active" />
-                                            <OfferList text="Basic Match Scheduling" status="active" />
-                                            <OfferList text="Access to Basic Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="inactive" />
-                                            <OfferList text="Historical Data" status="inactive" />
-                                            <OfferList text="Match Replays" status="inactive" />
+                                            <OfferList text="Access To All Tournaments" status="active"/>
+                                            <OfferList text="Limited Team Management" status="active"/>
+                                            <OfferList text="Basic Match Scheduling" status="active"/>
+                                            <OfferList text="Access to Basic Football Stats" status="active"/>
+                                            <OfferList text="Ad-Free Experience" status="inactive"/>
+                                            <OfferList text="Historical Data" status="inactive"/>
+                                            <OfferList text="Match Replays" status="inactive"/>
                                         </PricingBox>
 
                                         <PricingBox
@@ -684,13 +732,13 @@ export default function AddTeam() {
                                             isSubmitting={isSubmitting}
                                             formRef={formRef}
                                         >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Full Team Management" status="active" />
-                                            <OfferList text="Full Match Scheduling" status="active" />
-                                            <OfferList text="Full Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="active" />
-                                            <OfferList text="Historical Data" status="inactive" />
-                                            <OfferList text="Match Replays" status="inactive" />
+                                            <OfferList text="Access To All Tournaments" status="active"/>
+                                            <OfferList text="Full Team Management" status="active"/>
+                                            <OfferList text="Full Match Scheduling" status="active"/>
+                                            <OfferList text="Full Football Stats" status="active"/>
+                                            <OfferList text="Ad-Free Experience" status="active"/>
+                                            <OfferList text="Historical Data" status="inactive"/>
+                                            <OfferList text="Match Replays" status="inactive"/>
                                         </PricingBox>
 
                                         <PricingBox
@@ -702,13 +750,13 @@ export default function AddTeam() {
                                             isSubmitting={isSubmitting}
                                             formRef={formRef}
                                         >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Full Team Management" status="active" />
-                                            <OfferList text="Full Match Scheduling" status="active" />
-                                            <OfferList text="Full Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="active" />
-                                            <OfferList text="Historical Data And Match Replays" status="active" />
-                                            <OfferList text="Dedicated Support Line " status="active" />
+                                            <OfferList text="Access To All Tournaments" status="active"/>
+                                            <OfferList text="Full Team Management" status="active"/>
+                                            <OfferList text="Full Match Scheduling" status="active"/>
+                                            <OfferList text="Full Football Stats" status="active"/>
+                                            <OfferList text="Ad-Free Experience" status="active"/>
+                                            <OfferList text="Historical Data And Match Replays" status="active"/>
+                                            <OfferList text="Dedicated Support Line " status="active"/>
                                         </PricingBox>
                                     </div>
                                 </div>
@@ -820,6 +868,7 @@ export default function AddTeam() {
                             {errors.root.message}
                         </div>
                     )}
+                    <button type='submit'>Submit</button>
                 </form>
             </section>
 

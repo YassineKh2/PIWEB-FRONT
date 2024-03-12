@@ -17,6 +17,7 @@ import UpReservation from "./views/FrontOffice/components/Reservation/UpReservat
 import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
+import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -54,6 +55,15 @@ function RoutesPath() {
             element={
               <>
                 <RoutingTeams/>
+              </>
+            }
+        />
+
+          <Route
+            path="player/*"
+            element={
+              <>
+                <RoutingPlayers/>
               </>
             }
         />
