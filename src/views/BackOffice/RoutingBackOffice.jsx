@@ -1,6 +1,6 @@
 import PageTitle from "./components/PageTitle.jsx";
-import {Route, Routes, useLocation} from "react-router-dom";
-import {useEffect, useState} from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import ECommerce from "./Pages/Dashbord/ECommerce.jsx";
 import FormElements from "./Pages/Form/FormElements.jsx";
 import FormLayout from "./Pages/Form/FormLayout.jsx";
@@ -222,4 +222,6 @@ export default function RoutingBackOffice() {
             </Routes>
         </>
     );
-}
+ 
+
+                          }

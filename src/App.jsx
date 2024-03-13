@@ -6,11 +6,14 @@ import {useLocation} from "react-router-dom";
 import {Providers} from "./providers.jsx";
 import RoutesPath from "./routesPath.jsx";
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
+
+import PublicRoutes from "./publicRoutes";
+import {jwtDecode} from "jwt-decode";
 
 function App() {
-    const location = useLocation();
-    const [shouldDisplayHeader, setShouldDisplayHeader] = useState(false);
+  const location = useLocation();
+  const [shouldDisplayHeader, setShouldDisplayHeader] = useState(0);
 
     useEffect(() => {
         const userToken = localStorage.getItem('token');
@@ -28,7 +31,6 @@ function App() {
 
 
     return (
-
         <>
             {shouldDisplayHeader && (
                 <Providers>

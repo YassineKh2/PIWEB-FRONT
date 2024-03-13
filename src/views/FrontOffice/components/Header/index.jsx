@@ -3,6 +3,7 @@ import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
 import {Link, useNavigate} from "react-router-dom";
 
+
 const Header = () => {
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
@@ -56,7 +57,8 @@ const Header = () => {
                 className={`header-logo block w-full ${
                   sticky ? "py-5 lg:py-2" : "py-8"
                 } `}
-               to={"/"}>
+                to={"/"}
+              >
                 <img
                   src="/images/logo/LinkUpTournement.png"
                   alt="logo"
@@ -119,7 +121,8 @@ const Header = () => {
                           <>
                             <Link
                               onClick={() => handleSubmenu(index)}
-                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:opacity-70 dark:text-white lg:mr-0 lg:inline-flex lg:py-6 lg:px-0">
+                              className="flex cursor-pointer items-center justify-between py-2 text-base text-dark group-hover:opacity-70 dark:text-white lg:mr-0 lg:inline-flex lg:py-6 lg:px-0"
+                            >
                               {menuItem.title}
                               <span className="pl-3">
                                 <svg width="15" height="14" viewBox="0 0 15 14">
@@ -175,6 +178,18 @@ const Header = () => {
                 Logout
               </button>
             )}
+                <Link
+                  className="hidden py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
+                  to={"/signin"}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="ease-in-up hidden rounded-md bg-primary py-3 px-8 text-base font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-9 lg:px-6 xl:px-9"
+                >
+                  Sign Up
+                </Link>
                 <div>
                   <ThemeToggler />
                 </div>
