@@ -32,3 +32,12 @@ export async function updateMatchScore(matchData) {
     throw error;
   }
 }
+export async function deleteMatcheByTournament(id) {
+  try {
+    const response = await axios.delete(`${apiURL}/deleteMatches/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
