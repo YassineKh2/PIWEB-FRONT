@@ -42,10 +42,8 @@ export default function RoutingBackOffice() {
 
     }, []);
 
-    return loading ? (
-        // <Loader />
-        console.log("Loading")
-    ) : (
+    return  (
+        
         <>
             <Routes>
                 <Route element={<RequireAuth allowedRoles={['A']}/>} >

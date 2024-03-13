@@ -25,6 +25,7 @@ import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.
 import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
+import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 function RoutesPath() {
   return (
     <div>

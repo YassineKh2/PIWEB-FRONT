@@ -26,7 +26,8 @@ const DropdownUser = () => {
 
   const deleteToken = () => {
     localStorage.removeItem("token");
-    navigate('/signin');
+    setTimeout(() =>  navigate('/signin'), 1000);
+  
   };
   // close on click outside
   useEffect(() => {
