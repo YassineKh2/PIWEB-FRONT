@@ -160,10 +160,9 @@ export default function AddTeam() {
             data.image = image[0];
             data.imagename = image[0].name;
             data.foundedIn = date;
-            await addTeam(data);
+            let team = await addTeam(data);
             //Hot submit cyrine
-
-
+            let id = team.Team._id
             //hot submit cyrine
 
 
