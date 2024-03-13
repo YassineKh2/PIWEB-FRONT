@@ -5,6 +5,7 @@ import { formatDate } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { faPlus, faTrash, faLock, faUnlock } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Swal from 'sweetalert2';
 
 function DisplayAllUsers() {
     const [userData, setUserData] = useState([]);
@@ -144,11 +145,24 @@ function DisplayAllUsers() {
                     <td className="py-5 px-4 dark:border-strokedark">
                       {/* Icône de la corbeille pour l'action de suppression */}
                       <FontAwesomeIcon 
-                        icon={faTrash} 
-                        
-                        className="text-blue-500 cursor-pointer mr-4"
-                        onClick={() => handleDeleteUser(user._id)} // Appel de la fonction de suppression lors du clic sur l'icône
-                      />
+  icon={faTrash} 
+  className="text-blue-500 cursor-pointer mr-4"
+  onClick={() => {
+    // Display confirmation popup with SweetAlert
+    Swal.fire({
+      title: 'Do you really want to confirm deleting this user?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Call the delete function here
+        handleDeleteUser(user._id);
+      }
+    });
+  }} 
+/>
                       <FontAwesomeIcon 
                         icon={user.blocked ? faLock : faUnlock} // Utilisez les icônes faLock et faUnlock de FontAwesome
                         className={`text-${user.blocked ? 'red' : 'green'}-500 cursor-pointer`} // Changez la couleur en fonction de l'état de blocage

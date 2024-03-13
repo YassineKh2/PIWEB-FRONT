@@ -14,6 +14,8 @@ const navigate = useNavigate();
     cin: '',
 });
 
+
+
   const handleChange = (e) => {
     setUser({ ...User, [e.target.name]: e.target.value });
   };
@@ -34,7 +36,7 @@ const navigate = useNavigate();
         cin: '',
       });
       // Redirection vers une autre page après l'inscription réussie
-      navigate('/page_de_redirection');
+      navigate('/signin');
     } catch (error) {
       console.error("Erreur lors de l'inscription de l'utilisateur :", error);
     }

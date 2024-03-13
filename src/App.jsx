@@ -7,6 +7,7 @@ import {Providers} from "./providers.jsx";
 import RoutesPath from "./routesPath.jsx";
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx";
 import {useEffect, useState} from "react";
+import {jwtDecode} from "jwt-decode";
 
 function App() {
     const location = useLocation();
@@ -17,8 +18,9 @@ function App() {
         let i = 0;
         // Extract paths directly from the RoutesPath component
         const frontOfficePaths = [
-            "/signin",
+          "/signin",
             "/signup",
+            "/signupu",
             "/profile",
             "/about",
             "/blog",
@@ -39,9 +41,19 @@ function App() {
         // Check if the current path is in the array
         for (i = 0; i < frontOfficePaths.length; i++) {
             if (frontOfficePaths[i] === currentPath) setShouldDisplayHeader(true);
+            //else{setShouldDisplayHeader(false)}
+            
         }
-    }, [location.pathname]);
+
+
+
+    }, []);
+
+
+
+
     return (
+
         <>
             {shouldDisplayHeader && (
                 <Providers>

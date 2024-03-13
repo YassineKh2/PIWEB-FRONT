@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 const Header = () => {
   // Navbar toggle
@@ -19,6 +19,13 @@ const Header = () => {
       setSticky(false);
     }
   };
+
+  const navigate = useNavigate();
+  const deleteToken = () => {
+    localStorage.removeItem("token");
+    navigate('/signin')
+  };
+
   useEffect(() => {
     window.addEventListener("scroll", handleStickyNavbar);
   });
@@ -146,17 +153,28 @@ const Header = () => {
                 </nav>
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0">
-                <Link
-                  className="hidden py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
-                 to={'/signin'}>
-                  Sign In
-                </Link>
-                <Link
-                  to="/signup"
-                  className="ease-in-up hidden rounded-md bg-primary py-3 px-8 text-base font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-9 lg:px-6 xl:px-9"
-                >
-                  Sign Up
-                </Link>
+  {!localStorage.getItem("token") ? (
+    <>
+      <Link
+        className="hidden py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
+        to={'/signin'}>
+        Sign In
+      </Link>
+      <Link
+        to="/signup"
+        className="ease-in-up hidden rounded-md bg-primary py-3 px-8 text-base font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-9 lg:px-6 xl:px-9"
+      >
+        Sign Up
+      </Link>
+      </>
+            ) : (
+              <button
+                onClick={deleteToken}
+                className="py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
+              >
+                Logout
+              </button>
+            )}
                 <div>
                   <ThemeToggler />
                 </div>

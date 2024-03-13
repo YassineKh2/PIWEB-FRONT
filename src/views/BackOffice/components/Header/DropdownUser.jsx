@@ -1,17 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link,  Navigate, useNavigate } from 'react-router-dom';
-
+import { Link, useNavigate } from 'react-router-dom';
 import UserOne from '../../images/BackOffice/user/user-01.png';
+import { getUserProfile } from '../../../../Services/apiUser'; // Assurez-vous que le chemin d'importation est correct
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userData, setUserData] = useState(null); // Ajouté pour stocker les données utilisateur
+  const [error, setError] = useState(null); // Ajouté pour gérer les erreurs
   const navigate = useNavigate();
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
+  useEffect(() => {
+    async function fetchUserProfile() {
+      try {
+        const userProfileData = await getUserProfile();
+        setUserData(userProfileData.user); // Assurez-vous que les données sont correctement formatées dans la réponse
+      } catch (error) {
+        setError(error.message); // Gérer les erreurs de manière appropriée
+      }
+    }
+
+    fetchUserProfile();
+  }, []);
+
   const deleteToken = () => {
     localStorage.removeItem("token");
-    navigate('/signin')
+    navigate('/signin');
   };
   // close on click outside
   useEffect(() => {
@@ -49,14 +64,14 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-black dark:text-white">
-            Thomas Anree
+            {userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}
           </span>
-          <span className="block text-xs">UX Designer</span>
+          
         </span>
 
         <span className="h-12 w-12 rounded-full">
-          <img src={UserOne} alt="User" />
-        </span>
+  <img src={userData?.image|| UserOne} alt="User" />
+</span>
 
         <svg
           className="hidden fill-current sm:block"
