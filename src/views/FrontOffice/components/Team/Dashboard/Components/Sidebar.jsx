@@ -1,6 +1,7 @@
 import { TbTournament } from "react-icons/tb";
 import { IoIosFootball  as Football} from "react-icons/io";
 import {Link} from "react-router-dom";
+import { ImProfile  as Profile} from "react-icons/im";
 
 export default function Sidebar() {
     return (
@@ -24,8 +25,8 @@ export default function Sidebar() {
                 <div className="h-full rounded-3xl px-3 py-4 overflow-y-auto bg-gray-100 dark:bg-neutral-900">
                     <ul className="space-y-2 font-medium">
                         <li>
-                            <a href="#"
-                               className="flex items-center p-2  text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <Link to="/team"
+                                  className="flex items-center p-2  text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                 <svg
                                     className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                                     aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -36,23 +37,9 @@ export default function Sidebar() {
                                         d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
                                 </svg>
                                 <span className="ms-3">Dashboard</span>
-                            </a>
+                            </Link>
                         </li>
-                        <li>
-                            <a href="#"
-                               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                                <svg
-                                    className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                    viewBox="0 0 18 18">
-                                    <path
-                                        d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"/>
-                                </svg>
-                                <span className="flex-1 ms-3 whitespace-nowrap">Kanban</span>
-                                <span
-                                    className="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-300">Pro</span>
-                            </a>
-                        </li>
+
                         <li>
                             <a href="#"
                                className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
@@ -95,19 +82,43 @@ export default function Sidebar() {
                             </a>
                         </li>
                         <li>
-                            <Link to="games"
-                               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <Link to="matches"
+                                  className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                 <Football size={20}/>
-                                <span className="flex-1 ms-3 whitespace-nowrap">Games</span>
+                                <span className="flex-1 ms-3 whitespace-nowrap">Matches</span>
                             </Link>
                         </li>
                         <li>
-                            <Link to="/tournaments"
-                               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <Link to="tournaments"
+                                  className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                 <TbTournament size={20}/>
                                 <span className="flex-1 ms-3 whitespace-nowrap">Tournaments</span>
                             </Link>
                         </li>
+
+                        <li>
+                            <Link to="profile"
+                                  className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                                <Profile size={20}/>
+                                <span className="flex-1 ms-3 whitespace-nowrap">Profile</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <a href="#"
+                               className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                                <svg
+                                    className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 18 18">
+                                    <path
+                                        d="M6.143 0H1.857A1.857 1.857 0 0 0 0 1.857v4.286C0 7.169.831 8 1.857 8h4.286A1.857 1.857 0 0 0 8 6.143V1.857A1.857 1.857 0 0 0 6.143 0Zm10 0h-4.286A1.857 1.857 0 0 0 10 1.857v4.286C10 7.169 10.831 8 11.857 8h4.286A1.857 1.857 0 0 0 18 6.143V1.857A1.857 1.857 0 0 0 16.143 0Zm-10 10H1.857A1.857 1.857 0 0 0 0 11.857v4.286C0 17.169.831 18 1.857 18h4.286A1.857 1.857 0 0 0 8 16.143v-4.286A1.857 1.857 0 0 0 6.143 10Zm10 0h-4.286A1.857 1.857 0 0 0 10 11.857v4.286c0 1.026.831 1.857 1.857 1.857h4.286A1.857 1.857 0 0 0 18 16.143v-4.286A1.857 1.857 0 0 0 16.143 10Z"/>
+                                </svg>
+                                <span className="flex-1 ms-3 whitespace-nowrap">Plan</span>
+                                <span
+                                    className="inline-flex items-center justify-center px-2 ms-3 text-sm font-medium text-gray-800 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-300">Free</span>
+                            </a>
+                        </li>
+
                     </ul>
 
                     <div id="dropdown-cta" className="p-4 mt-6 rounded-lg bg-blue-200 dark:bg-blue-900" role="alert">

@@ -8,7 +8,6 @@ export  default function UpdateTeam() {
     useEffect(() => {
         getTeamDetails("65d5c0abec3a57e83b8376e2").then((response) => {
             setTeam(response.team);
-            console.log(response.team);
         });
     }, []);
 
