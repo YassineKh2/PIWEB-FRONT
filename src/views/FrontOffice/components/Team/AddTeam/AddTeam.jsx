@@ -28,9 +28,7 @@ const schema = yup.object().shape({
     slogan: yup.string(),
     founder: yup.string().required(),
     image: yup.string(),
-    foundedIn: yup.date(),
-    
-
+    foundedIn: yup.date()
 });
 const schemasp=yup.object().shape({
     name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
@@ -38,6 +36,8 @@ const schemasp=yup.object().shape({
     contact: yup.number().required("Contact is required").typeError("Contact must be a number").test('len', 'Contact must be exactly 8 digits', val => String(val).length === 8),
     adresse: yup.string().required("Adresse is required")
 });
+
+
 const steps = [
     {
         id: 'Step 1',
