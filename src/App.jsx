@@ -6,12 +6,14 @@ import {useLocation} from "react-router-dom";
 import {Providers} from "./providers.jsx";
 import RoutesPath from "./routesPath.jsx";
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
+import PublicRoutes from "./publicRoutes";
 import {jwtDecode} from "jwt-decode";
 
 function App() {
-    const location = useLocation();
-    const [shouldDisplayHeader, setShouldDisplayHeader] = useState(false);
+  const location = useLocation();
+  const [shouldDisplayHeader, setShouldDisplayHeader] = useState(0);
 
     useEffect(() => {
         const currentPath = location.pathname;
@@ -44,16 +46,8 @@ function App() {
             //else{setShouldDisplayHeader(false)}
             
         }
-
-
-
-    }, []);
-
-
-
-
+    }, [location.pathname]);
     return (
-
         <>
             {shouldDisplayHeader && (
                 <Providers>

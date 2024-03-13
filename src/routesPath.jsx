@@ -34,6 +34,7 @@ function RoutesPath() {
         <Route path="/signupTM" element={<SignupPageTM/>} />
         <Route path="/signupTRM" element ={<SignupPageTRM/>} />
         <Route path="/updateProfile" element ={<UpdateProfile/>}/>
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/addTournament" element={<AddTournament />} />
