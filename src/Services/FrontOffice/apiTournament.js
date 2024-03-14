@@ -51,3 +51,4 @@ export async function getTournamentDetails(id) {
     throw error;
   }
 }
+export default {getTournamentDetails};

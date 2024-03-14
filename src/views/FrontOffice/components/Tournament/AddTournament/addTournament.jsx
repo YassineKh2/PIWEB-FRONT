@@ -1,3 +1,6 @@
+
+
+
 import { useEffect, useState } from "react";
 import {
   addTournament,
@@ -12,8 +15,36 @@ import {
 import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
 import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
+import { AiOutlinePicture as Picture } from "react-icons/ai";
 
+import hotelService from '../../../../../Services/APis/HotelAPI.js';
+import HotelService from '../../../../../Services/FrontOffice/apiHotel.js';
+
+import AddHotels from '../../Hotels/AddHotels/AddHotels.jsx'
+const steps = [
+  {
+    id: "Step 1",
+    name: "General Information",
+    fields: ["name", "nameAbbreviation", "country", "state", "city", "image"],
+  },
+  {
+    id: "Step 2",
+    name: "Tournament Details",
+    fields: ["description", "slogan", "nickname", "foundedIn", "founder"],
+  },
+  {
+    id: "Step 3",
+    name: "Fields",
+    fields: [""],
+  },
+  {
+    id: "Step 4",
+    name: "Hotels",
+    fields: [""],
+  },
+];
 function AddTournament() {
+  
   const navigate = useNavigate();
   const [image, setImage] = useState(null);
   const [Countries, setCountries] = useState([]);
@@ -23,8 +54,25 @@ function AddTournament() {
   const [Cities, setCities] = useState([]);
   const [SelectedCities, setSelectedCities] = useState("");
   const [Teams, setTeams] = useState([]);
-  const [LastTournamentId, setLastTournamentId] = useState("");
   const [selectedTeams, setSelectedTeams] = useState([]);
+
+  //hotel
+  
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [radius, setRadius] = useState();
+  const [hotelData, setHotelData] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hotelsPerPage] = useState(10); // Number of hotels to display per page
+  const [selectedHotels, setSelectedHotels] = useState([]);
+  const [addedHotelsId, setaddedHotelsId] = useState([]);
+
+
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -42,13 +90,35 @@ function AddTournament() {
     win: "",
     loss: "",
     matchDate: new Date(),
-    scoreTeam1: null,
-    scoreTeam2: null,
+    scoreTeam1: "",
+    scoreTeam2: "",
     fixture: "",
     idTeam1: {},
     idTeam2: {},
     idTournament: {},
   });
+
+
+
+  const [previousStep, setPreviousStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const delta = currentStep - previousStep;
+  const next = async () => {
+    if (currentStep < steps.length - 1) {
+      if (currentStep === steps.length - 2) {
+        // await handleSubmit(processForm)()
+      }
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step + 1);
+    }
+  };
+
+  const prev = () => {
+    if (currentStep > 0) {
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step - 1);
+    }
+  };
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
   const handleTeamChange = (e) => {
     const selectedOptions = Array.from(
@@ -145,13 +215,145 @@ function AddTournament() {
     getTeams();
   }, []);
 
+
+
+
+/////////hotelll
+  const hideNotifications = () => {
+    setShowErrorNotification(false);
+    setShowSuccessNotification(false);
+  };
+
+
+
+
+  const fetchData = async (city) => {
+    setLoading(true);
   
+    try {
+      const geocodingData = await getGeocodingData(city);
+      console.log('Geocoding Data:', geocodingData);
+  
+      const response = await hotelService.getHotelsByGeoCode(
+        geocodingData.latitude,
+        geocodingData.longitude,
+        radius
+      );
+      console.log('API Response:', response);
+  
+      if (response) {
+        setHotelData(response.data); // Assuming response directly contains hotel data
+        setError(null);
+      } else {
+        setHotelData([]);
+        setError('Invalid response format. Please try again.');
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+  
+      if (error.response) {
+        setError(`API Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        setError('Network Error. Please check your internet connection.');
+      } else {
+        setError('Error fetching hotels. Please try again.');
+      }
+  
+      setHotelData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // useEffect hook
+  useEffect(() => {
+    fetchData(SelectedCities);
+  }, [SelectedCities]);
+  
+  // Log hotelData state
+  console.log('Hotel Data:', hotelData);
+  
+  // Check hotelData length before slicing
+  console.log('Hotel Data Length:', hotelData.length);
+
+ 
+const toggleHotelSelection = (hotelId) => {
+  //setError(null);
+  //setShowErrorNotification(null);
+  setShowSuccessNotification(null);
+// Toggle the selection status of the hotel
+  setSelectedHotels((prevSelected) =>
+    prevSelected.includes(hotelId)
+      ? prevSelected.filter((id) => id !== hotelId)
+      : [...prevSelected, hotelId]
+  );
+};
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  if (name === 'radius') {
+    setRadius(value);
+  }
+};
+const addHotelsToDatabase = async () => {
+  try {
+    const hotelsToAdd = hotelData.filter((hotel) => selectedHotels.includes(hotel.hotelId));
+
+    if (hotelsToAdd.length === 0) {
+      console.log("No hotels selected to add.");
+      return;
+    }
+
+    await Promise.all(
+      hotelsToAdd.map(async (hotel) => {
+        try {
+          hotel.idTournament = idTournament;
+          const addHotelResponse = await HotelService.addHotel([hotel]);
+          console.log('Hotel added to database:', addHotelResponse);
+        } catch (error) {
+          if (error.response && error.response.status === 400) {
+            console.error('Hotel already exists:', error.response.data.message);
+          } else {
+            console.error('Error adding hotel to database:', error);
+          }
+        }
+      })
+    );
+
+    setShowSuccessNotification(true);
+    setTimeout(hideNotifications, 2000);
+  } catch (error) {
+    console.error('Error adding selected hotels to database:', error);
+    setShowErrorNotification(true);
+    setTimeout(hideNotifications, 2000);
+  }
+};
+const handleCityChange = (e) => {
+  setCity(e.target.value);
+};
+const handleRadiusChange = () => {
+  fetchData();
+};
+
+// Calculate the index of the last hotel on the current page
+const indexOfLastHotel = currentPage * hotelsPerPage;
+// Calculate the index of the first hotel on the current page
+const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+// Get the hotels for the current page
+const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
+
+// Change page
+const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
   const add = async (e) => {
     e.preventDefault();
     const fileReader = new FileReader();
 
     fileReader.onloadend = async function () {
-      const base64Image = fileReader.result.split(",")[1]; // Extract base64 encoded image data
+      const base64Image = fileReader.result.split(",")[1];
       const imageData = {
         name: Tournament.name,
         description: Tournament.description,
@@ -169,418 +371,523 @@ function AddTournament() {
       };
 
       try {
-        // Await the result of addTournament
         await addTournament(imageData);
         const latestTournamentId = await getLatestTournamentId();
 
-        // Move the teamFixtureAssignments code here
         const numTeams = selectedTeams.length;
-        //const teamFixtureAssignments = generateTeamFixtureAssignments(numTeams);
+        let fixtureNumber = 1;
+        let fixtureNextTeam = 1;
+        let teamsParticipate = [];
+        let matchFixture = [];
+        let Fixtures = {};
+        const matches = [];
+        let teamsMatches = {}; // Object to store matches for each team
 
+        for (let i = 0; i < numTeams; i++) {
+          const teamId = selectedTeams[i];
+          teamsMatches[teamId] = [];
+        }
+        for (let i = 1; i <= numTeams - 1; i++) {
+          Fixtures[i] = [];
+        }
         for (let i = 0; i < numTeams; i++) {
           for (let j = i + 1; j < numTeams; j++) {
             const idTeam1 = selectedTeams[i];
             const idTeam2 = selectedTeams[j];
-
-            // Retrieve assigned fixtures for each team
-            /*const fixturesTeam1 = teamFixtureAssignments[idTeam1];
-            const fixturesTeam2 = teamFixtureAssignments[idTeam2];
-
-            // Find a common fixture for both teams
-            const commonFixture = findCommonFixture(
-              fixturesTeam1,
-              fixturesTeam2
-            );
-
-            // Remove the common fixture from the lists
-            const updatedFixturesTeam1 = fixturesTeam1.filter(
-              (fixture) => fixture !== commonFixture
-            );
-            const updatedFixturesTeam2 = fixturesTeam2.filter(
-              (fixture) => fixture !== commonFixture
-            );*/
-
-            // Create match data
             const matchData = {
               win: "",
               loss: "",
               matchDate: new Date(),
-              scoreTeam1: null,
-              scoreTeam2: null,
+              scoreTeam1: "",
+              scoreTeam2: "",
               fixture: "",
               idTeam1,
               idTeam2,
               idTournament: latestTournamentId.latestTournamentId,
             };
-
-            // Call your function to send match data
             await addMatch(matchData);
-
-            // Update the fixtures for each team
-           /* teamFixtureAssignments[idTeam1] = updatedFixturesTeam1;
-            teamFixtureAssignments[idTeam2] = updatedFixturesTeam2;*/
+            /*matches.push(matchData);
+            teamsMatches[idTeam1].push(matchData);
+            teamsMatches[idTeam2].push(matchData);*/
           }
         }
 
+        /*let j = 1;
+        for (let i = 0; i < matches.length; i++) {
+          if (Fixtures[j] === numTeams / 2) {
+            j++;
+            teamsParticipate = [];
+          }
+          
+          if (
+            !teamsParticipate.includes(matches[i].idTeam1) &&
+            !teamsParticipate.includes(matches[i].idTeam2)
+          ) {
+            Fixtures[j].push(matches[i]);
+            console.log("hjhjhjh");
+            console.log(matches[i].idTeam1);
+            teamsParticipate.push(matches[i].idTeam1);
+            teamsParticipate.push(matches[i].idTeam2);
+            console.log(teamsParticipate);
+          }
+        }*/
+        /*
+        let fix = [];
+        var i = 0;
+        var matchNumbers = selectedTeams.length / 2;
+        while (matches.length > 0) {
+          let j = 0;
+
+          if (matchNumbers >= 0) {
+            if (
+              !teamsParticipate.includes(matches[i].idTeam1) ||
+              !teamsParticipate.includes(matches[i].idTeam2)
+            ) {
+              Fixtures[i + 1].push(matches[i]);
+              console.log(Fixtures);
+              matches.splice(i, 1);
+              console.log(matches);
+              teamsParticipate.push(matches[i].idTeam1);
+              teamsParticipate.push(matches[i].idTeam2);
+              console.log(matches);
+              matchNumbers--;
+            } else {
+              i++;
+            }
+          } else {
+            teamsParticipate = [];
+            matchNumbers = selectedTeams.length / 2 ;
+            i = 0;
+          }
+        }*/
+addHotelsToDatabase();
+        //console.log(Fixtures);
         const hotelSearch = {
-         city:Tournament.city,
-          idTournament: latestTournamentId.latestTournamentId,
-        };
-        navigate("/listhotels",{state:{hotelSearch}});
-        getGeocodingData(hotelSearch.city);
-        console.log()
-        // Navigate after setting the state
-      //  navigate("/tournament/showAll");
+          city:Tournament.city,
+           idTournament: latestTournamentId.latestTournamentId,
+         };
+         navigate("/listhotels",{state:{hotelSearch}});
+         getGeocodingData(hotelSearch.city);
+         console.log()
+       
+         // navigate("/tournament/showAll");
       } catch (error) {
         console.log(error.response.data.message);
       }
     };
+    
 
     if (image) {
       fileReader.readAsDataURL(image);
     }
   };
-/*
-  const findCommonFixture = (array1, array2) => {
-    for (const fixture of array1) {
-      if (array2.includes(fixture)) {
-        return fixture;
-      }
-    }
-    throw new Error("No common fixture found.");
-  };
-  const generateFixtureNames = (numFixtures) => {
-    const fixtureNames = [];
-    for (let i = 1; i <= numFixtures; i++) {
-      fixtureNames.push(`Fixture ${i}`);
-    }
-    return fixtureNames;
-  };
-  // Function to generate an object of team fixture assignments
-  const generateTeamFixtureAssignments = (numTeams) => {
-    const teamFixtureAssignments = {};
-    for (let i = 0; i < numTeams; i++) {
-      teamFixtureAssignments[selectedTeams[i]] = generateFixtureNames(
-        numTeams - 1
-      );
-      console.log(teamFixtureAssignments);
-    }
-    return teamFixtureAssignments;
-  };*/
 
   return (
     <>
-      <div className="flex justify-center items-center h-screen mt-36 mb-20">
-        <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
-          <div
-            className="wow fadeInUp relative z-10 rounded-md bg-primary/[3%] p-8 dark:bg-primary/10 sm:p-11 lg:p-8 xl:p-11"
-            data-wow-delay=".2s"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%", // Make sure the parent div has a defined height
-            }}
-          >
-            <h3 className="mb-4 text-2xl font-bold leading-tight text-black dark:text-white">
-              Add New Tournament
-            </h3>
-            <form role="form" encType="multipart/form-data">
-              <div className="flex mb-4 w-full">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Tournament Name"
-                  onChange={(e) => handlechange(e)}
-                  className="mr-2 w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
-                />
-              </div>
-              <div className="flex mb-4 w-full">
-                <select
-                  onChange={(e) => handleCountryChange(e)}
-                  name="location"
-                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
-                >
-                  <option disabled selected>
-                    Select Country
-                  </option>
-                  {Countries.map((country, index) => (
-                    <option key={index} value={country.iso2}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  onChange={(e) => handleStateChange(e)}
-                  name="state"
-                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
-                >
-                  <option disabled selected>
-                    Select State
-                  </option>
-                  {States.map((country, index) => (
-                    <option key={index} value={country.iso2}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  onChange={(e) => handleCitiesChange(e)}
-                  name="citie"
-                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
-                >
-                  <option disabled selected>
-                    Select City
-                  </option>
-                  {Cities.map((country, index) => (
-                    <option key={index} value={country.iso2}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <textarea
-                name="description"
-                placeholder="Tournament Description"
-                onChange={(e) => handlechange(e)}
-                className="mb-4 w-full flex-grow rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50" // Added mb-4 for margin-bottom
-              />
-
-              <div className="flex mb-4">
-                <input
-                  type="date"
-                  name="startDate"
-                  onChange={(e) =>
-                    handleStartDateChange(new Date(e.target.value))
-                  }
-                  className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
-                />
-                <input
-                  type="date"
-                  name="endDate"
-                  onChange={(e) =>
-                    handleEndDateChange(new Date(e.target.value))
-                  }
-                  className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
-                />
-              </div>
-
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e)}
-                className="mb-4 w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50" // Added mb-4 for margin-bottom
-              />
-              <div className="mb-4 w-full flex">
-                <div className="mr-2">
-                  <label
-                    htmlFor="tournamentType"
-                    className="text-base font-medium text-body-color"
-                  >
-                    Tournament Type
-                  </label>
-                  <select
-                    id="tournamentType"
-                    name="tournamentType"
-                    onChange={(e) => handlechange(e)}
-                    value={Tournament.tournamentType}
-                    className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                  >
-                    <option value="" disabled>
-                      Select Tournament Type
-                    </option>
-                    {tournamentTypeOptions.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="teamCount"
-                    className="text-base font-medium text-body-color"
-                  >
-                    Number of Teams
-                  </label>
-                  <input
-                    type="number"
-                    id="teamCount"
-                    name="nbTeamPartipate"
-                    min="4"
-                    placeholder="Enter number of teams"
-                    onChange={(e) => handlechange(e)}
-                    className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="teams" className="text-lg font-semibold mb-2">
-                  Select Teams:
-                </label>
-                <select
-                  id="teams"
-                  name="teams"
-                  multiple
-                  onChange={handleTeamChange}
-                  defaultValue={selectedTeams}
-                  className="w-full p-2 border border-gray-300 rounded-md mb-5"
-                >
-                  {Teams != null &&
-                    Teams.map((team) => (
-                      <option key={team._id} value={team._id}>
-                        {team.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <input
-                type="submit"
-                value="Subscribe"
-                onClick={(e) => add(e)}
-                className="duration-80 mb-4 w-full cursor-pointer rounded-md border border-transparent bg-primary py-3 px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
-              />
-            </form>
-            <div className="absolute top-0 left-0 z-[-1]">
-              <svg
-                width="370"
-                height="596"
-                viewBox="0 0 370 596"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+      <section
+        id="contact"
+        className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28"
+      >
+        <form onSubmit={add}>
+          <div className="container">
+            <nav aria-label="Progress" className="mb-10">
+              <ol
+                role="list"
+                className="space-y-4 md:flex md:space-x-8 md:space-y-0"
               >
-                <mask
-                  id="mask0_88:141"
-                  style={{ maskType: "alpha" }}
-                  maskUnits="userSpaceOnUse"
-                  x="0"
-                  y="0"
-                  width="370"
-                  height="596"
-                >
-                  <rect width="370" height="596" rx="2" fill="#1D2144" />
-                </mask>
-                <g mask="url(#mask0_88:141)">
-                  <path
-                    opacity="0.15"
-                    d="M15.4076 50.9571L54.1541 99.0711L71.4489 35.1605L15.4076 50.9571Z"
-                    fill="url(#paint0_linear_88:141)"
-                  />
-                  <path
-                    opacity="0.15"
-                    d="M20.7137 501.422L44.6431 474.241L6 470.624L20.7137 501.422Z"
-                    fill="url(#paint1_linear_88:141)"
-                  />
-                  <path
-                    opacity="0.1"
-                    d="M331.676 198.309C344.398 204.636 359.168 194.704 358.107 180.536C357.12 167.363 342.941 159.531 331.265 165.71C318.077 172.69 318.317 191.664 331.676 198.309Z"
-                    fill="url(#paint2_linear_88:141)"
-                  />
-                  <g opacity="0.3">
-                    <path
-                      d="M209 89.9999C216 77.3332 235.7 50.7999 258.5 45.9999C287 39.9999 303 41.9999 314 30.4999C325 18.9999 334 -3.50014 357 -3.50014C380 -3.50014 395 4.99986 408.5 -8.50014C422 -22.0001 418.5 -46.0001 452 -37.5001C478.8 -30.7001 515.167 -45 530 -53"
-                      stroke="url(#paint3_linear_88:141)"
-                    />
-                    <path
-                      d="M251 64.9999C258 52.3332 277.7 25.7999 300.5 20.9999C329 14.9999 345 16.9999 356 5.49986C367 -6.00014 376 -28.5001 399 -28.5001C422 -28.5001 437 -20.0001 450.5 -33.5001C464 -47.0001 460.5 -71.0001 494 -62.5001C520.8 -55.7001 557.167 -70 572 -78"
-                      stroke="url(#paint4_linear_88:141)"
-                    />
-                    <path
-                      d="M212 73.9999C219 61.3332 238.7 34.7999 261.5 29.9999C290 23.9999 306 25.9999 317 14.4999C328 2.99986 337 -19.5001 360 -19.5001C383 -19.5001 398 -11.0001 411.5 -24.5001C425 -38.0001 421.5 -62.0001 455 -53.5001C481.8 -46.7001 518.167 -61 533 -69"
-                      stroke="url(#paint5_linear_88:141)"
-                    />
-                    <path
-                      d="M249 40.9999C256 28.3332 275.7 1.79986 298.5 -3.00014C327 -9.00014 343 -7.00014 354 -18.5001C365 -30.0001 374 -52.5001 397 -52.5001C420 -52.5001 435 -44.0001 448.5 -57.5001C462 -71.0001 458.5 -95.0001 492 -86.5001C518.8 -79.7001 555.167 -94 570 -102"
-                      stroke="url(#paint6_linear_88:141)"
-                    />
-                  </g>
-                </g>
-                <defs>
-                  <linearGradient
-                    id="paint0_linear_88:141"
-                    x1="13.4497"
-                    y1="63.5059"
-                    x2="81.144"
-                    y2="41.5072"
-                    gradientUnits="userSpaceOnUse"
+                {steps.map((step, index) => (
+                  <li key={step.name} className="md:flex-1">
+                    {currentStep > index ? (
+                      <div className="group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4">
+                        <span className="text-sm font-medium text-sky-600 transition-colors ">
+                          {step.id}
+                        </span>
+                        <span className="text-sm font-medium">{step.name}</span>
+                      </div>
+                    ) : currentStep === index ? (
+                      <div
+                        className="flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4"
+                        aria-current="step"
+                      >
+                        <span className="text-sm font-medium text-sky-600">
+                          {step.id}
+                        </span>
+                        <span className="text-sm font-medium">{step.name}</span>
+                      </div>
+                    ) : (
+                      <div className="group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4">
+                        <span className="text-sm font-medium text-gray-500 transition-colors">
+                          {step.id}
+                        </span>
+                        <span className="text-sm font-medium">{step.name}</span>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+
+            {/* Render form fields based on the current step */}
+            {currentStep !== 3 && (
+              <div className="-mx-4 flex justify-center flex-wrap">
+                <div className="w-full px-4 lg:w-7/12 xl:w-8/12">
+                  <div
+                    className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
+                    data-wow-delay=".15s"
                   >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="paint1_linear_88:141"
-                    x1="28.1579"
-                    y1="501.301"
-                    x2="8.69936"
-                    y2="464.391"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="paint2_linear_88:141"
-                    x1="338"
-                    y1="167"
-                    x2="349.488"
-                    y2="200.004"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="paint3_linear_88:141"
-                    x1="369.5"
-                    y1="-53"
-                    x2="369.5"
-                    y2="89.9999"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="paint4_linear_88:141"
-                    x1="411.5"
-                    y1="-78"
-                    x2="411.5"
-                    y2="64.9999"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="paint5_linear_88:141"
-                    x1="372.5"
-                    y1="-69"
-                    x2="372.5"
-                    y2="73.9999"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient
-                    id="paint6_linear_88:141"
-                    x1="409.5"
-                    y1="-102"
-                    x2="409.5"
-                    y2="40.9999"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="white" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-          </div>
+                    <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
+                      Create Your Tournament
+                    </h2>
+                    <p
+                      className="mb-12 text-base font-medium text-body-color"
+                      id="formP"
+                    >
+                      {currentStep === 0 &&
+                        "Start your journey with us by registering your tournament information."}
+                      {currentStep === 1 &&
+                        "Enter your tournament's description details here."}
+                      {currentStep === 2 && "Add your fields here."}
+                      {currentStep === 3 && "Add your hotels here."}
+                    </p>
+                    {currentStep === 0 && (
+                      <form role="form" encType="multipart/form-data">
+                        {/* Step 1 fields */}
+                        <div className="flex mb-4 w-full">
+                          <input
+                            type="text"
+                            name="name"
+                            placeholder="Tournament Name"
+                            onChange={(e) => handlechange(e)}
+                            className="mr-2 w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                          />
+                        </div>
+                        <div className="flex mb-4 w-full">
+                          <select
+                            onChange={(e) => handleCountryChange(e)}
+                            name="location"
+                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                          >
+                            <option disabled selected>
+                              Select Country
+                            </option>
+                            {Countries.map((country, index) => (
+                              <option key={index} value={country.iso2}>
+                                {country.name}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            onChange={(e) => handleStateChange(e)}
+                            name="state"
+                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                          >
+                            <option disabled selected>
+                              Select State
+                            </option>
+                            {States.map((country, index) => (
+                              <option key={index} value={country.iso2}>
+                                {country.name}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            onChange={(e) => handleCitiesChange(e)}
+                            name="citie"
+                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
+                          >
+                            <option disabled selected>
+                              Select City
+                            </option>
+                            {Cities.map((country, index) => (
+                              <option key={index} value={country.iso2}>
+                                {country.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <textarea
+                          name="description"
+                          placeholder="Tournament Description"
+                          onChange={(e) => handlechange(e)}
+                          className="mb-4 w-full flex-grow rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50" // Added mb-4 for margin-bottom
+                        />
+                        <div className="rounded-full bg-[#EBEBE5] p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
+                          <input
+                            onChange={(e) => handleImageChange(e)}
+                            type="file"
+                            name="image"
+                            accept="image/*"
+                            id="image"
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor={"image"}
+                            className="flex items-baseline justify-center"
+                          >
+                            <Picture className="text-black-2"></Picture>
+                          </label>
+                        </div>
+                        {/* Add any other fields for Step 1 */}
+                      </form>
+                    )}
+
+                    {currentStep === 1 && (
+                      <form role="form" encType="multipart/form-data">
+                        {/* Step 2 fields */}
+                        <div className="flex mb-4">
+                          <input
+                            type="date"
+                            name="startDate"
+                            onChange={(e) =>
+                              handleStartDateChange(new Date(e.target.value))
+                            }
+                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                          />
+                          <input
+                            type="date"
+                            name="endDate"
+                            onChange={(e) =>
+                              handleEndDateChange(new Date(e.target.value))
+                            }
+                            className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                          />
+                        </div>
+
+                        <div className="mb-4 w-full flex">
+                          <div className="mr-2">
+                            <label
+                              htmlFor="tournamentType"
+                              className="text-base font-medium text-body-color"
+                            >
+                              Tournament Type
+                            </label>
+                            <select
+                              id="tournamentType"
+                              name="tournamentType"
+                              onChange={(e) => handlechange(e)}
+                              value={Tournament.tournamentType}
+                              className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                            >
+                              <option value="" disabled>
+                                Select Tournament Type
+                              </option>
+                              {tournamentTypeOptions.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="teamCount"
+                              className="text-base font-medium text-body-color"
+                            >
+                              Number of Teams
+                            </label>
+                            <input
+                              type="number"
+                              id="teamCount"
+                              name="nbTeamPartipate"
+                              min="4"
+                              placeholder="Enter number of teams"
+                              onChange={(e) => handlechange(e)}
+                              className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="teams"
+                            className="text-lg font-semibold mb-2"
+                          >
+                            Select Teams:
+                          </label>
+                          <select
+                            id="teams"
+                            name="teams"
+                            multiple
+                            onChange={handleTeamChange}
+                            defaultValue={selectedTeams}
+                            className="w-full p-2 border border-gray-300 rounded-md mb-5"
+                          >
+                            {Teams != null &&
+                              Teams.map((team) => (
+                                <option key={team._id} value={team._id}>
+                                  {team.name}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+
+                        {/* Add any other fields for Step 2 */}
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <p>hello2</p>
+              /* Step 3 fields and UI */
+              /* Include form fields and validation logic */
+            )}
+
+            {currentStep === 3 && (
+             <>
+              <div>
+      <div>
+      <h1 className="text-center pb-8 " >Hotel List</h1>
+      </div>
+<div className="flex  gap-4 ml-10 ">
+  <div className="">
+      <label>
+        Radius (in km):
+        <input
+          type="number"
+          name="radius"
+          value={radius}
+          onChange={handleInputChange}
+          placeholder="Enter Radius"
+        />
+      </label>
+  </div>
+      <div className="pb-5 ">
+      <button onClick={handleRadiusChange} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Change Radius</button>
+      </div>
+</div>
+  <div className="flex  justify-end ">
+<button
+  onClick={addHotelsToDatabase}
+  disabled={selectedHotels.length === 0}
+  type="button"
+  className={`text-white w-48 bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-3 text-center me-2 mb-4 mr-15 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 ${selectedHotels.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+>
+  Confirm Addition</button>
+  </div>
+
+ 
+      {loading && <p>Loading...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+
+      <div className={`flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 ${showErrorNotification ? 'block' : 'hidden'}`} role="alert">
+        <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+        </svg>
+        <span className="sr-only">Info</span>
+        <div>
+          <span className="font-medium">Hotel already exists!</span> Change a few things up and try submitting again.
         </div>
       </div>
+
+      <div className={`flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400 ${showSuccessNotification ? 'block' : 'hidden'}`} role="alert">
+        <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16ZM3 10a7 7 0 1 0 14 0ZM10 12a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1Z"/>
+        </svg>
+        <span className="sr-only">Success</span>
+        <div>
+          <span className="font-medium">Success alert!</span> Hotel successfully added.
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4  mx-10">
+        {currentHotels.map((hotel, index) => (
+           <div key={index} className="border p-4 rounded-md ">
+           <label>
+             <input className=" mx-2"
+               type="checkbox"
+               checked={selectedHotels.includes(hotel.hotelId)}
+               onChange={() => toggleHotelSelection(hotel.hotelId)}
+             />
+             {hotel.name}
+           </label>
+           <h3>chainCode:{hotel.chainCode}</h3>
+           <p> Id: {hotel.hotelId}</p>
+         </div>
+       ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-4">
+        {Array.from({ length: Math.ceil(hotelData.length / hotelsPerPage) }).map((_, index) => (
+          <button
+            key={index}
+            onClick={() => handlePageChange(index + 1)}
+            className={`mx-2 px-3 py-2 border ${
+              currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
+            }`}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </div>
+    </div>
+              </>
+            )}
+
+            {/* Navigation buttons */}
+            <div className="flex justify-around">
+              <button
+                type="button"
+                onClick={prev}
+                disabled={currentStep === 0}
+                className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="h-6 w-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 19.5L8.25 12l7.5-7.5"
+                  />
+                </svg>
+              </button>
+
+              {currentStep !== steps.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={next}
+                  disabled={currentStep === steps.length - 1}
+                  className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="h-6 w-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <div className="flex justify-center">
+                  {/* Center the submit button */}
+                  <button
+                    type="submit"
+                    className="flex justify-center duration-80 mb-4 w-50 cursor-pointer rounded-md border border-transparent bg-primary py-3 px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
+                  >
+                    Submit
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </form>
+      </section>
     </>
   );
 }
