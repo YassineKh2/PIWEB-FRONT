@@ -5,17 +5,6 @@ import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
 
 
-
-function SigninPage() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
- 
-  
-
-import Swal from "sweetalert2";
-
 function SigninPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -33,13 +22,6 @@ function SigninPage() {
         localStorage.setItem("token", response.token);
 
 
-        
-        if (response.user.role === 'A') {
-        
-          navigate('/backoffice', { replace: true });
-        } else if (response.user.role !== 'A') {
-          navigate('/profile');
-
         if (response.user.role === "A") {
           navigate("/backoffice", { replace: true });
           window.location.reload();
@@ -52,17 +34,6 @@ function SigninPage() {
         setError("Token not found");
       }
 
-
-    }  catch (error) {
-      // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
-      const errorMessage = error.response?.data?.error;
-  
-      // Afficher l'alerte spécifique si le compte est bloqué
-      if (errorMessage === 'Votre compte est bloqué') {
-        Swal.fire({
-          icon: 'error',
-          title: 'Compte Bloqué',
-          text: 'Votre compte est bloqué. Veuillez contacter le support pour plus d\'informations.',
 
     } catch (error) {
       // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
@@ -87,17 +58,14 @@ function SigninPage() {
       }
   
 
-          icon: "error",
-          title: "Sorry!",
-          text: errorMessage || "This Account is banned",
-        });
+          
       }
 
 
       // Logger l'erreur pour le débogage
       console.error("Sign-in error:", errorMessage);
     }
-  };
+  
 
   return (
     <>

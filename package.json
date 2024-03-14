@@ -23,7 +23,7 @@
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
-    "@stripe/stripe-js": "^3.0.8",
+    "@stripe/stripe-js": "^3.0.10",
     "@videosdk.live/react-sdk": "^0.1.84",
     "apexcharts": "^3.45.2",
     "axios": "^1.6.7",
@@ -48,14 +48,9 @@
     "react-modal": "^3.16.1",
     "react-modal-video": "^2.0.1",
     "react-paginate": "^8.2.0",
-
     "react-player": "^2.15.1",
     "react-router-dom": "^6.22.2",
-
-    "react-player": "^2.15.0",
-   
     "react-select": "^5.8.0",
-
     "reactjs-popup": "^2.0.6",
     "socket.io-client": "^4.7.4",
     "sweetalert2": "^11.10.5",

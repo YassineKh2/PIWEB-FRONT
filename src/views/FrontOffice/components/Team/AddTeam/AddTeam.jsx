@@ -17,30 +17,36 @@ import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
 import { useNavigate } from "react-router-dom";
 import { addSponsors } from "../../../../../Services/FrontOffice/apiSponsors.js";
 
-
-
-
 const schema = yup.object().shape({
-
-    name: yup.string().required().min(3),
-    nameAbbreviation: yup.string().max(3).min(3).required(),
-    country: yup.string().required(),
-    state: yup.string().required(),
-    city: yup.string().required(),
-    description: yup.string().required(),
-    nickname: yup.string(),
-    slogan: yup.string(),
-    founder: yup.string().required(),
-    image: yup.string(),
-    foundedIn: yup.date()
+  name: yup.string().required().min(3),
+  nameAbbreviation: yup.string().max(3).min(3).required(),
+  country: yup.string().required(),
+  state: yup.string().required(),
+  city: yup.string().required(),
+  description: yup.string().required(),
+  nickname: yup.string(),
+  slogan: yup.string(),
+  founder: yup.string().required(),
+  image: yup.string(),
+  foundedIn: yup.date(),
 });
-const schemasp=yup.object().shape({
-    name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
-    description: yup.string().required("Description is required"),
-    contact: yup.number().required("Contact is required").typeError("Contact must be a number").test('len', 'Contact must be exactly 8 digits', val => String(val).length === 8),
-    adresse: yup.string().required("Adresse is required")
+const schemasp = yup.object().shape({
+  name: yup
+    .string()
+    .required("Name is required")
+    .matches(/^[A-Za-z]+$/, "Name must contain only letters"),
+  description: yup.string().required("Description is required"),
+  contact: yup
+    .number()
+    .required("Contact is required")
+    .typeError("Contact must be a number")
+    .test(
+      "len",
+      "Contact must be exactly 8 digits",
+      (val) => String(val).length === 8
+    ),
+  adresse: yup.string().required("Adresse is required"),
 });
-
 
 const steps = [
   {
@@ -76,25 +82,24 @@ export default function AddTeam() {
   const [currentStep, setCurrentStep] = useState(0);
   const delta = currentStep - previousStep;
 
-    const [isMonthly, setIsMonthly] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const formRef = useRef();
-    const navigate = useNavigate();
-    const [logo, setLogo] = useState(null);
-    const [sponsor, setSponsor] = useState({
-      name: "",
-      description: "",
-      logo: "",
-      contact: "",
-      adresse: ""
-    });
-    const [error, setErrors] = useState({
-        name: "",
-        description: "",
-        contact: "",
-        adresse: ""
-      });
-
+  const [isMonthly, setIsMonthly] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const formRef = useRef();
+  const navigate = useNavigate();
+  const [logo, setLogo] = useState(null);
+  const [sponsor, setSponsor] = useState({
+    name: "",
+    description: "",
+    logo: "",
+    contact: "",
+    adresse: "",
+  });
+  const [error, setErrors] = useState({
+    name: "",
+    description: "",
+    contact: "",
+    adresse: "",
+  });
 
   useEffect(() => {
     GetCountries().then((response) => {
@@ -108,101 +113,64 @@ export default function AddTeam() {
 
     if (!output) return;
 
-
-        if (currentStep < steps.length - 1) {
-            if (currentStep === steps.length - 2) {
-                // await handleSubmit(processForm)()
-            }
-            if (currentStep == 3 && showForm)
-            {        
-                await addSponsors(sponsor);
-            }
-            setPreviousStep(currentStep)
-            setCurrentStep(step => step + 1)
-
-        }
-    }
-useEffect(() => {
-        const fetchData = async () => {
-            if (currentStep === 4 && showForm) {        
-                try {
-                    // Récupérer la valeur du champ "name" en utilisant watch
-                    const nameValue = watch("name");
-    
-                    // Créer l'objet de données à envoyer à addSponsors en incluant la valeur du champ "name"
-                    const data = { ...sponsor, nameteam : nameValue };
-    
-                    // Appeler addSponsors avec les données mises à jour
-                    await addSponsors(data);
-                } catch (error) {
-                    setError("root", {
-                        message: error.message
-                    });
-                }
-            }
-        };
-    
-        fetchData();
-    }, [currentStep, showForm]);
-
     if (currentStep < steps.length - 1) {
       if (currentStep === steps.length - 2) {
         // await handleSubmit(processForm)()
+      }
+      if (currentStep == 3 && showForm) {
+        await addSponsors(sponsor);
       }
       setPreviousStep(currentStep);
       setCurrentStep((step) => step + 1);
     }
   };
-
-
-    const prev = () => {
-        if (currentStep > 0) {
-            setPreviousStep(currentStep)
-            setCurrentStep(step => step - 1)
-        }
-    }
-    const handleChange = async (e) => {
-        const { name, value } = e.target;
-        setSponsor({ ...sponsor, [name]: value });
+  useEffect(() => {
+    const fetchData = async () => {
+      if (currentStep === 4 && showForm) {
         try {
-            await yup.reach(schemasp, name).validate(value);
-            setErrors({ ...error, [name]: "" });
+          // Récupérer la valeur du champ "name" en utilisant watch
+          const nameValue = watch("name");
+
+          // Créer l'objet de données à envoyer à addSponsors en incluant la valeur du champ "name"
+          const data = { ...sponsor, nameteam: nameValue };
+
+          // Appeler addSponsors avec les données mises à jour
+          await addSponsors(data);
         } catch (error) {
-            setErrors({ ...error, [name]: error.message });
-
+          setError("root", {
+            message: error.message,
+          });
         }
+      }
     };
-    
-  
 
-    const {
-        register,
-        handleSubmit,
-        formState: {errors, isSubmitting, dirtyFields},
-        setError,
-        watch,
-        trigger
-    } = useForm({
-        resolver: yupResolver(schema)
-    });
+    fetchData();
+  }, [currentStep, showForm]);
 
-    const selectedCountry = watch("country", true);
-    const selectedState = watch("state", true);
-    const image = watch("image", true);
+  if (currentStep < steps.length - 1) {
+    if (currentStep === steps.length - 2) {
+      // await handleSubmit(processForm)()
+    }
+    setPreviousStep(currentStep);
+    setCurrentStep((step) => step + 1);
+  }
 
-
-    useEffect(() => {
-        if (selectedCountry) {
-            setCites([]);
-            GetStateByCountry(selectedCountry).then((response) => {
-                setStates(response);
-            });
-
-
-        }
-    };
-    
-  
+  const prev = () => {
+    if (currentStep > 0) {
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step - 1);
+    }
+  };
+  const handleChange = async (e) => {
+    const { name, value } = e.target;
+    setSponsor({ ...sponsor, [name]: value });
+    try {
+      await yup.reach(schemasp, name).validate(value);
+      setErrors({ ...error, [name]: "" });
+    } catch (error) {
+      setErrors({ ...error, [name]: error.message });
+    }
+  };
 
   const {
     register,
@@ -238,85 +206,30 @@ useEffect(() => {
     }
   }, [selectedState]);
 
-    const onSubmit = async (data) => {
-        try {
-            data.image = image[0];
-            data.imagename = image[0].name;
-            data.foundedIn = date;
-            await schemasp.validate(sponsor);
-            // Ajout de l'équipe
-            const addedTeam = await addTeam(data);
-            const teamId = addedTeam.data._id; // Obtenez l'identifiant de l'équipe nouvellement ajoutée
-            
-            // Ajout du sponsor avec l'ID de l'équipe associée
-            const sponsorData = { ...data, teamId };
-            await addSponsors(sponsorData);
-    
-            // Afficher les données du sponsor ajouté
-            console.log("Données du sponsor ajouté :", sponsorData);
-        
-    
-            navigate('/team/all');
-    
-        } catch (error) {
-            setError("root", {
-                message: error.message
-            });
-        }
+  const onSubmit = async (data) => {
+    try {
+      data.image = image[0];
+      data.imagename = image[0].name;
+      data.foundedIn = date;
+      await schemasp.validate(sponsor);
+      // Ajout de l'équipe
+      const addedTeam = await addTeam(data);
+      const teamId = addedTeam.data._id; // Obtenez l'identifiant de l'équipe nouvellement ajoutée
+
+      // Ajout du sponsor avec l'ID de l'équipe associée
+      const sponsorData = { ...data, teamId };
+      await addSponsors(sponsorData);
+
+      // Afficher les données du sponsor ajouté
+      console.log("Données du sponsor ajouté :", sponsorData);
+
+      navigate("/team/all");
+    } catch (error) {
+      setError("root", {
+        message: error.message,
+      });
     }
-    
-    
-    
-
-
-    return (
-        <>
-            <section id="contact" className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28">
-                <form onSubmit={handleSubmit(onSubmit)} ref={formRef}>
-                    <div className="container">
-                        <nav aria-label='Progress' className="mb-10">
-                            <ol role='list' className='space-y-4 md:flex md:space-x-8 md:space-y-0'>
-                                {steps.map((step, index) => (
-                                    <li key={step.name} className='md:flex-1'>
-                                        {currentStep > index ? (
-                                            <div
-                                                className='group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
-                  <span className='text-sm font-medium text-sky-600 transition-colors '>
-                    {step.id}
-                  </span>
-                                                <span className='text-sm font-medium'>{step.name}</span>
-                                            </div>
-                                        ) : currentStep === index ? (
-                                            <div
-                                                className='flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'
-                                                aria-current='step'
-                                            >
-                  <span className='text-sm font-medium text-sky-600'>
-                    {step.id}
-                  </span>
-                                                <span className='text-sm font-medium'>{step.name}</span>
-                                            </div>
-                                        ) : (
-                                            <div
-                                                className='group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
-                  <span className='text-sm font-medium text-gray-500 transition-colors'>
-                    {step.id}
-                  </span>
-                                                <span className='text-sm font-medium'>{step.name}</span>
-                                            </div>
-                                        )}
-                                    </li>
-                                ))}
-                            </ol>
-                        </nav>
-                        {currentStep !== 4 && (
-                            <div className="-mx-4 flex justify-center flex-wrap">
-
-                                <div className="w-full px-4 lg:w-7/12 xl:w-8/12">
-
-                                    <div
-                                        className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
-                                        data-wow-delay=".15s
+  };
 
   return (
     <>
@@ -673,194 +586,209 @@ useEffect(() => {
                                   className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                                 />
 
-                                                                {errors.slogan &&
-                                                                    <p className="text-danger mb-2">{errors.slogan.message}</p>}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-
-
-                                                </div>
-
-                                            </motion.div>
-                                        )}
-                                        {currentStep === 2 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: 'easeInOut'}}
-                                            >
-                                                Players And Coaches goes here
-                                            </motion.div>
-                                        )}
-
-{currentStep === 3 && (
-    <motion.div
-        initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-        animate={{x: 0, opacity: 1}}
-        transition={{duration: 0.3, ease: 'easeInOut'}}
-    >
-        <div className="flex items-center">
-        <p className="mr-4 font-bold text-blue-800">Do you have a sponsor to add ?</p>
-    <div className="flex">
-        <input type="radio" id="yes" name="sponsorOption" value="yes" onClick={() => setShowForm(true)} />
-        <label htmlFor="yes" className="mr-2">Yes</label>
-        <input type="radio" id="no" name="sponsorOption" value="no" onClick={() => setShowForm(false)} />
-        <label htmlFor="no" className="mr-4">No</label>
-    </div>
-</div>
-
-
-{showForm && (
-            <div className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11" data-wow-delay=".2s">
-                <div className="flex justify-center items-center mt-16">
-                    <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
-                        <form>
-                            <div className="mb-4">
-                                <label htmlFor="name" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Name:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    value={sponsor.name}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.name && <div className="text-red-500">{error.name}</div>}
+                                {errors.slogan && (
+                                  <p className="text-danger mb-2">
+                                    {errors.slogan.message}
+                                  </p>
+                                )}
+                              </div>
                             </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                    {currentStep === 2 && (
+                      <motion.div
+                        initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                      >
+                        Players And Coaches goes here
+                      </motion.div>
+                    )}
 
-                            <div className="mb-4">
-                                <label htmlFor="description" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Description:
-                                </label>
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    value={sponsor.description}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.description && <div className="text-red-500">{error.description}</div>}
+                    {currentStep === 3 && (
+                      <motion.div
+                        initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                      >
+                        <div className="flex items-center">
+                          <p className="mr-4 font-bold text-blue-800">
+                            Do you have a sponsor to add ?
+                          </p>
+                          <div className="flex">
+                            <input
+                              type="radio"
+                              id="yes"
+                              name="sponsorOption"
+                              value="yes"
+                              onClick={() => setShowForm(true)}
+                            />
+                            <label htmlFor="yes" className="mr-2">
+                              Yes
+                            </label>
+                            <input
+                              type="radio"
+                              id="no"
+                              name="sponsorOption"
+                              value="no"
+                              onClick={() => setShowForm(false)}
+                            />
+                            <label htmlFor="no" className="mr-4">
+                              No
+                            </label>
+                          </div>
+                        </div>
+
+                        {showForm && (
+                          <div
+                            className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11"
+                            data-wow-delay=".2s"
+                          >
+                            <div className="flex justify-center items-center mt-16">
+                              <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
+                                <form>
+                                  <div className="mb-4">
+                                    <label
+                                      htmlFor="name"
+                                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                    >
+                                      Name:
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="name"
+                                      name="name"
+                                      value={sponsor.name}
+                                      onChange={(e) => handleChange(e)}
+                                      className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                    />
+                                    {error.name && (
+                                      <div className="text-red-500">
+                                        {error.name}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="mb-4">
+                                    <label
+                                      htmlFor="description"
+                                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                    >
+                                      Description:
+                                    </label>
+                                    <textarea
+                                      id="description"
+                                      name="description"
+                                      value={sponsor.description}
+                                      onChange={(e) => handleChange(e)}
+                                      className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                    />
+                                    {error.description && (
+                                      <div className="text-red-500">
+                                        {error.description}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="mb-4">
+                                    <label
+                                      htmlFor="logo"
+                                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                    >
+                                      Logo:
+                                    </label>
+                                    <input
+                                      type="file"
+                                      name="logo"
+                                      accept="image/*"
+                                      onChange={(e) => handleLogoChange(e)}
+                                      className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                    />
+                                    {error.logo && (
+                                      <div className="text-red-500">
+                                        {error.logo}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="mb-4">
+                                    <label
+                                      htmlFor="logo"
+                                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                    >
+                                      Logo:
+                                    </label>
+                                    <input
+                                      type="file"
+                                      name="logo"
+                                      accept="image/*"
+                                      onChange={(e) => handleLogoChange(e)}
+                                      className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                    />
+                                    {error.logo && (
+                                      <div className="text-red-500">
+                                        {error.logo}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="mb-4">
+                                    <label
+                                      htmlFor="contact"
+                                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                    >
+                                      Contact:
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="contact"
+                                      name="contact"
+                                      value={sponsor.contact}
+                                      onChange={(e) => handleChange(e)}
+                                      className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                    />
+                                    {error.contact && (
+                                      <div className="text-red-500">
+                                        {error.contact}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="mb-4">
+                                    <label
+                                      htmlFor="address"
+                                      className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                    >
+                                      Adresse:
+                                    </label>
+                                    <input
+                                      type="text"
+                                      id="adresse"
+                                      name="adresse"
+                                      value={sponsor.adresse}
+                                      onChange={(e) => handleChange(e)}
+                                      className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                    />
+                                    {error.adresse && (
+                                      <div className="text-red-500">
+                                        {error.adresse}
+                                      </div>
+                                    )}
+                                  </div>
+                                </form>
+                              </div>
                             </div>
-
-
-                            <div className="mb-4">
-                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Logo:
-                                </label>
-                                <input
-                                    type="file"
-                                    name="logo"
-                                    accept="image/*"
-                                    onChange={(e) => handleLogoChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.logo && <div className="text-red-500">{error.logo}</div>}
-                            </div>
-
-
-                            <div className="mb-4">
-                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Logo:
-                                </label>
-                                <input
-                                    type="file"
-                                    name="logo"
-                                    accept="image/*"
-                                    onChange={(e) => handleLogoChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.logo && <div className="text-red-500">{error.logo}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="contact" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Contact:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="contact"
-                                    name="contact"
-                                    value={sponsor.contact}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.contact && <div className="text-red-500">{error.contact}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Adresse:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="adresse"
-                                    name="adresse"
-                                    value={sponsor.adresse}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
-                            </div>
-                        </form>
-                   
-                </div>
-            </div>
-        </div>
-         )}
-    </motion.div>
-)}
-
-
-                            <div className="mb-4">
-                                <label htmlFor="contact" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Contact:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="contact"
-                                    name="contact"
-                                    value={sponsor.contact}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.contact && <div className="text-red-500">{error.contact}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Adresse:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="adresse"
-                                    name="adresse"
-                                    value={sponsor.adresse}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
-                            </div>
-                        </form>
-                   
-                </div>
-            </div>
-        </div>
-         )}
-    </motion.div>
-)}
-
-
-
-                                    </div>
-                                </div>
-                            </div>
+                          </div>
                         )}
-                    </div>
-
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {currentStep === 4 && (
             <motion.div
