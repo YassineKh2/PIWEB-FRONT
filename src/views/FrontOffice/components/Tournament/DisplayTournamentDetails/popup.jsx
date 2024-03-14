@@ -5,18 +5,7 @@ import { updateMatchScore } from "../../../../../Services/FrontOffice/apiMatch";
 import { io } from "socket.io-client";
 
 function PopupContent({ match, onClose, socket }) {
-  const [Match, setMatch] = useState({
-    _id: match._id,
-    win: match.win,
-    loss: match.loss,
-    matchDate: match.matchDate,
-    scoreTeam1: match.scoreTeam1,
-    scoreTeam2: match.scoreTeam2,
-    fixture: match.fixture,
-    idTeam1: match.idTeam1,
-    idTeam2: match.idTeam2,
-    idTournament: match.idTournament,
-  });
+ 
 
   const [editedTeam1Score, setEditedTeam1Score] = useState(
     match.scoreTeam1 === "" ? "?" : match.scoreTeam1
@@ -43,9 +32,10 @@ function PopupContent({ match, onClose, socket }) {
     };
     try {
       // Emit the updateScore event to the server
-      socket.emit("updateScore", updatedMatch);
+      
       // Continue with your existing code
       await updateMatchScore(updatedMatch);
+      socket.emit("updateScore", updatedMatch);
       console.log("Update successful");
     } catch (error) {
       console.error("Error updating match:", error);

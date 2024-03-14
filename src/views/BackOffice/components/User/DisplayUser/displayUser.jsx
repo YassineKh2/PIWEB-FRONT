@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { getAllUsers,deleteUser  } from "../../../../../Services/apiUser"; 
+import { getAllUsers, deleteUser, blockUser, unBlockUser } from "../../../../../Services/apiUser"; 
 import { formatDate } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faTrash, faLock, faUnlock } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Swal from 'sweetalert2';
 
 function DisplayAllUsers() {
     const [userData, setUserData] = useState([]);
@@ -42,6 +43,24 @@ function DisplayAllUsers() {
             // Gérer les erreurs de suppression, par exemple afficher un message d'erreur à l'utilisateur
         }
     };
+
+    // Fonction pour bloquer ou débloquer un utilisateur
+    const toggleBlockUser = async (userId, isBlocked) => {
+      try {
+          if (isBlocked) {
+              await unBlockUser(userId);
+          } else {
+              await blockUser(userId);
+          }
+          // Mettre à jour la liste des utilisateurs après le blocage ou le déblocage
+          setUserData(userData.map(user =>
+              user._id === userId ? { ...user, blocked: !isBlocked } : user
+          ));
+      } catch (error) {
+          console.error('Erreur lors du blocage ou du déblocage de l\'utilisateur : ', error);
+          // Gérer les erreurs, par exemple afficher un message d'erreur à l'utilisateur
+      }
+  };
 
    
     return (
@@ -126,10 +145,30 @@ function DisplayAllUsers() {
                     <td className="py-5 px-4 dark:border-strokedark">
                       {/* Icône de la corbeille pour l'action de suppression */}
                       <FontAwesomeIcon 
-                        icon={faTrash} 
-                        className="text-blue-500 cursor-pointer" 
-                        onClick={() => handleDeleteUser(user._id)} // Appel de la fonction de suppression lors du clic sur l'icône
+  icon={faTrash} 
+  className="text-blue-500 cursor-pointer mr-4"
+  onClick={() => {
+    // Display confirmation popup with SweetAlert
+    Swal.fire({
+      title: 'Do you really want to confirm deleting this user?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirm',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Call the delete function here
+        handleDeleteUser(user._id);
+      }
+    });
+  }} 
+/>
+                      <FontAwesomeIcon 
+                        icon={user.blocked ? faLock : faUnlock} // Utilisez les icônes faLock et faUnlock de FontAwesome
+                        className={`text-${user.blocked ? 'red' : 'green'}-500 cursor-pointer`} // Changez la couleur en fonction de l'état de blocage
+                        onClick={() => toggleBlockUser(user._id, user.blocked)} // Appel de la fonction pour bloquer/débloquer lors du clic sur l'icône
                       />
+                          
                     </td>
                   </tr>
                 ))}
