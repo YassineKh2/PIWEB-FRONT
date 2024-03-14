@@ -31,8 +31,7 @@ import {
 } from "@g-loot/react-tournament-brackets";
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
 import { Card, CardContent } from "@mui/material";
-import ReactPaginate from "react-paginate";
-import Popup from "reactjs-popup";
+
 import Popupcontent from "./popup";
 import { io } from "socket.io-client";
 
