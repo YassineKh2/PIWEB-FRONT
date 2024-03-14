@@ -95,6 +95,7 @@ export default function AddTeam() {
         adresse: ""
       });
 
+
   useEffect(() => {
     GetCountries().then((response) => {
       setCountries(response);
@@ -107,6 +108,43 @@ export default function AddTeam() {
 
     if (!output) return;
 
+
+        if (currentStep < steps.length - 1) {
+            if (currentStep === steps.length - 2) {
+                // await handleSubmit(processForm)()
+            }
+            if (currentStep == 3 && showForm)
+            {        
+                await addSponsors(sponsor);
+            }
+            setPreviousStep(currentStep)
+            setCurrentStep(step => step + 1)
+
+        }
+    }
+useEffect(() => {
+        const fetchData = async () => {
+            if (currentStep === 4 && showForm) {        
+                try {
+                    // Récupérer la valeur du champ "name" en utilisant watch
+                    const nameValue = watch("name");
+    
+                    // Créer l'objet de données à envoyer à addSponsors en incluant la valeur du champ "name"
+                    const data = { ...sponsor, nameteam : nameValue };
+    
+                    // Appeler addSponsors avec les données mises à jour
+                    await addSponsors(data);
+                } catch (error) {
+                    setError("root", {
+                        message: error.message
+                    });
+                }
+            }
+        };
+    
+        fetchData();
+    }, [currentStep, showForm]);
+
     if (currentStep < steps.length - 1) {
       if (currentStep === steps.length - 2) {
         // await handleSubmit(processForm)()
@@ -115,6 +153,7 @@ export default function AddTeam() {
       setCurrentStep((step) => step + 1);
     }
   };
+
 
     const prev = () => {
         if (currentStep > 0) {
@@ -130,6 +169,36 @@ export default function AddTeam() {
             setErrors({ ...error, [name]: "" });
         } catch (error) {
             setErrors({ ...error, [name]: error.message });
+
+        }
+    };
+    
+  
+
+    const {
+        register,
+        handleSubmit,
+        formState: {errors, isSubmitting, dirtyFields},
+        setError,
+        watch,
+        trigger
+    } = useForm({
+        resolver: yupResolver(schema)
+    });
+
+    const selectedCountry = watch("country", true);
+    const selectedState = watch("state", true);
+    const image = watch("image", true);
+
+
+    useEffect(() => {
+        if (selectedCountry) {
+            setCites([]);
+            GetStateByCountry(selectedCountry).then((response) => {
+                setStates(response);
+            });
+
+
         }
     };
     
@@ -199,6 +268,56 @@ export default function AddTeam() {
     
     
 
+
+    return (
+        <>
+            <section id="contact" className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28">
+                <form onSubmit={handleSubmit(onSubmit)} ref={formRef}>
+                    <div className="container">
+                        <nav aria-label='Progress' className="mb-10">
+                            <ol role='list' className='space-y-4 md:flex md:space-x-8 md:space-y-0'>
+                                {steps.map((step, index) => (
+                                    <li key={step.name} className='md:flex-1'>
+                                        {currentStep > index ? (
+                                            <div
+                                                className='group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
+                  <span className='text-sm font-medium text-sky-600 transition-colors '>
+                    {step.id}
+                  </span>
+                                                <span className='text-sm font-medium'>{step.name}</span>
+                                            </div>
+                                        ) : currentStep === index ? (
+                                            <div
+                                                className='flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'
+                                                aria-current='step'
+                                            >
+                  <span className='text-sm font-medium text-sky-600'>
+                    {step.id}
+                  </span>
+                                                <span className='text-sm font-medium'>{step.name}</span>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                className='group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
+                  <span className='text-sm font-medium text-gray-500 transition-colors'>
+                    {step.id}
+                  </span>
+                                                <span className='text-sm font-medium'>{step.name}</span>
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
+                            </ol>
+                        </nav>
+                        {currentStep !== 4 && (
+                            <div className="-mx-4 flex justify-center flex-wrap">
+
+                                <div className="w-full px-4 lg:w-7/12 xl:w-8/12">
+
+                                    <div
+                                        className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
+                                        data-wow-delay=".15s
+
   return (
     <>
       <section
@@ -249,6 +368,7 @@ export default function AddTeam() {
                   <div
                     className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
                     data-wow-delay=".15s
+
               "
                   >
                     <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
@@ -626,6 +746,22 @@ export default function AddTeam() {
                                 {error.description && <div className="text-red-500">{error.description}</div>}
                             </div>
 
+
+                            <div className="mb-4">
+                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Logo:
+                                </label>
+                                <input
+                                    type="file"
+                                    name="logo"
+                                    accept="image/*"
+                                    onChange={(e) => handleLogoChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.logo && <div className="text-red-500">{error.logo}</div>}
+                            </div>
+
+
                             <div className="mb-4">
                                 <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
                                     Logo:
@@ -679,6 +815,43 @@ export default function AddTeam() {
 )}
 
 
+                            <div className="mb-4">
+                                <label htmlFor="contact" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Contact:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="contact"
+                                    name="contact"
+                                    value={sponsor.contact}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.contact && <div className="text-red-500">{error.contact}</div>}
+                            </div>
+
+                            <div className="mb-4">
+                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Adresse:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="adresse"
+                                    name="adresse"
+                                    value={sponsor.adresse}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
+                            </div>
+                        </form>
+                   
+                </div>
+            </div>
+        </div>
+         )}
+    </motion.div>
+)}
 
 
 

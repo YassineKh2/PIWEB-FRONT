@@ -2,14 +2,15 @@ import React, { useState } from "react";
 import { addReservation } from "../../../../Services/FrontOffice/apiReservation";
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
+import QRCode from 'qrcode.react'; 
 
-function UpReservation() {
+function AddReservation() {
   const navigate = useNavigate();
   const [reservation, setReservation] = useState({
     date: new Date().toISOString().split('T')[0], 
     nbplace: "",
   });
-
+  const [qrCodeValue, setQrCodeValue] = useState("");
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -36,8 +37,15 @@ function UpReservation() {
       }
       
       const res = await addReservation(reservation);
+      const qrCodeData = {
+        reservationId: res._id, // Assuming this is how you identify a reservation
+        nbplace: reservation.nbplace,
+        // Add any other relevant data here
+      };
+      const qrCodeString = JSON.stringify(qrCodeData);
+      setQrCodeValue(qrCodeString);
       console.log("Successful addition");
-      navigate("/ticket");
+    
       
       // Display confirmation popup
       Swal.fire({
@@ -46,6 +54,7 @@ function UpReservation() {
         icon: 'success',
         confirmButtonText: 'OK'
       });
+      navigate("/ticket");
     } catch (error) {
       console.error("Error adding reservation:", error);
     }
@@ -108,10 +117,16 @@ function UpReservation() {
               />
             </div>
           </form>
+          {qrCodeValue && (
+            <div className="mt-8">
+              <h4 className="mb-2 text-lg font-semibold">QR Code</h4>
+              <QRCode value={qrCodeValue} />
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export default UpReservation;
+export default AddReservation;
