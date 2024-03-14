@@ -21,6 +21,7 @@ function AddSponsors() {
     adresse: ""
   });
   const [showForm, setShowForm] = useState(false); // State to control form visibility
+ 
 
   const schema = yup.object().shape({
     name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),

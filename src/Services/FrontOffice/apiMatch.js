@@ -22,10 +22,7 @@ export async function getTournamentMatches(id) {
 }
 export async function updateMatchScore(matchData) {
   try {
-    const response = await axios.put(
-      `${apiURL}/updatematch`,
-      matchData
-    );
+    const response = await axios.put(`${apiURL}/updatematch`, matchData);
     return response.data;
   } catch (error) {
     console.error(error);
@@ -35,6 +32,7 @@ export async function updateMatchScore(matchData) {
 export async function deleteMatcheByTournament(id) {
   try {
     const response = await axios.delete(`${apiURL}/deleteMatches/${id}`);
+    console.log(response);
     return response.data;
   } catch (error) {
     console.error(error);

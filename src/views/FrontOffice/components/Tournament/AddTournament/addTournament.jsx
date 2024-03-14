@@ -15,6 +15,7 @@ import * as yup from "yup";
 import { AiOutlinePicture as Picture } from "react-icons/ai";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
+import { jwtDecode } from "jwt-decode";
 
 const animatedComponents = makeAnimated();
 const firstStepSchema = yup.object().shape({
@@ -86,6 +87,7 @@ function AddTournament() {
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [showComboboxKnokout, setshowComboboxKnokout] = useState(false);
   const [showLeague, setLeague] = useState(true);
+  const [userInfo, setUserInfo] = useState();
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -111,7 +113,14 @@ function AddTournament() {
     idTeam2: {},
     idTournament: {},
   });
+  useEffect(() => {
+    const userToken = localStorage.getItem("token");
 
+    if (userToken) {
+      const decodedToken = jwtDecode(userToken);
+      setUserInfo(decodedToken);
+    }
+  }, []);
   const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const delta = currentStep - previousStep;
@@ -279,6 +288,7 @@ function AddTournament() {
         country: Tournament.country,
         state: Tournament.state,
         city: Tournament.city,
+        creator: userInfo.userId,
       };
 
       try {

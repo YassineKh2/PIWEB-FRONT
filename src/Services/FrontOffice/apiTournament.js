@@ -51,3 +51,12 @@ export async function getTournamentDetails(id) {
     throw error;
   }
 }
+export async function getTournamentsByUser(idUser) {
+  try {
+    const response = await axios.get(`${apiURL}/gettournamentbyuser/${idUser}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

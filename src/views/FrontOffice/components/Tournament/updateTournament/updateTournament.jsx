@@ -13,6 +13,9 @@ import {
   deleteMatcheByTournament,
   getTournamentMatches,
 } from "../../../../../Services/FrontOffice/apiMatch";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+const animatedComponents = makeAnimated();
 const firstStepSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
   description: yup.string().required("Description is required"),
@@ -82,8 +85,11 @@ function UpdateTournament() {
   const [Cities, setCities] = useState([]);
   const [SelectedCities, setSelectedCities] = useState("");
   const [Teams, setTeams] = useState([]);
+  const [TeamsAffected, setTeamsAffected] = useState([]);
   const [selectedTeams, setSelectedTeams] = useState(state.tournament.teams);
   const [RealMatches, setRealMatches] = useState([]);
+  const [showComboboxKnokout, setshowComboboxKnokout] = useState(false);
+  const [showLeague, setLeague] = useState(true);
   const [Tournament, setTournament] = useState({
     _id: state.tournament._id,
     name: state.tournament.name,
@@ -98,6 +104,15 @@ function UpdateTournament() {
     city: state.tournament.city,
     teams: state.tournament.teams,
   });
+  useEffect(() => {
+    if (Tournament.tournamentType === "Knockout") {
+      setLeague(false);
+      setshowComboboxKnokout(true);
+    } else if (Tournament.tournamentType === "League") {
+      setshowComboboxKnokout(false);
+      setLeague(true);
+    }
+  }, [Tournament.tournamentType]);
   const deleteAllMAtches = async () => {
     try {
       const res = await deleteMatcheByTournament(Tournament._id);
@@ -123,16 +138,15 @@ function UpdateTournament() {
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
   };
-  const handleTeamChange = (e) => {
-    const selectedOptions = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setSelectedTeams(selectedOptions);
+  const handleTeamChange = (selectedOptions) => {
+    const selectedTeamIds = selectedOptions.map((option) => option.value);
+    setSelectedTeams(selectedTeamIds);
+    console.log(selectedTeamIds);
     setTournament({
       ...Tournament,
-      teams: selectedOptions,
+      teams: selectedTeamIds,
     });
+    console.log(Tournament);
   };
   /*useEffect(() => {
     if (image && image.name) {
@@ -193,11 +207,18 @@ function UpdateTournament() {
   useEffect(() => {
     getTeams();
   }, []);
+  useEffect(() => {
+    const teamOptions = Tournament.teams.map((teamId) => ({
+      value: teamId,
+      label: Teams.find((team) => team._id === teamId)?.name || "Unknown Team",
+    }));
+    setTeamsAffected(teamOptions);
+  }, [Tournament.teams]);
 
   const update = async (e) => {
     e.preventDefault();
     await deleteAllMAtches();
-
+    setSelectedTeams(Tournament.teams);
     const imageData = {
       _id: state.tournament._id,
       name: Tournament.name,
@@ -207,26 +228,39 @@ function UpdateTournament() {
       endDate: Tournament.endDate,
       tournamentType: Tournament.tournamentType,
       nbTeamPartipate: Tournament.nbTeamPartipate,
-      teams: Tournament.teams,
+      teams: selectedTeams,
       country: Tournament.country,
       state: Tournament.state,
       city: Tournament.city,
     };
     const numTeams = Tournament.teams.length;
-    let Fixtures = {};
-    let teamsMatches = {}; // Object to store matches for each team
+    if (Tournament.tournamentType === "League") {
+      for (let i = 0; i < numTeams; i++) {
+        for (let j = i + 1; j < numTeams; j++) {
+          const idTeam1 = selectedTeams[i];
+          const idTeam2 = selectedTeams[j];
+          const matchData = {
+            win: "",
+            loss: "",
+            matchDate: new Date(),
+            scoreTeam1: "",
+            scoreTeam2: "",
+            fixture: "",
+            idTeam1,
+            idTeam2,
+            idTournament: Tournament._id,
+          };
+          await addMatch(matchData);
+        }
+      }
+    } else if (Tournament.tournamentType === "Knockout") {
+      // Deep copy selectedTeams to avoid modifying original array
+      let remainingTeams = [...selectedTeams];
+      remainingTeams.sort(() => Math.random() - 0.5);
 
-    for (let i = 0; i < numTeams; i++) {
-      const teamId = selectedTeams[i];
-      teamsMatches[teamId] = [];
-    }
-    for (let i = 1; i <= numTeams - 1; i++) {
-      Fixtures[i] = [];
-    }
-    for (let i = 0; i < numTeams; i++) {
-      for (let j = i + 1; j < numTeams; j++) {
-        const idTeam1 = selectedTeams[i];
-        const idTeam2 = selectedTeams[j];
+      while (remainingTeams.length >= 2) {
+        const idTeam1 = remainingTeams.pop();
+        const idTeam2 = remainingTeams.pop();
         const matchData = {
           win: "",
           loss: "",
@@ -238,22 +272,21 @@ function UpdateTournament() {
           idTeam2,
           idTournament: Tournament._id,
         };
+        console.log(matchData);
         await addMatch(matchData);
       }
     }
+
     const res = updateTournament(imageData)
       .then(() => {
-        console.log("update passe");
+        console.log("update passed");
         navigate("/tournament/showAll");
       })
       .catch((error) => {
         console.log(error.response.data.message);
       });
-
-    /*if (image) {
-      fileReader.readAsDataURL(image);
-    }*/
   };
+
   const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const delta = currentStep - previousStep;
@@ -299,7 +332,7 @@ function UpdateTournament() {
         id="contact"
         className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28"
       >
-        <form onSubmit={update}>
+        <form onSubmit={update} noValidate>
           <div className="container">
             <nav aria-label="Progress" className="mb-10">
               <ol
@@ -558,52 +591,95 @@ function UpdateTournament() {
                               </span>
                             )}
                           </div>
-                          <div>
-                            <label
-                              htmlFor="teamCount"
-                              className="text-base font-medium text-body-color"
-                            >
-                              Number of Teams
-                            </label>
-                            <input
-                              type="number"
-                              id="teamCount"
-                              name="nbTeamPartipate"
-                              defaultValue={Tournament.nbTeamPartipate}
-                              min="4"
-                              placeholder="Enter number of teams"
-                              onChange={(e) => handlechange(e)}
-                              className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                            />
-                            {errors.nbTeamPartipate && (
-                              <span className="text-red-500">
-                                {errors.nbTeamPartipate}
-                              </span>
-                            )}
-                          </div>
+                          {showComboboxKnokout && (
+                            <div className="mr-2">
+                              {/* Render combobox specific to knockout tournament */}
+                              <label
+                                htmlFor="teamCount"
+                                className="text-base font-medium text-body-color"
+                              >
+                                Number of Teams
+                              </label>
+                              <select
+                                id="teamCount"
+                                name="nbTeamPartipate"
+                                defaultValue={Tournament.nbTeamPartipate}
+                                onChange={(e) => handlechange(e)}
+                                className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                              >
+                                {[...Array(7).keys()].map(
+                                  (index) =>
+                                    index >= 2 && ( // Exclude 0 and 1 from the options
+                                      <option
+                                        key={index}
+                                        value={Math.pow(2, index)}
+                                      >
+                                        {Math.pow(2, index)}
+                                      </option>
+                                    )
+                                )}
+                              </select>
+                            </div>
+                          )}
+
+                          {showLeague && (
+                            <div className="mr-2">
+                              {/* Render number input specific to league tournament */}
+                              <label
+                                htmlFor="teamCount"
+                                className="text-base font-medium text-body-color"
+                              >
+                                Number of Teams
+                              </label>
+                              <div className="flex items-center">
+                                <input
+                                  type="number"
+                                  id="teamCount"
+                                  name="nbTeamPartipate"
+                                  min={"4"}
+                                  step={"2"}
+                                  defaultValue={Tournament.nbTeamPartipate}
+                                  onChange={(e) => handlechange(e)}
+                                  onKeyDown={(e) => e.preventDefault()}
+                                  placeholder="Enter number of teams"
+                                  className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                                />
+                              </div>
+                              {errors.nbTeamPartipate && (
+                                <span className="text-red-500">
+                                  {errors.nbTeamPartipate}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
+
                         <div>
                           <label
                             htmlFor="teams"
                             className="text-lg font-semibold mb-2"
                           >
-                            Select Teams: (Optionnal)
+                            Select Teams: (Optional)
                           </label>
-                          <select
-                            id="teams"
-                            name="teams"
-                            multiple
+                          <Select
+                            isMulti
+                            closeMenuOnSelect={false}
+                            components={animatedComponents}
+                            name="teams" // Change name to "teams"
                             onChange={handleTeamChange}
-                            defaultValue={Tournament.teams}
-                            className="w-full p-2 border border-gray-300 rounded-md mb-5"
-                          >
-                            {Teams != null &&
-                              Teams.map((team) => (
-                                <option key={team._id} value={team._id}>
-                                  {team.name}
-                                </option>
-                              ))}
-                          </select>
+                            defaultValue={Tournament.teams.map((teamId) => ({
+                              value: teamId,
+                              label:
+                                Teams.find((team) => team._id === teamId)
+                                  ?.name || "Unknown Team",
+                            }))}
+                            options={Teams.map((team) => ({
+                              value: team._id,
+                              label: team.name,
+                            }))}
+                            className="basic-multi-select"
+                            classNamePrefix="select"
+                          />
                         </div>
                         {errors.teams && (
                           <span className="text-red-500">{errors.teams}</span>

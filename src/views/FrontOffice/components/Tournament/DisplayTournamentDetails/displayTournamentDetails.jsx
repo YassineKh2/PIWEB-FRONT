@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getTournamentDetails } from "../../../../../Services/FrontOffice/apiTournament";
 import { getTournamentMatches } from "../../../../../Services/FrontOffice/apiMatch";
 import { useParams } from "react-router-dom";
@@ -13,17 +13,7 @@ import { TbPlayFootball as Played } from "react-icons/tb";
 import { HiMagnifyingGlass as Loop } from "react-icons/hi2";
 import { BiFootball as Football } from "react-icons/bi";
 import { AiOutlineFieldTime as Active } from "react-icons/ai";
-import {
-  Score,
-  Side,
-  StyledMatch,
-  Team,
-  TopText,
-  BottomText,
-  Wrapper,
-  Line,
-  Anchor,
-} from "@g-loot/react-tournament-brackets/dist/esm/components/match/styles";
+
 import {
   Match,
   SVGViewer,
@@ -31,17 +21,17 @@ import {
 } from "@g-loot/react-tournament-brackets";
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
 import { Card, CardContent } from "@mui/material";
-import ReactPaginate from "react-paginate";
-import Popup from "reactjs-popup";
 import Popupcontent from "./popup";
 import { io } from "socket.io-client";
+import { jwtDecode } from "jwt-decode";
 
 function DisplayAllTournaments() {
   const { id } = useParams();
   const popupRef = useRef(null);
   const [activeTab, setActiveTab] = useState("matches");
   const path = "http://localhost:3000/public/images/teams/";
-  const socket = io.connect("http://localhost:3000/");
+  const socket = useMemo(() => io.connect("http://localhost:3000/"), []);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
@@ -51,8 +41,7 @@ function DisplayAllTournaments() {
   const [Matches, setMatches] = useState([]);
   const [MatchesCopy, setMatchesCopy] = useState([]);
   const [RealMatches, setRealMatches] = useState([]);
-  const [refresh, setRefresh] = useState(false);
-  const [begin, setBegin] = useState(false);
+  const [userInfo, setUserInfo] = useState();
 
   const getTournamentDetail = async () => {
     try {
@@ -62,11 +51,18 @@ function DisplayAllTournaments() {
       console.error(err);
     }
   };
+  useEffect(() => {
+    const userToken = localStorage.getItem("token");
+
+    if (userToken) {
+      const decodedToken = jwtDecode(userToken);
+      setUserInfo(decodedToken);
+    }
+  }, []);
   const getAllTournamentMatches = async () => {
     try {
       const res = await getTournamentMatches(id);
       setRealMatches(res.matchList);
-
       setMatchesCopy(res.matchList);
     } catch (err) {
       console.error(err);
@@ -104,11 +100,10 @@ function DisplayAllTournaments() {
       fetchTeamDetails();
     }
   }, [Tournament]);
-
   useEffect(() => {
     const numberOfTeams = Tournament.nbTeamPartipate || 0;
     const teams = Array.from({ length: numberOfTeams }, (_, index) => ({
-      id: `team-${index + 1}`, // Assign a unique id to each team
+      id: `team-${index + 1}`,
       name: `Team ${index + 1}`,
     }));
     setTeams(teams);
@@ -116,41 +111,52 @@ function DisplayAllTournaments() {
     const updatedMatches = [];
     let nextmatch = RealMatches.length;
     let j = 1;
+    let resultTeam1 = "";
+    let resultTeam2 = "";
     // Iterate over each match in realMatches
     if (RealMatches.length !== 0) {
       let loopCounter = 0;
       RealMatches.forEach((match, index) => {
-        // Create a new match object with the required structure
+        if (match.scoreTeam1 > match.scoreTeam2) {
+          /*setResultTeam1("WON");
+          setResultTeam1("LOST");*/
+          resultTeam1 = "Won";
+          resultTeam2 = "Lost";
+        }
+        if (match.scoreTeam1 < match.scoreTeam2) {
+          resultTeam2 = "Won";
+          resultTeam1 = "Lost";
+        }
+
         const newMatch = {
-          id: index + 1, // Assign a unique ID to the match
-          nextMatchId: j + nextmatch, // Assuming nextMatchId follows a pattern, adjust this accordingly
-          tournamentRoundText: "1", // Adjust this based on the round
-          startTime: match.matchDate, // Assuming matchDate contains the start time
-          state: "DONE", // Assuming all matches are already completed
+          id: index + 1,
+          nextMatchId: j + nextmatch,
+          tournamentRoundText: "1",
+          startTime: match.matchDate,
+          state: "DONE",
           participants: [
             {
-              id: match.team1._id, // Assuming team1 contains the ID of the team
-              resultText: match.win === "team1" ? "WON" : "", // Adjust this based on match result
-              isWinner: match.win === "team1", // Adjust this based on match result
-              status: "PLAYED", // Assuming all matches are already played
-              name: match.team1.name, // Assuming team1 contains the name of the team
+              id: match.team1._id,
+              resultText: match.scoreTeam1,
+              isWinner: resultTeam1 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team1.name,
             },
             {
-              id: match.team2._id, // Assuming team2 contains the ID of the team
-              resultText: match.win === "team2" ? "WON" : "", // Adjust this based on match result
-              isWinner: match.win === "team2", // Adjust this based on match result
-              status: "PLAYED", // Assuming all matches are already played
-              name: match.team2.name, // Assuming team2 contains the name of the team
+              id: match.team2._id,
+              resultText: match.scoreTeam2,
+              isWinner: resultTeam2 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team2.name,
             },
           ],
         };
         loopCounter++;
-
-        // If loopCounter is even, decrement nextmatch
+        resultTeam1 = "";
+        resultTeam2 = "";
         if (loopCounter % 2 === 0) {
           nextmatch++;
         }
-        // Push the new match object to the updatedMatches array
         updatedMatches.push(newMatch);
       });
     }
@@ -171,15 +177,14 @@ function DisplayAllTournaments() {
         nextmatch = null;
       }
       const emptyMatch = {
-        id: RealMatches.length + i + 1, // Assign a unique ID to the empty match
-        nextMatchId: nextmatch, // Set the nextMatchId for the empty match
-        tournamentRoundText: "2", // Adjust this based on the round
-        startTime: "", // Adjust this based on your requirement
-        state: "NOT_PLAYED", // Assuming the match hasn't been played yet
-        participants: [], // Empty participants for empty match
+        id: RealMatches.length + i + 1,
+        nextMatchId: nextmatch,
+        tournamentRoundText: "2",
+        startTime: "",
+        state: "NOT_PLAYED",
+        participants: [],
       };
 
-      // Push the empty match object to the updatedMatches array
       updatedMatches.push(emptyMatch);
     }
 
@@ -290,7 +295,6 @@ function DisplayAllTournaments() {
       // If points are equal, sort by goal difference in descending order
       return b.goalDifference - a.goalDifference;
     });
-    console.log(sortedStandings);
     setSortStandings(sortedStandings);
   };
 
@@ -553,20 +557,24 @@ function DisplayAllTournaments() {
                 currentPage={currentPage}
                 handlePageClick={handlePageClick}
               />
-              {isPopupOpen && selectedMatch && (
-                <div>
-                  <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
-                  <Popupcontent
-                    ref={popupRef}
-                    match={selectedMatch}
-                    onClose={() => {
-                      setIsPopupOpen(false);
-                      setSelectedMatch(null);
-                    }}
-                    socket={socket}
-                  />
-                </div>
-              )}
+
+              {isPopupOpen &&
+                selectedMatch &&
+                userInfo &&
+                userInfo.userId === Tournament.creator && (
+                  <div>
+                    <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                    <Popupcontent
+                      ref={popupRef}
+                      match={selectedMatch}
+                      onClose={() => {
+                        setIsPopupOpen(false);
+                        setSelectedMatch(null);
+                      }}
+                      socket={socket}
+                    />
+                  </div>
+                )}
             </div>
           )}
 
@@ -634,8 +642,109 @@ function DisplayAllTournaments() {
       {Tournament.tournamentType === "Group Stage" && <p>Group Stage</p>}
       {Tournament.tournamentType === "Knockout" && Teams.length > 0 && (
         <>
-          <p>Knockout</p>
-          <SingleEliminationBracket matches={Matches} matchComponent={Match} />
+          <div className="flex justify-center gap-4 mt-4">
+            <button
+              className={`${
+                activeTab === "matches"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-800"
+              } px-4 py-2 rounded-md focus:outline-none mb-5`}
+              onClick={() => handleTabChange("matches")}
+            >
+              Matches
+            </button>
+            <button
+              className={`${
+                activeTab === "standings"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-800"
+              } px-4 py-2 rounded-md focus:outline-none mb-5`}
+              onClick={() => handleTabChange("standings")}
+            >
+              Draw
+            </button>
+          </div>
+          {activeTab === "standings" && (
+            <SingleEliminationBracket
+              matches={Matches}
+              matchComponent={Match}
+            />
+          )}
+          {activeTab === "matches" && (
+            <div className="flex flex-wrap justify-center">
+              <ul className="flex-column  space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
+                <li>
+                  <button
+                    onClick={all}
+                    className="gap-1 inline-flex items-center px-4 py-3 text-white bg-blue-700 rounded-lg active w-full dark:bg-blue-600"
+                    aria-current="page"
+                  >
+                    <Football size={20} />
+                    All
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={upcoming}
+                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Upcoming size={20} />
+                    Upcoming
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={active}
+                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Active size={20} />
+                    Active
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={played}
+                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Played size={20} />
+                    Played
+                  </button>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Loop size={20} />
+                    Discover
+                  </a>
+                </li>
+              </ul>
+              <MatchesComponent
+                RealMatches={RealMatches}
+                currentPage={currentPage}
+                handlePageClick={handlePageClick}
+              />
+
+              {isPopupOpen &&
+                selectedMatch &&
+                userInfo &&
+                userInfo.userId === Tournament.creator && (
+                  <div>
+                    <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                    <Popupcontent
+                      ref={popupRef}
+                      match={selectedMatch}
+                      onClose={() => {
+                        setIsPopupOpen(false);
+                        setSelectedMatch(null);
+                      }}
+                      socket={socket}
+                    />
+                  </div>
+                )}
+            </div>
+          )}
         </>
       )}
     </div>
