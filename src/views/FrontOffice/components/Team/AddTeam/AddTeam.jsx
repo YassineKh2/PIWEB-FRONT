@@ -1,7 +1,7 @@
 import {useFieldArray, useForm} from "react-hook-form";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {Suspense, useEffect, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry} from "../../../../../Services/APis/CountryAPI.js";
 import {DatePickerDemo} from "./DatePicker.jsx";
 import {AiOutlinePicture as Picture} from "react-icons/ai";
@@ -12,6 +12,8 @@ import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
 import {useNavigate} from "react-router-dom";
 import {FaTrash as Trash} from "react-icons/fa6";
 import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
+import {MultiSelect} from 'primereact/multiselect';
+import {getAllPlayers} from "../../../../../Services/apiUser.js";
 
 
 const schema = yup.object().shape({
@@ -67,6 +69,25 @@ export default function AddTeam() {
     const [Cites, setCites] = useState([]);
     const [date, setDate] = useState();
 
+    const [selectedPlayers, setSelectedPlayers] = useState([]);
+
+
+    const [players, setPlayers] = useState([]);
+
+    useEffect(() => {
+        getAllPlayers().then((response) => {
+            console.log(response.users)
+            let resPlayers = []
+            response.users.map((player) => {
+                player.name = player.firstName + " " + player.lastName;
+                player.id = player._id;
+                resPlayers.push(player)
+            })
+            setPlayers(resPlayers)
+        })
+    }, []);
+
+
     const [previousStep, setPreviousStep] = useState(0)
     const [currentStep, setCurrentStep] = useState(0)
     const delta = currentStep - previousStep
@@ -75,6 +96,9 @@ export default function AddTeam() {
 
     const formRef = useRef();
     const navigate = useNavigate();
+
+    const [showAddPlayer, setShowAddPlayer] = useState(true);
+    const [showSearchPlayer, setShowSearchPlayer] = useState(false);
 
 
     useEffect(() => {
@@ -233,7 +257,7 @@ export default function AddTeam() {
                                         <p className="mb-12 text-base font-medium text-body-color" id="formP">
                                             {currentStep === 0 && "Start your journey with us by registering your team."}
                                             {currentStep === 1 && "Enter your team's description details here."}
-                                            {currentStep === 2 && "Add your players and coaches here."}
+                                            {currentStep === 2 && "Add or Search for your players and coaches here."}
                                             {currentStep === 3 && "Add your sponsors and other details here."}
                                         </p>
 
@@ -243,6 +267,7 @@ export default function AddTeam() {
                                                 animate={{x: 0, opacity: 1}}
                                                 transition={{duration: 0.3, ease: 'easeInOut'}}
                                             >
+
                                                 <div
                                                     className="rounded-full bg-amber-50 p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
                                                     <input {...register("image")} type="file" name="image"
@@ -538,84 +563,133 @@ export default function AddTeam() {
                                                 initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
                                                 animate={{x: 0, opacity: 1}}
                                                 transition={{duration: 0.3, ease: 'easeInOut'}}
-                                                className="bg-gray-200 p-10 rounded-3xl dark:bg-blue-950 "
+                                                className="flex flex-col gap-2"
                                             >
 
-                                                {fields.map((field, index) => {
-                                                    return (
-                                                        <>
-                                                            <div className="-mx-4 " key={field.id}>
-                                                                <div className="flex items-center justify-between mb-4">
-                                                                    <h1 className="bg-gray-300 rounded-3xl px-3 py-2 dark:bg-blue-600">{index}</h1>
-                                                                    <Trash size={25} className="text-red-600"
-                                                                           onClick={() => {
-                                                                               remove(index)
-                                                                           }}/>
-                                                                </div>
-                                                                <div className="flex flex-wrap">
-                                                                    <div className="w-full px-4 md:w-1/2">
-                                                                        <div className="mb-8">
-                                                                            <label
-                                                                                htmlFor="name"
-                                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                            >
-                                                                                Name
-                                                                            </label>
-                                                                            <div className="flex flex-col">
-                                                                                <input
-                                                                                    {...register(`players.${index}.playername`)}
-                                                                                    type="text"
-                                                                                    name={`players.${index}.playername`}
-                                                                                    placeholder="Player Name"
-                                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                                />
-
-                                                                                {errors.players?.[index]?.playername &&
-                                                                                    <p className="text-danger mb-2">{errors.players?.[index]?.playername?.message}</p>}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="w-full px-4 md:w-1/2">
-                                                                        <div className="mb-8">
-                                                                            <label
-                                                                                htmlFor="email"
-                                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                            >
-                                                                                Email
-                                                                            </label>
-
-                                                                            <div className="flex flex-col">
-                                                                                <input
-                                                                                    {...register(`players.${index}.email`)}
-                                                                                    type="email"
-                                                                                    name={`players.${index}.email`}
-                                                                                    placeholder="Players Email"
-                                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                                />
-                                                                                {errors.players?.[index]?.email &&
-                                                                                    <p className="text-danger">{errors.players?.[index]?.email?.message}</p>}
-                                                                            </div>
-                                                                        </div>
-
-                                                                    </div>
-
-                                                                </div>
-                                                            </div>
-
-                                                        </>
-
-                                                    )
-                                                })}
-                                                <button
-                                                    type="button" onClick={() => {
-                                                    append(Player)
-                                                }}
-                                                    className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800">
+                                                <hr className="border-2 my-2"/>
+                                                <p className="mb-12 text-base font-medium text-body-color" id="formP">
+                                                    Add your players
+                                                </p>
+                                                <label className="inline-flex items-center cursor-pointer mb-2">
+                                                    <input type="checkbox"
+                                                           onChange={() => setShowAddPlayer(prevState => !prevState)}
+                                                           className="sr-only peer"/>
+                                                    <div
+                                                        className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                                                     <span
-                                                     className="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
+                                                        className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Add New Players </span>
+                                                </label>
+                                                {showAddPlayer && (
+                                                    <div
+                                                        className="bg-gray-200 p-10 rounded-3xl dark:bg-blue-950 ">
+                                                        {fields.map((field, index) => {
+                                                            return (
+                                                                <>
+                                                                    <div className="-mx-4 " key={field.id}>
+                                                                        <div
+                                                                            className="flex items-center justify-between mb-4">
+                                                                            <h1 className="bg-gray-300 rounded-3xl px-3 py-2 dark:bg-blue-600">{index}</h1>
+                                                                            <Trash size={25} className="text-red-600"
+                                                                                   onClick={() => {
+                                                                                       remove(index)
+                                                                                   }}/>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap">
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="name"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Name
+                                                                                    </label>
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`players.${index}.playername`)}
+                                                                                            type="text"
+                                                                                            name={`players.${index}.playername`}
+                                                                                            placeholder="Player Name"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+
+                                                                                        {errors.players?.[index]?.playername &&
+                                                                                            <p className="text-danger mb-2">{errors.players?.[index]?.playername?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="email"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Email
+                                                                                    </label>
+
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`players.${index}.email`)}
+                                                                                            type="email"
+                                                                                            name={`players.${index}.email`}
+                                                                                            placeholder="Players Email"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+                                                                                        {errors.players?.[index]?.email &&
+                                                                                            <p className="text-danger">{errors.players?.[index]?.email?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                            </div>
+
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+
+                                                            )
+                                                        })}
+                                                        <button
+                                                            type="button" onClick={() => {
+                                                            append(Player)
+                                                        }}
+                                                            className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800">
+
+                                                    <span
+                                                        className="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
                                                             Add
                                                     </span>
-                                                </button>
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                <label className="inline-flex items-center cursor-pointer mt-4 mb-2">
+                                                    <input type="checkbox" value=""
+                                                           onChange={() => setShowSearchPlayer(prevState => !prevState)}
+                                                           className="sr-only peer"/>
+                                                    <div
+                                                        className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    <span
+                                                        className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">                                                    Invite Existing players to your team
+</span>
+                                                </label>
+
+                                                {showSearchPlayer && (
+                                                    <MultiSelect value={selectedPlayers}
+                                                                 onChange={(e) => setSelectedPlayers(e.value)}
+                                                                 options={players} optionLabel="name"
+                                                                 filter placeholder="Select Players"
+                                                                 maxSelectedLabels={3}
+                                                                 virtualScrollerOptions={{itemSize: 40}}
+                                                                 checkboxIcon filterIcon
+                                                                 className="w-full md:w-20rem"/>
+
+                                                )}
+
+
+                                                <hr className="border-2 my-2"/>
+                                                <p className="mb-12 text-base font-medium text-body-color" id="formP">
+                                                    Add your Coaches
+                                                </p>
+
                                             </motion.div>
                                         )}
 
@@ -648,7 +722,7 @@ export default function AddTeam() {
                             animate={{x: 0, opacity: 1}}
                             transition={{duration: 0.3, ease: 'easeInOut'}}
                         >
-                            <section id="pricing" className="relative z-10 py-16 md:py-20 lg:py-28">
+                        <section id="pricing" className="relative z-10 py-16 md:py-20 lg:py-28">
                                 <div className="container">
                                     <SectionTitle
                                         title="Simple and Affordable Pricing"

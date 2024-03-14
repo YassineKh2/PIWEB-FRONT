@@ -92,5 +92,15 @@ export async function finishplayerprofile(userData) {
   }
 }
 
+export async function getAllPlayers() {
+  try {
+    const response = await axios.get(`${BASE_URL}/getAllPlayers`);
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+}
+
+
 
 
