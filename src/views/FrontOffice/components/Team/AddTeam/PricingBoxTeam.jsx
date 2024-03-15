@@ -21,8 +21,12 @@ const PricingBox = (props) => {
           {type === "free" && (
 
                 <button
+                    type='submit'
                     disabled={isSubmitting}
-                    onClick={() => formRef.current.submit()}
+                    onClick={(e) => {
+                     e.preventDefault();
+                      formRef.current.submit()
+                    }}
                     className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
                     {isSubmitting ? "Loading..." : "Get Started"}</button>
 
@@ -30,6 +34,7 @@ const PricingBox = (props) => {
           )}
           {type === "basic" && (
               <button
+                  type='button'
                   className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
                Go Beyond
               </button>
@@ -37,6 +42,7 @@ const PricingBox = (props) => {
           )}
           {type === "plus" && (
               <button
+                  type="button"
                   className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
                 Unlock your potential
               </button>
