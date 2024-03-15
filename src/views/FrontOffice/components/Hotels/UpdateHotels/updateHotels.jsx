@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom'; // Import useParams
+import { useParams } from 'react-router-dom';
 import hotelService from '../../../../../Services/APis/HotelAPI.js';
 import HotelService from '../../../../../Services/FrontOffice/apiHotel.js';
 import getGeocodingData from '../../../../../Services/APis/Geocoding.js';
-import TournamentService from '../../../../../Services/FrontOffice/apiTournament.js'; 
+import TournamentService from '../../../../../Services/FrontOffice/apiTournament.js';
 
-const UpdateHotels = () => { 
-    const { id } = useParams();
-  
+const UpdateHotels = () => {
+  const { id } = useParams();
+
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [radius, setRadius] = useState();
@@ -19,34 +19,31 @@ const UpdateHotels = () => {
   const [selectedHotels, setSelectedHotels] = useState([]);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [city, setCity] = useState(''); // State to store city
+  const [city, setCity] = useState('');
   const [Tournament, setTournament] = useState({});
   const [hotels, setHotels] = useState([]);
-
 
   const hideNotifications = () => {
     setShowErrorNotification(false);
     setShowSuccessNotification(false);
   };
 
-
   useEffect(() => {
     const fetchTournamentCity = async () => {
       try {
         const res = await TournamentService.getTournamentDetails(id);
-      setTournament(res.tournaments);
-        if (Tournament) {
-          setCity(Tournament.city); 
+        const tournamentData = res.tournaments;
+        setTournament(tournamentData);
+        if (tournamentData) {
+          setCity(tournamentData.city);
         }
       } catch (error) {
         console.error('Error fetching tournament city:', error);
       }
     };
-    
 
     fetchTournamentCity();
-  }, [ id]); 
-
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,16 +64,16 @@ const UpdateHotels = () => {
   const handleConfirmAddition = () => {
     const hotelsToAdd = hotelData.filter((hotel) => selectedHotels.includes(hotel.hotelId));
     hotelsToAdd.forEach((hotel) => {
-      addHotelToDatabase(hotel,  id); // Pass tournamentId to addHotelToDatabase
+      addHotelToDatabase(hotel, id);
     });
     const updatedHotelData = hotelData.filter((hotel) => !selectedHotels.includes(hotel.hotelId));
     setHotelData(updatedHotelData);
     setSelectedHotels([]);
   };
 
-  const addHotelToDatabase = async (hotel,  id) => {
+  const addHotelToDatabase = async (hotel, id) => {
     try {
-      hotel.idTournament =  id; 
+      hotel.idTournament = id;
       const addHotelResponse = await HotelService.addHotel([hotel]);
       setShowSuccessNotification(true);
       setTimeout(hideNotifications, 2000);
@@ -92,20 +89,20 @@ const UpdateHotels = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const geocodingData = await getGeocodingData(city);
-      const response = await hotelService.getHotelsByGeoCode(
-        geocodingData.latitude,
-        geocodingData.longitude,
-        radius
-      );
-      if (response) {
-        const addedHotelsIds = await HotelService.getHotelIds( id);
-        const filteredhotels = response.data.filter((hotel) => !addedHotelsIds.includes(hotel.hotelId));
-        setHotelData(filteredhotels);
-        setError(null);
-      } else {
-        setHotelData([]);
-        setError('Invalid response format. Please try again.');
+      if (city) {
+        const geocodingData = await getGeocodingData(city);
+        const response = await hotelService.getHotelsByGeoCode(
+          geocodingData.latitude,
+          geocodingData.longitude,
+          radius
+        );
+        if (response) {
+          setHotelData(response.data);
+          setError(null);
+        } else {
+          setHotelData([]);
+          setError('Invalid response format. Please try again.');
+        }
       }
     } catch (error) {
       console.error('API Error:', error);
@@ -124,7 +121,7 @@ const UpdateHotels = () => {
 
   useEffect(() => {
     fetchData();
-  }, [city, radius, id]); // Add city, radius, and tournamentId to dependency array
+  }, [city, radius, id]);
 
   const handleRadiusChange = () => {
     fetchData();
@@ -137,51 +134,59 @@ const UpdateHotels = () => {
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   useEffect(() => {
-    console.log("ID:", id);
-    console.log("City:", city);
+    console.log('ID:', id);
+    console.log('City:', city);
   }, [id, city]);
-  
+
   return (
     <div>
       <div>
-      <h1 className="text-center pb-8 " >Hotel List</h1>
+        <h1 className="text-center pb-8">Hotel List</h1>
       </div>
-      <div className='flex justify-end'>
-      <ul>
-        {hotels.map((hotel) => (
-          <li key={hotel._id}  >
-            <strong>{hotel.name}</strong> - {hotel.location}
-          </li>
-        ))}
-      </ul>
+      <div className="flex justify-end">
+        <ul>
+          {hotels.map((hotel) => (
+            <li key={hotel._id}>
+              <strong>{hotel.name}</strong> - {hotel.location}
+            </li>
+          ))}
+        </ul>
       </div>
-<div className="flex  gap-4 ml-10 ">
-  <div className="">
-      <label>
-        Radius (in km):
-        <input
-          type="number"
-          name="radius"
-          value={radius}
-          onChange={handleInputChange}
-          placeholder="Enter Radius"
-        />
-      </label>
-  </div>
-      <div class="pb-5 ">
-      <button onClick={handleRadiusChange} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Change Radius</button>
+      <div className="flex gap-4 ml-10">
+        <div className="">
+          <label>
+            Radius (in km):
+            <input
+              type="number"
+              name="radius"
+              value={radius}
+              onChange={handleInputChange}
+              placeholder="Enter Radius"
+            />
+          </label>
+        </div>
+        <div class="pb-5">
+          <button
+            onClick={handleRadiusChange}
+            type="button"
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Change Radius
+          </button>
+        </div>
       </div>
-</div>
-  <div className="flex  justify-end ">
-<button
-  onClick={handleConfirmAddition}
-  disabled={selectedHotels.length === 0}
-  type="button"
-  className={`text-white w-48 bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-3 text-center me-2 mb-4 mr-15 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 ${selectedHotels.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
->
-  Confirm Addition</button>
-  </div>
-
+      <div className="flex justify-end">
+        <button
+          onClick={handleConfirmAddition}
+          disabled={selectedHotels.length === 0}
+          type="button"
+          className={`text-white w-48 bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-3 text-center me-2 mb-4 mr-15 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 ${
+            selectedHotels.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          Confirm Addition
+        </button>
+      </div>
  
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}

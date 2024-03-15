@@ -1,6 +1,9 @@
 import { Route, Routes } from "react-router-dom";
 import SigninPage from "./views/FrontOffice/components/User/signin/page.jsx";
-import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
+
+import SignupPageTRM from "./views/FrontOffice/components/User/signup/page1.jsx"
+import SignupPageTM from "./views/FrontOffice/components/User/signup/page2.jsx"
+
 import About from "./views/FrontOffice/HomePage/components/About/AboutSectionOne.jsx";
 import Blog from "./views/FrontOffice/HomePage/components/Blog/index.jsx";
 import Home from "./views/FrontOffice/HomePage/page.jsx";
@@ -17,6 +20,12 @@ import UpReservation from "./views/FrontOffice/components/Reservation/UpReservat
 import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
+import RoutingUsers from "./views/FrontOffice/components/User/profile/profile.jsx"
+import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
+import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
+import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
+import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
+import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
 function RoutesPath() {
@@ -24,6 +33,11 @@ function RoutesPath() {
     <div>
       <Routes>
         <Route path="/signin" element={<SigninPage />} />
+        <Route path="/signup" element={<UserOptions />} />
+        <Route path="/signupu" element ={<SignupPage/>} />
+        <Route path="/signupTM" element={<SignupPageTM/>} />
+        <Route path="/signupTRM" element ={<SignupPageTRM/>} />
+        <Route path="/updateProfile" element ={<UpdateProfile/>}/>
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/about" element={<About />} />
         <Route path="/blog" element={<Blog />} />
@@ -51,6 +65,15 @@ function RoutesPath() {
                   </>
               }
           />
+ <Route
+            path="profile/*"
+            element={
+              <>
+                <RoutingUsers/>
+              </>
+            }
+        />
+        
         <Route
             path="team/*"
             element={
@@ -60,7 +83,7 @@ function RoutesPath() {
             }
         />
          <Route
-            path="listhotels/*"
+            path="hotels/*"
             element={
               <>
                 <RoutingHotels/>
@@ -68,6 +91,10 @@ function RoutesPath() {
             }
         />
         <Route path="/" element={<Home />} />
+
+        <Route element={<RequireAuth allowedRoles={['A']}/>}>
+                        <Route path="backoffice" element={<RoutingBackOffice/>}/>
+                        </Route>
       </Routes>
     </div>
   );

@@ -1,14 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-
-import UserOne from '../../images/BackOffice/user/user-01.png';
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import UserOne from "../../images/BackOffice/user/user-01.png";
+import { getUserProfile } from "../../../../Services/apiUser"; // Assurez-vous que le chemin d'importation est correct
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const [userData, setUserData] = useState(null); // Ajouté pour stocker les données utilisateur
+  const [error, setError] = useState(null); // Ajouté pour gérer les erreurs
+  const navigate = useNavigate();
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
+  useEffect(() => {
+    async function fetchUserProfile() {
+      try {
+        const userProfileData = await getUserProfile();
+        setUserData(userProfileData.user); // Assurez-vous que les données sont correctement formatées dans la réponse
+      } catch (error) {
+        setError(error.message); // Gérer les erreurs de manière appropriée
+      }
+    }
+
+    fetchUserProfile();
+  }, []);
+
+  const deleteToken = () => {
+    localStorage.removeItem("token");
+    navigate("/signin");
+    window.location.reload();
+  };
   // close on click outside
   useEffect(() => {
     const clickHandler = ({ target }) => {
@@ -21,8 +41,8 @@ const DropdownUser = () => {
         return;
       setDropdownOpen(false);
     };
-    document.addEventListener('click', clickHandler);
-    return () => document.removeEventListener('click', clickHandler);
+    document.addEventListener("click", clickHandler);
+    return () => document.removeEventListener("click", clickHandler);
   });
 
   // close if the esc key is pressed
@@ -31,8 +51,8 @@ const DropdownUser = () => {
       if (!dropdownOpen || keyCode !== 27) return;
       setDropdownOpen(false);
     };
-    document.addEventListener('keydown', keyHandler);
-    return () => document.removeEventListener('keydown', keyHandler);
+    document.addEventListener("keydown", keyHandler);
+    return () => document.removeEventListener("keydown", keyHandler);
   });
 
   return (
@@ -45,13 +65,14 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-black dark:text-white">
-            Thomas Anree
+            {userData
+              ? `${userData.firstName} ${userData.lastName}`
+              : "Loading..."}
           </span>
-          <span className="block text-xs">UX Designer</span>
         </span>
 
         <span className="h-12 w-12 rounded-full">
-          <img src={UserOne} alt="User" />
+          <img src={userData?.image || UserOne} alt="User" />
         </span>
 
         <svg
@@ -77,7 +98,7 @@ const DropdownUser = () => {
         onFocus={() => setDropdownOpen(true)}
         onBlur={() => setDropdownOpen(false)}
         className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark ${
-          dropdownOpen === true ? 'block' : 'hidden'
+          dropdownOpen === true ? "block" : "hidden"
         }`}
       >
         <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-7.5 dark:border-strokedark">
@@ -153,7 +174,11 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
+
+        <button
+          onClick={deleteToken}
+          className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+        >
           <svg
             className="fill-current"
             width="22"
@@ -180,3 +205,4 @@ const DropdownUser = () => {
 };
 
 export default DropdownUser;
+//onClick={deleteToken()}

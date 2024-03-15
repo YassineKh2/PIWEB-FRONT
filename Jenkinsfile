@@ -1,10 +1,18 @@
 pipeline {
     agent any
     stages {
-        stage('Checkout Git') {
+        stage('Install dependendencies  ') {
             steps {
-                git branch :'main',
-                url :'https://github.com/YassineKh2/PIWEB-FRONT'
+                script {
+                    sh('npm install')
+                }
+            }
+        }
+        stage('Build application  ') {
+            steps {
+                script {
+                    sh('npm run build')
+                }
             }
         }
     }

@@ -6,13 +6,18 @@ import Blog from "./views/FrontOffice/HomePage/components/Blog/index.jsx";
 import Home from "./views/FrontOffice/HomePage/page.jsx";
 import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
-
+import SignupPageTRM from "./views/FrontOffice/components/User/signup/page1.jsx"
+import SignupPageTM from "./views/FrontOffice/components/User/signup/page2.jsx"
+import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
 function PublicRoutes() {
   return (
     <div>
       <Routes>
-        <Route path="/signin" element={<SigninPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+      <Route path="/signin" element={<SigninPage />} />
+        <Route path="/signup" element={<UserOptions />} />
+        <Route path="/signupu" element ={<SignupPage/>} />
+        <Route path="/signupTM" element={<SignupPageTM/>} />
+        <Route path="/signupTRM" element ={<SignupPageTRM/>} />
         <Route path="/about" element={<About />} />
         <Route path="/blog" element={<Blog />} />
         <Route
@@ -30,6 +35,8 @@ function PublicRoutes() {
             </>
           }
         />
+
+
       </Routes>
     </div>
   );
