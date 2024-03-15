@@ -147,13 +147,6 @@ export default function AddTeam() {
     fetchData();
   }, [currentStep, showForm]);
 
-  if (currentStep < steps.length - 1) {
-    if (currentStep === steps.length - 2) {
-      // await handleSubmit(processForm)()
-    }
-    setPreviousStep(currentStep);
-    setCurrentStep((step) => step + 1);
-  }
 
   const prev = () => {
     if (currentStep > 0) {
