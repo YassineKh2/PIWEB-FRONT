@@ -26,6 +26,8 @@ import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
+import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
+
 function RoutesPath() {
   return (
     <div>
@@ -77,6 +79,14 @@ function RoutesPath() {
             element={
               <>
                 <RoutingTeams/>
+              </>
+            }
+        />
+         <Route
+            path="hotels/*"
+            element={
+              <>
+                <RoutingHotels/>
               </>
             }
         />
