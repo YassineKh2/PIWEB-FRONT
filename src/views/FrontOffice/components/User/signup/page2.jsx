@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { signup } from "../../../../../Services/apiUser";
+import { useState } from "react";
+import { addTM } from "../../../../../Services/apiUser";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 function SignupPage() {
-const navigate = useNavigate();
+    const navigate = useNavigate();
 
   const [User, setUser] = useState({
     firstName: '',
@@ -12,10 +13,12 @@ const navigate = useNavigate();
     password: '',
     birthDate: '',
     cin: '',
+    certificate:''
 });
 
-
-
+const handleCertificateChange = (e) => {
+    setCertificate(e.target.files[0]); // Mettre à jour l'état avec le fichier sélectionné
+  }; 
   const handleChange = (e) => {
     setUser({ ...User, [e.target.name]: e.target.value });
   };
@@ -24,8 +27,14 @@ const navigate = useNavigate();
     e.preventDefault();
     try {
       // Appel de la fonction signup du service avec les données utilisateur
-      await signup(User);
+      await addTM(User);
       console.log("Utilisateur inscrit avec succès");
+      Swal.fire({
+        title: 'Welcome!',
+        text: 'You can now signin.',
+        icon: 'success',
+        confirmButtonText: 'OK'
+      });
       // Réinitialiser les champs du formulaire après la soumission réussie
       setUser({
         firstName: '',
@@ -34,6 +43,7 @@ const navigate = useNavigate();
         password: '',
         birthDate: '',
         cin: '',
+        
       });
       // Redirection vers une autre page après l'inscription réussie
       navigate('/signin');
@@ -41,8 +51,6 @@ const navigate = useNavigate();
       console.error("Erreur lors de l'inscription de l'utilisateur :", error);
     }
   };
-
-  
   return (
     <>
       <section className="relative z-10 overflow-hidden pt-36 pb-16 md:pb-20 lg:pt-[180px] lg:pb-28">
@@ -159,6 +167,20 @@ const navigate = useNavigate();
                       className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                     />
                   </div>
+                  <div className="mb-8">
+  <label
+    htmlFor="certificate"
+    className="mb-3 block text-sm font-medium text-dark dark:text-white"
+  >
+    Certificate
+  </label>
+  <input
+    type="file"
+    name="certificate"
+    onChange={handleCertificateChange}
+    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+  />
+</div>
                   <div className="mb-6">
                     <button 
                       type="submit"
