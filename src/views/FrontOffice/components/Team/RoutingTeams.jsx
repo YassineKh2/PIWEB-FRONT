@@ -9,7 +9,7 @@ export default function RoutingTeams() {
 
     return(
         <Routes>
-            
+
             <Route
                 path="add"
                 element={

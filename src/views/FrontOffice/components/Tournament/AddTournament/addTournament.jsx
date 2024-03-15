@@ -95,7 +95,7 @@ function AddTournament() {
   const [userInfo, setUserInfo] = useState();
 
   //hotel
-  
+
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [radius, setRadius] = useState();
@@ -455,7 +455,6 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
       try {
         await addTournament(imageData);
         const latestTournamentId = await getLatestTournamentId();
-
         const numTeams = selectedTeams.length;
         if (Tournament.tournamentType === "League") {
           for (let i = 0; i < numTeams; i++) {
@@ -497,6 +496,60 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
             await addMatch(matchData);
           }
         }
+
+
+        /*let j = 1;
+        for (let i = 0; i < matches.length; i++) {
+          if (Fixtures[j] === numTeams / 2) {
+            j++;
+            teamsParticipate = [];
+          }
+
+          if (
+            !teamsParticipate.includes(matches[i].idTeam1) &&
+            !teamsParticipate.includes(matches[i].idTeam2)
+          ) {
+            Fixtures[j].push(matches[i]);
+            console.log("hjhjhjh");
+            console.log(matches[i].idTeam1);
+            teamsParticipate.push(matches[i].idTeam1);
+            teamsParticipate.push(matches[i].idTeam2);
+            console.log(teamsParticipate);
+          }
+        }*/
+        /*
+        let fix = [];
+        var i = 0;
+        var matchNumbers = selectedTeams.length / 2;
+        while (matches.length > 0) {
+          let j = 0;
+
+          if (matchNumbers >= 0) {
+            if (
+              !teamsParticipate.includes(matches[i].idTeam1) ||
+              !teamsParticipate.includes(matches[i].idTeam2)
+            ) {
+              Fixtures[i + 1].push(matches[i]);
+              console.log(Fixtures);
+              matches.splice(i, 1);
+              console.log(matches);
+              teamsParticipate.push(matches[i].idTeam1);
+              teamsParticipate.push(matches[i].idTeam2);
+              console.log(matches);
+              matchNumbers--;
+            } else {
+              i++;
+            }
+          } else {
+            teamsParticipate = [];
+            matchNumbers = selectedTeams.length / 2 ;
+            i = 0;
+          }
+        }*/
+
+        //console.log(Fixtures);
+
+
         navigate("/tournament/showAll");
         addHotelsToDatabase(hotelData, latestTournamentId.latestTournamentId);
       } catch (error) {
@@ -919,7 +972,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 </div>
 
 
- 
+
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
