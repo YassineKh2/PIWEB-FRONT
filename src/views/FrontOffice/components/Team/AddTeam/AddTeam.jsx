@@ -572,6 +572,7 @@ export default function AddTeam() {
                                                 </p>
                                                 <label className="inline-flex items-center cursor-pointer mb-2">
                                                     <input type="checkbox"
+                                                           checked={showAddPlayer}
                                                            onChange={() => setShowAddPlayer(prevState => !prevState)}
                                                            className="sr-only peer"/>
                                                     <div
@@ -580,8 +581,10 @@ export default function AddTeam() {
                                                         className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Add New Players </span>
                                                 </label>
                                                 {showAddPlayer && (
+
                                                     <div
                                                         className="bg-gray-200 p-10 rounded-3xl dark:bg-blue-950 ">
+
                                                         {fields.map((field, index) => {
                                                             return (
                                                                 <>

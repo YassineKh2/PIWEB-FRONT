@@ -210,7 +210,6 @@ function AddTournament() {
       try {
         await addTournament(imageData);
         const latestTournamentId = await getLatestTournamentId();
-
         const numTeams = selectedTeams.length;
         let fixtureNumber = 1;
         let fixtureNextTeam = 1;
@@ -255,7 +254,7 @@ function AddTournament() {
             j++;
             teamsParticipate = [];
           }
-          
+
           if (
             !teamsParticipate.includes(matches[i].idTeam1) &&
             !teamsParticipate.includes(matches[i].idTeam2)
