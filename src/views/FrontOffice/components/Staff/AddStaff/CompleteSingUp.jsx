@@ -18,11 +18,9 @@ const schema = yup.object().shape({
     confirmPassword: yup.string().required(),
     birthDate: yup.date().required(),
     cin: yup.number().required(),
-    height: yup.number().positive().required(),
     position: yup.string(),
     image: yup.string(),
     bio: yup.string(),
-    preferredFoot: yup.string(),
     socialMediaHandle: yup.string(),
 });
 export default function CompleteSingUp() {
@@ -78,7 +76,7 @@ export default function CompleteSingUp() {
         {
             id: 'Step 2',
             name: 'Players Details',
-            fields: ['height', 'position', 'image', 'bio', 'preferredFoot', 'socialMediaHandle'],
+            fields: ['position', 'image', 'bio', 'socialMediaHandle'],
             stage: 1
         },
         {
@@ -150,9 +148,7 @@ export default function CompleteSingUp() {
             data.imagename = image[0].name;
             data._id = user._id;
             await finishplayerprofile(data);
-
-
-            // navigate('/')
+            navigate('/')
         } catch (error) {
             console.log(error.message)
             setError("root", {
@@ -402,69 +398,7 @@ export default function CompleteSingUp() {
                                             animate={{x: 0, opacity: 1}}
                                             transition={{duration: 0.3, ease: 'easeInOut'}}
                                         >
-                                            <div className="mb-8">
-                                                <label
-                                                    htmlFor="height"
-                                                    className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                >
-                                                    {" "}
-                                                    Height{" "}
-                                                </label>
-                                                <input
-                                                    type="number"
 
-                                                    {...register("height")}
-                                                    name="height"
-                                                    placeholder="Enter your height in cm"
-                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                />
-
-                                                {errors.height &&
-                                                    <p className="text-danger my-2">{errors.height.message}</p>}
-                                            </div>
-                                            <div className="mb-8">
-                                                <label
-                                                    htmlFor="preferredFoot"
-                                                    className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                >
-                                                    {" "}
-                                                    Preferred Foot{" "}
-                                                </label>
-                                                <div className="flex justify-between w-full gap-4 ">
-
-                                                    <div
-                                                        className="flex items-center w-full ps-4 border border-gray-200 rounded-br-2xl dark:border-gray-700">
-                                                        <input id="bordered-radio-1" type="radio" value="Left"
-                                                               name="preferredFoot"
-                                                               {...register("preferredFoot")}
-                                                               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"/>
-                                                        <label htmlFor="bordered-radio-1"
-                                                               className="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Left</label>
-                                                    </div>
-                                                    <div
-                                                        className="flex items-center w-full ps-4 border border-gray-200 rounded-b-2xl dark:border-gray-700">
-                                                        <input id="bordered-radio-2" type="radio" value="Both"
-                                                               name="preferredFoot"
-                                                               {...register("preferredFoot")}
-                                                               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"/>
-                                                        <label htmlFor="bordered-radio-2"
-                                                               className="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Both</label>
-                                                    </div>
-                                                    <div
-                                                        className="flex items-center w-full ps-4 border border-gray-200 rounded-bl-2xl dark:border-gray-700">
-                                                        <input id="bordered-radio-3" type="radio" value="Right"
-                                                               name="preferredFoot"
-                                                               {...register("preferredFoot")}
-                                                               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"/>
-                                                        <label htmlFor="bordered-radio-3"
-                                                               className="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Right</label>
-                                                    </div>
-
-                                                </div>
-
-                                                {errors.preferredFoot &&
-                                                    <p className="text-danger my-2">{errors.preferredFoot.message}</p>}
-                                            </div>
                                             <div className="mb-8">
                                                 <label
                                                     htmlFor="position"

@@ -3,7 +3,7 @@ import {FaHeart as FullHeart, FaHeartBroken as BrokenHeart, FaRegHeart as EmptyH
 
 
 import {useEffect, useState} from "react";
-import {updateUser} from "../../../../../Services/apiUser.js";
+import {updateFollowedTeams} from "../../../../../Services/apiUser.js";
 
 
 export default function TeamsCard({team, user}) {
@@ -14,6 +14,7 @@ export default function TeamsCard({team, user}) {
 
 
     useEffect(() => {
+
         followedTeams.map((follow) => {
                 if (follow === team._id) {
                     setLiked(true);
@@ -26,7 +27,7 @@ export default function TeamsCard({team, user}) {
     const like = () => {
         followedTeams.push(team._id);
         user.followedTeams = followedTeams
-        updateUser(user).then(() => {
+        updateFollowedTeams(user).then(() => {
             console.log("Liked team :", team.name)
         })
         setLiked(true);
@@ -36,7 +37,7 @@ export default function TeamsCard({team, user}) {
     const unlike = () => {
         followedTeams.pop(team._id);
         user.followedTeams = followedTeams
-        updateUser(user).then(() => {
+        updateFollowedTeams(user).then(() => {
             console.log("Unliked team :", team.name)
         })
         setLiked(false);

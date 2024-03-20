@@ -13,7 +13,7 @@ import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
 import {useNavigate} from "react-router-dom";
 import {FaTrash as Trash} from "react-icons/fa6";
 import {MultiSelect} from 'primereact/multiselect';
-import {getAllPlayers} from "../../../../../Services/apiUser.js";
+import {getAllPlayers, sendinvitationplayers} from "../../../../../Services/apiUser.js";
 import {addSponsors} from "../../../../../Services/FrontOffice/apiSponsors.js";
 
 
@@ -36,7 +36,12 @@ const schema = yup.object().shape({
             email: yup.string().email().required()
         })
     ),
-    coaches: yup.array()
+    staff: yup.array().of(
+        yup.object({
+            staffname: yup.string().required(),
+            email: yup.string().email().required()
+        })
+    )
 });
 
 const steps = [
@@ -90,9 +95,11 @@ export default function AddTeam() {
     const [date, setDate] = useState();
 
     const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [selectedStaff, setselectedStaff] = useState([]);
 
 
     const [players, setPlayers] = useState([]);
+    const [staff, setStaff] = useState([]);
 
     useEffect(() => {
         getAllPlayers().then((response) => {
@@ -135,6 +142,8 @@ export default function AddTeam() {
 
     const [showAddPlayer, setShowAddPlayer] = useState(true);
     const [showSearchPlayer, setShowSearchPlayer] = useState(false);
+    const [showAddStaff, setshowAddStaff] = useState(true);
+    const [showSearchStaff, setshowSearchStaff] = useState(false);
 
 
     useEffect(() => {
@@ -169,6 +178,10 @@ export default function AddTeam() {
         playername: '',
         email: ''
     }
+    const Staff = {
+        staffname: '',
+        email: ''
+    }
 
     const {
         register,
@@ -181,7 +194,8 @@ export default function AddTeam() {
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            players: [Player]
+            players: [Player],
+            staff: [Staff]
         }
     })
 
@@ -196,6 +210,12 @@ export default function AddTeam() {
         control,
         name: "players"
     })
+
+    const staffTable = useFieldArray({
+        control,
+        name: "staff",
+    })
+
 
 
     const selectedCountry = watch("country", true);
@@ -219,7 +239,6 @@ export default function AddTeam() {
             });
         }
     }, [selectedState]);
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -257,41 +276,37 @@ export default function AddTeam() {
     };
 
 
-    useEffect(() => {
-        if (selectedCountry) {
-            setCites([]);
-            GetStateByCountry(selectedCountry).then((response) => {
-                setStates(response);
-            });
-        }
-    }, [selectedCountry]);
 
-    useEffect(() => {
-        if (selectedState) {
-            GetCitybyStateAndCountry(selectedCountry, selectedState).then(
-                (response) => {
-                    setCites(response);
-                }
-            );
-        }
-    }, [selectedState]);
 
     const onSubmit = async (data) => {
         try {
+
+
+            console.log(selectedPlayers)
             data.image = image[0];
             data.imagename = image[0].name;
             data.foundedIn = date;
             await schemasp.validate(sponsor);
             // Ajout de l'équipe
             const addedTeam = await addTeam(data);
-            const teamId = addedTeam.data._id; // Obtenez l'identifiant de l'équipe nouvellement ajoutée
+
+
+            //await sendinvitationplayers(selectedPlayers)
+            const teamId = addedTeam.data._id;
+
+
+
+            let InvitedUsers = {
+                "idTeam": teamId,
+                "invitedPlayers": selectedPlayers
+            }
 
             // Ajout du sponsor avec l'ID de l'équipe associée
-            const sponsorData = {...data, teamId};
-            await addSponsors(sponsorData);
+            if(showForm){
+                const sponsorData = {...data, teamId};
+                await addSponsors(sponsorData);
+            }
 
-            // Afficher les données du sponsor ajouté
-            console.log("Données du sponsor ajouté :", sponsorData);
 
             navigate("/team/all");
         } catch (error) {
@@ -796,8 +811,125 @@ export default function AddTeam() {
 
                                                 <hr className="border-2 my-2"/>
                                                 <p className="mb-12 text-base font-medium text-body-color" id="formP">
-                                                    Add your Coaches
+                                                    Add your Staff
                                                 </p>
+                                                <label className="inline-flex items-center cursor-pointer mb-2">
+                                                    <input type="checkbox"
+                                                           checked={showAddStaff}
+                                                           onChange={() => setshowAddStaff(prevState => !prevState)}
+                                                           className="sr-only peer"/>
+                                                    <div
+                                                        className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    <span
+                                                        className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Add New Staff Members</span>
+                                                </label>
+                                                {showAddStaff && (
+
+                                                    <div
+                                                        className="bg-gray-200 p-10 rounded-3xl dark:bg-blue-950 ">
+
+                                                        {staffTable.fields.map((staff, index) => {
+                                                            return (
+                                                                <>
+                                                                    <div className="-mx-4 " key={staff.id}>
+                                                                        <div
+                                                                            className="flex items-center justify-between mb-4">
+                                                                            <h1 className="bg-gray-300 rounded-3xl px-3 py-2 dark:bg-blue-600">{index}</h1>
+                                                                            <Trash size={25} className="text-red-600"
+                                                                                   onClick={() => {
+                                                                                       staffTable.remove(index)
+                                                                                   }}/>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap">
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="staffname"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Name
+                                                                                    </label>
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`staff.${index}.staffname`)}
+                                                                                            type="text"
+                                                                                            name={`staff.${index}.staffname`}
+                                                                                            placeholder="Staff Name"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+
+                                                                                        {errors.staff?.[index]?.staffname &&
+                                                                                            <p className="text-danger mb-2">{errors.staff?.[index]?.staffname?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="email"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Email
+                                                                                    </label>
+
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`staff.${index}.email`)}
+                                                                                            type="email"
+                                                                                            name={`staff.${index}.email`}
+                                                                                            placeholder="Staff Email"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+                                                                                        {errors.staff?.[index]?.email &&
+                                                                                            <p className="text-danger">{errors.staff?.[index]?.email?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                            </div>
+
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+
+                                                            )
+                                                        })}
+                                                        <button
+                                                            type="button" onClick={() => {
+                                                            staffTable.append(Staff)
+                                                        }}
+                                                            className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800">
+
+                                                    <span
+                                                        className="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
+                                                            Add
+                                                    </span>
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                <label className="inline-flex items-center cursor-pointer mt-4 mb-2">
+                                                    <input type="checkbox" value=""
+                                                           onChange={() => setshowSearchStaff(prevState => !prevState)}
+                                                           className="sr-only peer"/>
+                                                    <div
+                                                        className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    <span
+                                                        className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">                                                    Invite Existing Staff Members to your team
+                                                    </span>
+                                                </label>
+
+                                                {showSearchStaff && (
+                                                    <MultiSelect value={selectedStaff}
+                                                                 onChange={(e) => setselectedStaff(e.value)}
+                                                                 options={staff} optionLabel="name"
+                                                                 filter placeholder="Select Staff Members"
+                                                                 maxSelectedLabels={3}
+                                                                 virtualScrollerOptions={{itemSize: 40}}
+                                                                 checkboxIcon filterIcon
+                                                                 className="w-full md:w-20rem"/>
+
+                                                )}
+
 
                                             </motion.div>
                                         )}
@@ -806,9 +938,9 @@ export default function AddTeam() {
                                         {/* SPONSORSS CYRINE */}
                                         {currentStep === 3 && (
                                             <motion.div
-                                                initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
-                                                animate={{ x: 0, opacity: 1 }}
-                                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                                initial={{x: delta >= 0 ? "50%" : "-50%", opacity: 0}}
+                                                animate={{x: 0, opacity: 1}}
+                                                transition={{duration: 0.3, ease: "easeInOut"}}
                                             >
                                                 <div className="flex items-center">
                                                     <p className="mr-4 font-bold text-blue-800">
@@ -1212,8 +1344,10 @@ export default function AddTeam() {
                         </button>
                     </div>
                     {errors.root && (
-                        <div className="flex mb-4">
-                            {errors.root.message}
+                        <div id="toast-bottom-left"
+                             className="fixed bg-red-500 text-white flex items-center w-full max-w-xs p-4 space-x-4 divide-x rtl:divide-x-reverse divide-gray-200 rounded-lg shadow bottom-5 left-5 dark:text-gray-100 dark:divide-gray-700 space-x dark:bg-red-800"
+                             role="alert">
+                            <div className="text-sm font-normal">{errors.root.message}</div>
                         </div>
                     )}
                     <button type='submit'>Submit</button>

@@ -27,6 +27,17 @@ export async function addTeam(teamData) {
         }
         await axios.post(`${apiURLUser}/addplayers`, playersData);
       }
+    if(teamData.staff.length > 0){
+      let team = response.data;
+
+      const teamId = team.Team._id;
+      const staff = teamData.staff;
+      const staffData = {
+        teamId,
+        staff
+      }
+      await axios.post(`${apiURLUser}/addstaff`, staffData);
+    }
 
 
     return response.data;
@@ -113,5 +124,17 @@ export async function getTeam(teamId) {
     throw error;
   }
 }
+export async function getTeams(teamsId) {
+  try {
+    const response = await axios.post(`${apiURL}/getTeams`,teamsId);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+
+
 
 

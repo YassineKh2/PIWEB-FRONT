@@ -1,9 +1,8 @@
 import {Route, Routes} from "react-router-dom";
 import Dashboard from "./Dashboard.jsx";
 import HomeDash from "./Components/HomeDash.jsx";
-import Invitations from "./Components/Invitations.jsx";
 
-export default function RoutingDashboardPlayer() {
+export default function RoutingDashboardStaff() {
     return (
         <Routes>
             <Route
@@ -17,10 +16,6 @@ export default function RoutingDashboardPlayer() {
                 <Route
                     index
                     element={ <HomeDash /> }
-                />
-                <Route
-                    path="invitations"
-                    element={ <Invitations /> }
                 />
 
             </Route>
