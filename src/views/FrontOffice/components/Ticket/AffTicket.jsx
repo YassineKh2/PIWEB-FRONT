@@ -6,6 +6,12 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import QRCode from 'qrcode.react';
 import { loadStripe } from '@stripe/stripe-js';
+import axios from 'axios';
+
+const formatDate = (date) => {
+    const options = { day: "numeric", month: "numeric", year: "numeric" };
+    return new Date(date).toLocaleDateString(undefined, options);
+};
 
 function AffTicket() {
     const navigate = useNavigate();
@@ -23,11 +29,6 @@ function AffTicket() {
 
         fetchTicket();
     }, []);
-
-    const formatDate = (date) => {
-        const options = { day: "numeric", month: "numeric", year: "numeric" };
-        return new Date(date).toLocaleDateString(undefined, options);
-    };
 
     const handleDeleteTicket = async (reservationId) => {
         try {
@@ -54,29 +55,22 @@ function AffTicket() {
     const handlePayment = async () => {
         try {
             // Charge the Stripe.js library
-            const stripe = await loadStripe('YOUR_PUBLIC_KEY'); // Replace 'YOUR_PUBLIC_KEY' with your actual Stripe public key
+            const stripe = await loadStripe('pk_test_51OuG1RHMTmfPbZ2rJc8v3BKFGgsr01wD723Z1diicQ1qCFZ4NybLceC75F1XuqRaOmwCnkuYrm8KWWOmAUB1M7uM00KaXkEGCZ'); 
 
             // Create a payment session with Stripe
-            const session = await fetch('/create-payment-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    amount: AMOUNT_TO_PAY,
-                    // Add any other relevant data here
-                }),
-            }).then((res) => res.json());
+            const response = await axios.post('/create-checkout-session', {
+                amount: 100,
+      
+            });
 
             // Redirect to Stripe checkout page
-            await stripe.redirectToCheckout({ sessionId: session.id });
+            await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
         } catch (error) {
             console.error('Error processing payment:', error);
         }
     };
 
-    const AMOUNT_TO_PAY = 100; // Replace 100 with the actual amount to pay
-
+    // Classnames for buttons
     const modifierButtonClass = classnames(
         "duration-80",
         "cursor-pointer",

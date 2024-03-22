@@ -1,11 +1,10 @@
 import {Link, useParams} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {getMatchesByTeam, getTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
-import { getbyteam } from "../../../../../Services/FrontOffice/apiSponsors.js";
+
 export default function ShowTeam() {
     const path = "http://localhost:3000/public/images/teams/";
     const [team, setTeam] = useState({});
-    const[sponsors,setSponsors]=useState({});
     const {id} = useParams();
     const [matches, setMatches] = useState([])
 
@@ -14,7 +13,6 @@ export default function ShowTeam() {
         getTeam(id).then((response) => {
             setTeam(response.team)
         })
-    
         getMatchesByTeam(id).then((response) => {
             setMatches(response.matchList)
             console.log(response.matchList)
@@ -52,22 +50,6 @@ export default function ShowTeam() {
                         </div>
                     </div>
                 </div>
-                <div className="grid gap-1">
-    <h2 className="text-2xl font-bold">Our Sponsors</h2>
-    {sponsors.nameteam && sponsors.nameteam> 0 ? (
-        sponsors.na.map((sponsor, index) => (
-            <p key={index} className="text-gray-500 md:max-w-prose dark:text-gray-400">
-                {sponsor.name}
-            </p>
-        ))
-    ) : (
-        <p className="text-gray-500 md:max-w-prose dark:text-gray-400">No sponsors available</p>
-    )}
-</div>
-
-
-
-
 
                 <div className="flex flex-wrap items-center justify-between gap-6">
                     <div>
