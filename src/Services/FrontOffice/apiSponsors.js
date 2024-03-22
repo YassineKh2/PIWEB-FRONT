@@ -21,6 +21,16 @@ export async function getAllSponsors() {
     throw error;
   }
 }
+export async function getbyteam(nameteam) {
+  try {
+    const response = await axios.get(`${apiURL}/getbyteam/${nameteam}`);
+    console.log("Response:", response.data); 
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 export async function getbyName(name) {
   try {
     const response = await axios.get(`${apiURL}/getbyname/${name}`);
