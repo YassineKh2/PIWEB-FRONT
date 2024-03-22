@@ -5,6 +5,8 @@ import { deleteres } from "../../../../Services/FrontOffice/apiReservation";
 import classnames from "classnames";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import QRCode from 'qrcode.react';
+import { loadStripe } from '@stripe/stripe-js';
 
 function AffTicket() {
     const navigate = useNavigate();
@@ -49,8 +51,32 @@ function AffTicket() {
     const handleModifyTicket = () => {
         navigate("/upres", { state: { _id: ticket.reservation._id, nbplace: ticket.reservation.nbplace } });
     };
-    
-    
+
+    const handlePayment = async () => {
+        try {
+            // Charge the Stripe.js library
+            const stripe = await loadStripe('YOUR_PUBLIC_KEY'); // Replace 'YOUR_PUBLIC_KEY' with your actual Stripe public key
+
+            // Create a payment session with Stripe
+            const session = await fetch('/create-payment-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    amount: AMOUNT_TO_PAY,
+                    // Add any other relevant data here
+                }),
+            }).then((res) => res.json());
+
+            // Redirect to Stripe checkout page
+            await stripe.redirectToCheckout({ sessionId: session.id });
+        } catch (error) {
+            console.error('Error processing payment:', error);
+        }
+    };
+
+    const AMOUNT_TO_PAY = 100; // Replace 100 with the actual amount to pay
 
     const modifierButtonClass = classnames(
         "duration-80",
@@ -74,6 +100,7 @@ function AffTicket() {
         "hover:shadow-signUp",
         "focus-visible:shadow-none",
     );
+
     const payerButtonClass = classnames(
         "ml-7",
         "duration-80",
@@ -128,8 +155,12 @@ function AffTicket() {
                         />
                         <div>
                             <button className={modifierButtonClass} onClick={handleModifyTicket}>Modifier</button>
-                            <button className={payerButtonClass}>Payer</button>
+                            <button className={payerButtonClass} onClick={handlePayment}>Payer</button>
                         </div>
+                    </div>
+                    {/* Affichage du QR Code ici */}
+                    <div style={{ position: "absolute", top: "100px", left: "570px"}}>
+                        <QRCode value={JSON.stringify(ticket)} />
                     </div>
                 </div>
             )}

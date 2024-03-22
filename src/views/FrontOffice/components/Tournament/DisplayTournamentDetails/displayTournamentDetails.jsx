@@ -13,6 +13,7 @@ import { TbPlayFootball as Played } from "react-icons/tb";
 import { HiMagnifyingGlass as Loop } from "react-icons/hi2";
 import { BiFootball as Football } from "react-icons/bi";
 import { AiOutlineFieldTime as Active } from "react-icons/ai";
+import { useNavigate } from "react-router-dom";
 
 import {
   Match,
@@ -21,6 +22,7 @@ import {
 } from "@g-loot/react-tournament-brackets";
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
 import { Card, CardContent } from "@mui/material";
+
 import Popupcontent from "./popup";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
@@ -500,6 +502,7 @@ function DisplayAllTournaments() {
             >
               Standings
             </button>
+            
           </div>
 
           {activeTab === "matches" && (
