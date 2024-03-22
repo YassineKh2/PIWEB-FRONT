@@ -7,7 +7,44 @@ import {
   GetCountries,
   GetStateByCountry,
 } from "../../../../../Services/APis/CountryAPI";
-import { AiOutlinePicture as Picture } from "react-icons/ai";
+import * as yup from "yup";
+import {
+  addMatch,
+  deleteMatcheByTournament,
+  getTournamentMatches,
+} from "../../../../../Services/FrontOffice/apiMatch";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+const animatedComponents = makeAnimated();
+const firstStepSchema = yup.object().shape({
+  name: yup.string().required("Name is required"),
+  description: yup.string().required("Description is required"),
+  country: yup.string().required("Country is required"),
+  state: yup.string().required("State is required"),
+  city: yup.string().required("City is required"),
+});
+const secondStepSchema = yup.object().shape({
+  startDate: yup.date().required("Start Date is required"),
+  endDate: yup
+    .date()
+    .required("End Date is required")
+    .min(yup.ref("startDate"), "End Date should be after Start Date"),
+  nbTeamPartipate: yup
+    .mixed()
+    .required("Number of Teams to Participate is required"),
+  tournamentType: yup.string().required("Tournament Type is required"),
+  teams: yup
+    .array()
+    .required("Select at least one team")
+    .min(
+      yup.ref("nbTeamPartipate"),
+      "Selected Teams sould be equal to the number of the teams participating"
+    )
+    .max(
+      yup.ref("nbTeamPartipate"),
+      "Selected Teams sould be equal to the number of the teams participating"
+    ),
+});
 const steps = [
   {
     id: "Step 1",
@@ -33,6 +70,7 @@ const steps = [
 function UpdateTournament() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const [errors, setErrors] = useState({});
   const formattedStartDate = new Date(state.tournament.startDate)
     .toISOString()
     .split("T")[0];
@@ -47,7 +85,11 @@ function UpdateTournament() {
   const [Cities, setCities] = useState([]);
   const [SelectedCities, setSelectedCities] = useState("");
   const [Teams, setTeams] = useState([]);
-  const [selectedTeams, setSelectedTeams] = useState([]);
+  const [TeamsAffected, setTeamsAffected] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState(state.tournament.teams);
+  const [RealMatches, setRealMatches] = useState([]);
+  const [showComboboxKnokout, setshowComboboxKnokout] = useState(false);
+  const [showLeague, setLeague] = useState(true);
   const [Tournament, setTournament] = useState({
     _id: state.tournament._id,
     name: state.tournament.name,
@@ -55,14 +97,29 @@ function UpdateTournament() {
     startDate: state.tournament.startDate,
     endDate: state.tournament.endDate,
     location: state.tournament.location,
-    image: state.tournament.image,
     tournamentType: state.tournament.tournamentType,
     nbTeamPartipate: state.tournament.nbTeamPartipate,
     country: state.tournament.country,
     state: state.tournament.state,
     city: state.tournament.city,
+    teams: state.tournament.teams,
   });
-
+  useEffect(() => {
+    if (Tournament.tournamentType === "Knockout") {
+      setLeague(false);
+      setshowComboboxKnokout(true);
+    } else if (Tournament.tournamentType === "League") {
+      setshowComboboxKnokout(false);
+      setLeague(true);
+    }
+  }, [Tournament.tournamentType]);
+  const deleteAllMAtches = async () => {
+    try {
+      const res = await deleteMatcheByTournament(Tournament._id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
   const handlechange = (e) => {
     setTournament({ ...Tournament, [e.target.name]: e.target.value });
@@ -81,22 +138,24 @@ function UpdateTournament() {
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
   };
-  const handleTeamChange = (e) => {
-    const selectedOptions = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setSelectedTeams(selectedOptions);
-
+  const handleTeamChange = (selectedOptions) => {
+    const selectedTeamIds = selectedOptions.map((option) => option.value);
+    setSelectedTeams(selectedTeamIds);
+    console.log(selectedTeamIds);
+    setTournament({
+      ...Tournament,
+      teams: selectedTeamIds,
+    });
+    console.log(Tournament);
   };
-  useEffect(() => {
+  /*useEffect(() => {
     if (image && image.name) {
       setTournament((prevTournament) => ({
         ...prevTournament,
         image: image.name,
       }));
     }
-  }, [image]);
+  }, [image]);*/
   const handleCountryChange = (e) => {
     const { name, value } = e.target;
     if (name === "location") {
@@ -148,51 +207,116 @@ function UpdateTournament() {
   useEffect(() => {
     getTeams();
   }, []);
+  useEffect(() => {
+    const teamOptions = Tournament.teams.map((teamId) => ({
+      value: teamId,
+      label: Teams.find((team) => team._id === teamId)?.name || "Unknown Team",
+    }));
+    setTeamsAffected(teamOptions);
+  }, [Tournament.teams]);
 
   const update = async (e) => {
     e.preventDefault();
-    const fileReader = new FileReader();
-    fileReader.onloadend = function () {
-      const base64Image = fileReader.result.split(",")[1]; // Extract base64 encoded image data
-      const imageData = {
-        _id: state.tournament._id,
-        name: Tournament.name,
-        description: Tournament.description,
-        location: Tournament.location,
-        startDate: Tournament.startDate,
-        endDate: Tournament.endDate,
-        tournamentType: Tournament.tournamentType,
-        nbTeamPartipate: Tournament.nbTeamPartipate,
-        teams: selectedTeams,
-        country: Tournament.country,
-        state: Tournament.state,
-        city: Tournament.city,
-      };
-
-      const res = updateTournament(imageData)
-        .then(() => {
-          console.log("update passe");
-          navigate("/tournament/showAll");
-        })
-        .catch((error) => {
-          console.log(error.response.data.message);
-        });
+    await deleteAllMAtches();
+    setSelectedTeams(Tournament.teams);
+    const imageData = {
+      _id: state.tournament._id,
+      name: Tournament.name,
+      description: Tournament.description,
+      location: Tournament.location,
+      startDate: Tournament.startDate,
+      endDate: Tournament.endDate,
+      tournamentType: Tournament.tournamentType,
+      nbTeamPartipate: Tournament.nbTeamPartipate,
+      teams: selectedTeams,
+      country: Tournament.country,
+      state: Tournament.state,
+      city: Tournament.city,
     };
+    const numTeams = Tournament.teams.length;
+    if (Tournament.tournamentType === "League") {
+      for (let i = 0; i < numTeams; i++) {
+        for (let j = i + 1; j < numTeams; j++) {
+          const idTeam1 = selectedTeams[i];
+          const idTeam2 = selectedTeams[j];
+          const matchData = {
+            win: "",
+            loss: "",
+            matchDate: new Date(),
+            scoreTeam1: "",
+            scoreTeam2: "",
+            fixture: "",
+            idTeam1,
+            idTeam2,
+            idTournament: Tournament._id,
+          };
+          await addMatch(matchData);
+        }
+      }
+    } else if (Tournament.tournamentType === "Knockout") {
+      // Deep copy selectedTeams to avoid modifying original array
+      let remainingTeams = [...selectedTeams];
+      remainingTeams.sort(() => Math.random() - 0.5);
 
-    if (image) {
-      fileReader.readAsDataURL(image);
+      while (remainingTeams.length >= 2) {
+        const idTeam1 = remainingTeams.pop();
+        const idTeam2 = remainingTeams.pop();
+        const matchData = {
+          win: "",
+          loss: "",
+          matchDate: new Date(),
+          scoreTeam1: "",
+          scoreTeam2: "",
+          fixture: "",
+          idTeam1,
+          idTeam2,
+          idTournament: Tournament._id,
+        };
+        console.log(matchData);
+        await addMatch(matchData);
+      }
     }
+
+    const res = updateTournament(imageData)
+      .then(() => {
+        console.log("update passed");
+        navigate("/tournament/showAll");
+      })
+      .catch((error) => {
+        console.log(error.response.data.message);
+      });
   };
+
   const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const delta = currentStep - previousStep;
   const next = async () => {
-    if (currentStep < steps.length - 1) {
-      if (currentStep === steps.length - 2) {
-        // await handleSubmit(processForm)()
+    try {
+      // Validate based on the current step
+      if (currentStep === 0) {
+        await firstStepSchema.validate(Tournament, { abortEarly: false });
+      } else if (currentStep === 1) {
+        await secondStepSchema.validate(Tournament, { abortEarly: false });
       }
-      setPreviousStep(currentStep);
-      setCurrentStep((step) => step + 1);
+
+      // Proceed to the next step
+      if (currentStep < steps.length - 1) {
+        setErrors({}); // Clear previous errors
+        setPreviousStep(currentStep);
+        setCurrentStep((step) => step + 1);
+      }
+    } catch (error) {
+      // Handle validation errors
+      if (error instanceof yup.ValidationError) {
+        const validationErrors = {};
+        error.inner.forEach((err) => {
+          validationErrors[err.path] = err.message;
+        });
+        setErrors(validationErrors);
+      } else {
+        // Handle other errors
+        console.error(error);
+      }
     }
   };
 
@@ -208,7 +332,7 @@ function UpdateTournament() {
         id="contact"
         className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28"
       >
-        <form onSubmit={update}>
+        <form onSubmit={update} noValidate>
           <div className="container">
             <nav aria-label="Progress" className="mb-10">
               <ol
@@ -270,118 +394,157 @@ function UpdateTournament() {
                       {currentStep === 3 && "Add your hotels here."}
                     </p>
                     {currentStep === 0 && (
-                      <form role="form" encType="multipart/form-data">
+                      <form
+                        role="form"
+                        encType="multipart/form-data"
+                        noValidate
+                      >
                         {/* Step 1 fields */}
-                        <div className="flex mb-4 w-full">
+                        <div
+                          className={`flex w-full  ${
+                            errors.name
+                              ? "border border-red-500"
+                              : "border-body-color border-opacity-10"
+                          } ${errors.name ? "" : "mb-4"}`}
+                        >
                           <input
                             type="text"
                             name="name"
                             placeholder="Tournament Name"
-                            defaultValue={state.tournament.name}
                             onChange={(e) => handlechange(e)}
-                            className="mr-2 w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                            defaultValue={Tournament.name}
+                            className="py-3 px-6 w-full rounded-md text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
                           />
                         </div>
-                        <div className="flex mb-4 w-full">
-                          <select
-                            onChange={(e) => handleCountryChange(e)}
-                            name="location"
-                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
-                          >
-                            <option disabled selected>
-                              Select Country
-                            </option>
-                            {Countries.map((country, index) => (
-                              <option
-                                key={index}
-                                value={country.iso2}
-                                selected={
-                                  state.tournament.country === country.iso2
-                                }
-                              >
-                                {country.name}
+                        {errors.name && (
+                          <span className="text-xs text-red-500 mt-1">
+                            {errors.name}
+                          </span>
+                        )}
+                        <div className="flex w-full mb-4">
+                          <div className="flex flex-col w-full mr-4">
+                            <select
+                              onChange={(e) => handleCountryChange(e)}
+                              name="location"
+                              defaultValue={Tournament.country}
+                              className={`rounded-md border ${
+                                errors.country
+                                  ? "border-red-500"
+                                  : "border-body-color border-opacity-10"
+                              } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                            >
+                              <option disabled selected>
+                                Select Country
                               </option>
-                            ))}
-                          </select>
-                          <select
-                            onChange={(e) => handleStateChange(e)}
-                            name="state"
-                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
-                          >
-                            <option disabled selected>
-                              Select State
-                            </option>
-                            {States.map((country, index) => (
-                              <option
-                                key={index}
-                                value={country.iso2}
-                                selected={state.tournament.state === state.iso2}
-                              >
-                                {country.name}
+                              {Countries.map((country, index) => (
+                                <option key={index} value={country.iso2}>
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.country && (
+                              <span className="text-xs text-red-500 mt-1">
+                                {errors.country}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col w-full mr-4">
+                            <select
+                              onChange={(e) => handleStateChange(e)}
+                              name="state"
+                              defaultValue={Tournament.state}
+                              className={`rounded-md border ${
+                                errors.state
+                                  ? "border-red-500"
+                                  : "border-body-color border-opacity-10"
+                              } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                            >
+                              <option disabled selected>
+                                Select State
                               </option>
-                            ))}
-                          </select>
-                          <select
-                            onChange={(e) => handleCitiesChange(e)}
-                            name="citie"
-                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4"
-                          >
-                            <option disabled selected>
-                              Select City
-                            </option>
-                            {Cities.map((country, index) => (
-                              <option
-                                key={index}
-                                value={country.iso2}
-                                selected={
-                                  state.tournament.city === country.iso2
-                                }
-                              >
-                                {country.name}
+                              {States.map((country, index) => (
+                                <option key={index} value={country.iso2}>
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.state && (
+                              <span className="text-xs text-red-500 mt-1">
+                                {errors.state}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col w-full">
+                            <select
+                              onChange={(e) => handleCitiesChange(e)}
+                              name="citie"
+                              defaultValue={Tournament.city}
+                              className={`rounded-md border ${
+                                errors.city
+                                  ? "border-red-500"
+                                  : "border-body-color border-opacity-10"
+                              } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                            >
+                              <option disabled selected>
+                                Select City
                               </option>
-                            ))}
-                          </select>
+                              {Cities.map((country, index) => (
+                                <option key={index} value={country.iso2}>
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.city && (
+                              <span className="text-xs text-red-500 mt-1">
+                                {errors.city}
+                              </span>
+                            )}
+                          </div>
                         </div>
+
                         <textarea
                           name="description"
-                          defaultValue={state.tournament.description}
+                          defaultValue={Tournament.description}
                           placeholder="Tournament Description"
                           onChange={(e) => handlechange(e)}
-                          className="mb-4 w-full flex-grow rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50" // Added mb-4 for margin-bottom
+                          className={` w-full flex-grow rounded-md border ${
+                            errors.description
+                              ? "border-red-500"
+                              : "border-body-color border-opacity-10"
+                          } ${
+                            errors.description ? "" : "mb-4"
+                          } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
                         />
-                        <div className="rounded-full bg-[#EBEBE5] p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
-                          <input
-                            onChange={(e) => handleImageChange(e)}
-                            type="file"
-                            name="image"
-                            accept="image/*"
-                            id="image"
-                            className="hidden"
-                          />
-                          <label
-                            htmlFor={"image"}
-                            className="flex items-baseline justify-center"
-                          >
-                            <Picture className="text-black-2"></Picture>
-                          </label>
-                        </div>
-                        {/* Add any other fields for Step 1 */}
+                        {errors.description && (
+                          <span className="text-xs text-red-500 mt-1">
+                            {errors.description}
+                          </span>
+                        )}
                       </form>
                     )}
 
                     {currentStep === 1 && (
-                      <form role="form" encType="multipart/form-data">
+                      <form
+                        role="form"
+                        encType="multipart/form-data"
+                        noValidate
+                      >
                         {/* Step 2 fields */}
                         <div className="flex mb-4">
                           <input
                             type="date"
                             name="startDate"
-                            defaultValue={formattedStartDate}
+                            defaultValue={formattedStartDate || ""}
                             onChange={(e) =>
                               handleStartDateChange(new Date(e.target.value))
                             }
                             className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
                           />
+                          {errors.startDate && (
+                            <span className="text-red-500">
+                              {errors.startDate}
+                            </span>
+                          )}
                           <input
                             type="date"
                             name="endDate"
@@ -391,6 +554,11 @@ function UpdateTournament() {
                             }
                             className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
                           />
+                          {errors.endDate && (
+                            <span className="text-red-500">
+                              {errors.endDate}
+                            </span>
+                          )}
                         </div>
 
                         <div className="mb-4 w-full flex">
@@ -404,9 +572,8 @@ function UpdateTournament() {
                             <select
                               id="tournamentType"
                               name="tournamentType"
-                              defaultValue={state.tournament.tournamentType}
                               onChange={(e) => handlechange(e)}
-                              value={Tournament.tournamentType}
+                              defaultValue={Tournament.tournamentType}
                               className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
                             >
                               <option value="" disabled>
@@ -418,49 +585,105 @@ function UpdateTournament() {
                                 </option>
                               ))}
                             </select>
+                            {errors.tournamentType && (
+                              <span className="text-red-500">
+                                {errors.tournamentType}
+                              </span>
+                            )}
                           </div>
-                          <div>
-                            <label
-                              htmlFor="teamCount"
-                              className="text-base font-medium text-body-color"
-                            >
-                              Number of Teams
-                            </label>
-                            <input
-                              type="number"
-                              id="teamCount"
-                              defaultValue={state.tournament.nbTeamPartipate}
-                              name="nbTeamPartipate"
-                              min="4"
-                              placeholder="Enter number of teams"
-                              onChange={(e) => handlechange(e)}
-                              className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                            />
-                          </div>
+                          {showComboboxKnokout && (
+                            <div className="mr-2">
+                              {/* Render combobox specific to knockout tournament */}
+                              <label
+                                htmlFor="teamCount"
+                                className="text-base font-medium text-body-color"
+                              >
+                                Number of Teams
+                              </label>
+                              <select
+                                id="teamCount"
+                                name="nbTeamPartipate"
+                                defaultValue={Tournament.nbTeamPartipate}
+                                onChange={(e) => handlechange(e)}
+                                className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                              >
+                                {[...Array(7).keys()].map(
+                                  (index) =>
+                                    index >= 2 && ( // Exclude 0 and 1 from the options
+                                      <option
+                                        key={index}
+                                        value={Math.pow(2, index)}
+                                      >
+                                        {Math.pow(2, index)}
+                                      </option>
+                                    )
+                                )}
+                              </select>
+                            </div>
+                          )}
+
+                          {showLeague && (
+                            <div className="mr-2">
+                              {/* Render number input specific to league tournament */}
+                              <label
+                                htmlFor="teamCount"
+                                className="text-base font-medium text-body-color"
+                              >
+                                Number of Teams
+                              </label>
+                              <div className="flex items-center">
+                                <input
+                                  type="number"
+                                  id="teamCount"
+                                  name="nbTeamPartipate"
+                                  min={"4"}
+                                  step={"2"}
+                                  defaultValue={Tournament.nbTeamPartipate}
+                                  onChange={(e) => handlechange(e)}
+                                  onKeyDown={(e) => e.preventDefault()}
+                                  placeholder="Enter number of teams"
+                                  className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                                />
+                              </div>
+                              {errors.nbTeamPartipate && (
+                                <span className="text-red-500">
+                                  {errors.nbTeamPartipate}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
+
                         <div>
                           <label
                             htmlFor="teams"
                             className="text-lg font-semibold mb-2"
                           >
-                            Select Teams:
+                            Select Teams: (Optional)
                           </label>
-                          <select
-                            id="teams"
-                            name="teams"
-                            multiple
+                          <Select
+                            isMulti
+                            closeMenuOnSelect={false}
+                            components={animatedComponents}
+                            name="teams" // Change name to "teams"
                             onChange={handleTeamChange}
-                            defaultValue={selectedTeams}
-                            className="w-full p-2 border border-gray-300 rounded-md mb-5"
-                          >
-                            {Teams != null &&
-                              Teams.map((team) => (
-                                <option key={team._id} value={team._id}>
-                                  {team.name}
-                                </option>
-                              ))}
-                          </select>
+                            defaultValue={Tournament.teams.map((teamId) => ({
+                              value: teamId,
+                              label:
+                                Teams.find((team) => team._id === teamId)
+                                  ?.name || "Unknown Team",
+                            }))}
+                            options={Teams.map((team) => ({
+                              value: team._id,
+                              label: team.name,
+                            }))}
+                            className="basic-multi-select"
+                            classNamePrefix="select"
+                          />
                         </div>
+                        {errors.teams && (
+                          <span className="text-red-500">{errors.teams}</span>
+                        )}
 
                         {/* Add any other fields for Step 2 */}
                       </form>
@@ -470,17 +693,9 @@ function UpdateTournament() {
               </div>
             )}
 
-            {currentStep === 2 && (
-              <p>hello2</p>
-              /* Step 3 fields and UI */
-              /* Include form fields and validation logic */
-            )}
+            {currentStep === 2 && <p>hello2</p>}
 
-            {currentStep === 3 && (
-              <p>hello</p>
-              /* Step 4 fields and UI */
-              /* Include form fields and validation logic */
-            )}
+            {currentStep === 3 && <p>hello</p>}
 
             {/* Navigation buttons */}
             <div className="flex justify-around">

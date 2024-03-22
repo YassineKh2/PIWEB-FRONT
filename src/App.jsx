@@ -24,6 +24,10 @@ function App() {
         setShouldDisplayHeader(1);
       } else if (decodedToken.role === "A") {
         setShouldDisplayHeader(2);
+      } else if (decodedToken.role === "TRM") {
+        setShouldDisplayHeader(3);
+      } else if (decodedToken.role === "TM") {
+        setShouldDisplayHeader(4);
       }
     }
   }, []);
@@ -33,11 +37,25 @@ function App() {
       {shouldDisplayHeader === 0 && (
         <Providers>
           <Header />
-          <PublicRoutes />)
+          <PublicRoutes />
           <Footer />
         </Providers>
       )}
       {shouldDisplayHeader === 1 && (
+        <Providers>
+          <Header />
+          <RoutesPath />
+          <Footer />
+        </Providers>
+      )}
+      {shouldDisplayHeader === 3 && (
+        <Providers>
+          <Header />
+          <RoutesPath />
+          <Footer />
+        </Providers>
+      )}
+      {shouldDisplayHeader === 4 && (
         <Providers>
           <Header />
           <RoutesPath />
