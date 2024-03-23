@@ -7,7 +7,7 @@ import {getTeam} from "../../../../../../Services/FrontOffice/apiTeam.js";
 export default function Invitations() {
 
     const path = "http://localhost:3000/public/images/teams"
-    const [player, setplayer] = useState({});
+    const [staff, setstaff] = useState({});
     const [teams, setTeams] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showAcceptModal, setshowAcceptModal] = useState(false);
@@ -23,7 +23,7 @@ export default function Invitations() {
             const decodedToken = jwtDecode(userToken);
             let Teams = [];
             getUserData(decodedToken.userId).then((response) => {
-                setplayer(response.user)
+                setstaff(response.user)
                 setTeams(response.user.teamInvitations)
 
                 response.user.teamInvitations.map((teamInvitation) => {
@@ -50,22 +50,22 @@ export default function Invitations() {
 
 
     function acceptTeam(team) {
-        if (player.PlayingFor) {
+        if (staff.PlayingFor) {
             setshowAcceptModal(true)
             return;
         }
 
-        let updatedPlayer = player;
+        let updatedStaff = staff;
 
 
-        updatedPlayer.PlayingFor = team.idTeam
-        updatedPlayer.previousTeam = player.PlayingFor
+        updatedStaff.PlayingFor = team.idTeam
+        updatedStaff.previousTeam = staff.PlayingFor
 
         const index = teams.findIndex(t => t.team === team.team);
         if (index !== -1) {
             teams.splice(index, 1);
         }
-        updatePlayersCurrentTeam(updatedPlayer).then((response) => {
+        updatePlayersCurrentTeam(updatedStaff).then((response) => {
             console.log(response)
             setTeams([...teams]);
         })
@@ -80,7 +80,7 @@ export default function Invitations() {
             setTeams([...teams]);
         }
         let data = {
-            player: player._id,
+            staff: staff._id,
             team: team.idTeam
         }
         declineTeamRequest(data).then((response) => {

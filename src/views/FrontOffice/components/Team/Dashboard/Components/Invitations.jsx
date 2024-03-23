@@ -1,14 +1,16 @@
-import {useEffect, useState} from "react";
+import {Fragment, useEffect, useState} from "react";
 import {jwtDecode} from "jwt-decode";
-import {declineTeamRequest, getUserData, updatePlayersCurrentTeam} from "../../../../../../Services/apiUser.js";
-import {getTeam} from "../../../../../../Services/FrontOffice/apiTeam.js";
+import {getUserData} from "../../../../../../Services/apiUser.js";
+import {getTeam, updateTeam} from "../../../../../../Services/FrontOffice/apiTeam.js";
+import {getTournamentDetails} from "../../../../../../Services/FrontOffice/apiTournament.js";
 
 
 export default function Invitations() {
 
-    const path = "http://localhost:3000/public/images/teams"
-    const [player, setplayer] = useState({});
-    const [teams, setTeams] = useState([]);
+    const path = "http://localhost:3000/public/images/tournaments"
+    const [teamManager, setteamManager] = useState({});
+    const [team, setTeam] = useState({});
+    const [tournaments, setTournaments] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [showAcceptModal, setshowAcceptModal] = useState(false);
     const [showAcceptConfirm, setshowAcceptConfirm] = useState(false);
@@ -21,20 +23,21 @@ export default function Invitations() {
 
             const userToken = localStorage.getItem('token');
             const decodedToken = jwtDecode(userToken);
-            let Teams = [];
             getUserData(decodedToken.userId).then((response) => {
-                setplayer(response.user)
-                setTeams(response.user.teamInvitations)
-
-                response.user.teamInvitations.map((teamInvitation) => {
-                    getTeam(teamInvitation.team).then((response) => {
-                        Teams.push({
-                            team: response.team.name,
-                            idTeam: response.team._id,
-                            state: teamInvitation.state,
-                            date: teamInvitation.date
+                setteamManager(response.user)
+                getTeam(response.user.PlayingFor).then((response) => {
+                    setTeam(response.team)
+                    let Tournaments = []
+                    response.team.tournamentInvitations.map((tournamentInvitation) => {
+                        getTournamentDetails(tournamentInvitation.tournament).then((response) => {
+                            Tournaments.push({
+                                tournament: response.tournaments.name,
+                                idTournament: response.tournaments._id,
+                                state: tournamentInvitation.state,
+                                date: tournamentInvitation.date
+                            })
+                            setTournaments(Tournaments)
                         })
-                        setTeams(Teams)
                     })
                 })
 
@@ -49,41 +52,37 @@ export default function Invitations() {
     }, [])
 
 
-    function acceptTeam(team) {
-        if (player.PlayingFor) {
-            setshowAcceptModal(true)
-            return;
-        }
-
-        let updatedPlayer = player;
-
-
-        updatedPlayer.PlayingFor = team.idTeam
-        updatedPlayer.previousTeam = player.PlayingFor
-
-        const index = teams.findIndex(t => t.team === team.team);
+    function acceptTournament(tournament) {
+        const index = tournaments.findIndex(t => t.tournament === tournament.tournament);
         if (index !== -1) {
-            teams.splice(index, 1);
+            tournaments.splice(index, 1);
+            setTournaments([...tournaments]);
         }
-        updatePlayersCurrentTeam(updatedPlayer).then((response) => {
-            console.log(response)
-            setTeams([...teams]);
+
+        let data = {
+            ...team,
+            tournaments: [...team.tournaments, tournament.idTournament],
+            tournamentInvitations: tournaments
+        }
+
+        updateTeam(data).then(() => {
+            setTeam([data]);
         })
 
 
     }
 
-    function declineTeam(team) {
-        const index = teams.findIndex(t => t.team === team.team);
+    function declineTournament(tournament) {
+        const index = tournaments.findIndex(t => t.tournament === tournament.tournament);
         if (index !== -1) {
-            teams.splice(index, 1);
-            setTeams([...teams]);
+            tournaments.splice(index, 1);
+            setTournaments([...tournaments]);
         }
         let data = {
-            player: player._id,
-            team: team.idTeam
+            ...team,
+            tournamentInvitations: tournaments
         }
-        declineTeamRequest(data).then((response) => {
+        updateTeam(data).then((response) => {
             console.log(response)
         })
     }
@@ -98,11 +97,11 @@ export default function Invitations() {
     return (
         <>
 
-            {teams && teams.length === 0 ?
+            {tournaments && tournaments.length === 0 ?
                 <div className="flex flex-col items-center gap-4">
                     <h1 className="text-2xl text-semibold ">You will find your invitations here </h1>
                     <svg className="w-3/6" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1"
-                         viewBox="0 0 647.63626 632.17383" xmlns:xlink="http://www.w3.org/1999/xlink">
+                         viewBox="0 0 647.63626 632.17383" xmlnsXlink="http://www.w3.org/1999/xlink">
                         <path
                             d="M687.3279,276.08691H512.81813a15.01828,15.01828,0,0,0-15,15v387.85l-2,.61005-42.81006,13.11a8.00676,8.00676,0,0,1-9.98974-5.31L315.678,271.39691a8.00313,8.00313,0,0,1,5.31006-9.99l65.97022-20.2,191.25-58.54,65.96972-20.2a7.98927,7.98927,0,0,1,9.99024,5.3l32.5498,106.32Z"
                             transform="translate(-276.18187 -133.91309)" fill="#f2f2f2"/>
@@ -146,87 +145,24 @@ export default function Invitations() {
                         </tr>
                         </thead>
                         <tbody>
-                        {teams.map((team, index) => (
-                                <>
-                                    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700" key={index}>
+                        {tournaments.map((tournament, index) => (
+                                <Fragment key={index}>
+                                    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                         <th scope="row"
                                             className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                            {team.team}
+                                            {tournament.tournament}
                                         </th>
                                         <th scope="row"
                                             className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                            {transformDate(team.date)}
+                                            {transformDate(tournament.date)}
                                         </th>
                                         <td className="px-6 py-4 flex items-center justify-between">
-                                            <p>{team.state}</p>
+                                            <p>{tournament.state}</p>
                                             <div>
                                                 <button type="button"
-                                                        onClick={() => setshowAcceptConfirm(true)}
+                                                        onClick={() => acceptTournament(tournament)}
                                                         className="text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Accept
                                                 </button>
-                                                {showAcceptConfirm ? (
-                                                    <>
-                                                        <div
-                                                            className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
-                                                        >
-                                                            <div className="relative w-auto my-6 mx-auto max-w-sm">
-                                                                {/*content*/}
-                                                                <div
-                                                                    className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                                                                    {/*header*/}
-                                                                    <div
-                                                                        className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                                                                        <h3 className="text-3xl font-semibold">
-                                                                            Accept Invitation
-                                                                        </h3>
-                                                                        <button
-                                                                            className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                                                                            onClick={() => setshowAcceptConfirm(false)}
-                                                                        >
-                                                                         <span
-                                                                             className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
-                                                                            ×
-                                                                             </span>
-                                                                        </button>
-                                                                    </div>
-                                                                    {/*body*/}
-                                                                    <div className="relative p-6 flex-auto">
-                                                                        <p className="my-4 text-blueGray-500 text-lg leading-relaxed">
-                                                                            You're going
-                                                                            to <strong> Accept </strong> team's <strong>{team.team} </strong>
-                                                                            invitation are
-                                                                            you
-                                                                            sure?
-                                                                        </p>
-                                                                    </div>
-                                                                    {/*footer*/}
-                                                                    <div
-                                                                        className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                                                                        <button
-                                                                            className="text-gray-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                                                                            type="button"
-                                                                            onClick={() => setshowAcceptConfirm(false)}
-                                                                        >
-                                                                            Close
-                                                                        </button>
-                                                                        <button
-                                                                            className="bg-emerald-700 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setshowAcceptConfirm(false)
-                                                                                acceptTeam(team)
-                                                                            }}
-                                                                        >
-                                                                                Accept
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-                                                    </>
-                                                ) : null}
-
                                                 {showAcceptModal ? (
                                                     <>
                                                         <div
@@ -255,7 +191,7 @@ export default function Invitations() {
                                                                     {/*body*/}
                                                                     <div className="relative p-6 flex-auto">
                                                                         <p className="my-4 text-blueGray-500 text-lg leading-relaxed">
-                                                                          You're already part of a team
+                                                                            You&apos;re already part of a team
                                                                         </p>
                                                                     </div>
                                                                     {/*footer*/}
@@ -309,8 +245,9 @@ export default function Invitations() {
                                                                     {/*body*/}
                                                                     <div className="relative p-6 flex-auto">
                                                                         <p className="my-4 text-blueGray-500 text-lg leading-relaxed">
-                                                                            You're going to decline the invitation
-                                                                            from <strong>{team.team} </strong>team, are you
+                                                                            You&apos;re going to decline the invitation
+                                                                            from <strong>{tournament.tournament} </strong>team,
+                                                                            are you
                                                                             sure?
                                                                         </p>
                                                                     </div>
@@ -329,7 +266,7 @@ export default function Invitations() {
                                                                             type="button"
                                                                             onClick={() => {
                                                                                 setShowModal(false)
-                                                                                declineTeam(team)
+                                                                                declineTournament(tournament)
                                                                             }}
                                                                         >
                                                                             Delete
@@ -345,7 +282,7 @@ export default function Invitations() {
                                             </div>
                                         </td>
                                     </tr>
-                                </>
+                                </Fragment>
                             )
                         )}
 

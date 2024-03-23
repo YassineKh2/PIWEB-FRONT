@@ -11,7 +11,7 @@ import AddTournament from "./views/FrontOffice/components/Tournament/AddTourname
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails
     from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
-import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
+
 import AddReservation from "./views/FrontOffice/components/Reservation/AddReservation.jsx";
 import AddSponsors from "./views/FrontOffice/components/Sponsors/AddSponsors.jsx";
 import AllReservation from "./views/BackOffice/components/Reservation/AllReservation.jsx"
@@ -22,6 +22,7 @@ import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
 import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
+import RoutingStaff from "./views/FrontOffice/components/Staff/RoutingStaff.jsx";
 
 import RoutingUsers from "./views/FrontOffice/components/User/profile/profile.jsx"
 import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
@@ -84,15 +85,26 @@ function RoutesPath() {
                         </>
                     }
                 />
-
                 <Route
-                    path="player/*"
+                    path="staff/*"
                     element={
                         <>
-                            <RoutingPlayers/>
+                            <RoutingStaff/>
                         </>
                     }
                 />
+
+
+                <Route element={<RequireAuth allowedRoles={['P']}/>}>
+                    <Route
+                        path="player/*"
+                        element={
+                            <>
+                                <RoutingPlayers/>
+                            </>
+                        }
+                    />
+                </Route>
 
                 <Route
                     path="hotels/*"

@@ -1,7 +1,7 @@
 import {Route, Routes} from "react-router-dom";
 import RoutingDashboardStaff from "./Dashboard/RoutingDashboardStaff.jsx";
-import CompleteSingUp from "./AddPlayer/CompleteSingUp.jsx";
-import ProfilePlayer from "./Profile/PlayerProfile.jsx";
+import CompleteSingUp from "./AddStaff/CompleteSingUp.jsx";
+
 
 export default function RoutingPlayers() {
 
@@ -23,14 +23,7 @@ export default function RoutingPlayers() {
                     </>
                 }
             />
-            <Route
-                path="profile/:id"
-                element={
-                    <>
-                        <ProfileStaff />
-                    </>
-                }
-            />
+
 
 
         </Routes>

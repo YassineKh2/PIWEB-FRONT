@@ -194,4 +194,51 @@ export async function getTopPlayers(teamId) {
     }
 }
 
+export async function declineTeamRequest(data) {
+    try {
+        const response = await axios.post(`${BASE_URL}/declineRequest`,data);
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
+export async function updatePlayersCurrentTeam(player) {
+    try {
+        const response = await axios.post(`${BASE_URL}/updatePlayersCurrentTeam`,player);
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
+export async function updatePlayerImage(userData) {
+    try {
+        const response = await axios.put(`${BASE_URL}/updateplayerimage`, userData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+export async function updateStaffImage(userData) {
+    try {
+        const response = await axios.put(`${BASE_URL}/updatestaffimage`, userData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+
 
