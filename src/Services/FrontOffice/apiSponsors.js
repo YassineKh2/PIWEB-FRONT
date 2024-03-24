@@ -11,7 +11,27 @@ export async function addSponsors(spData) {
     throw error;
   }
 }
+export async function updateSp(id, newData) {
+  try {
+    const response = await axios.put(`${apiURL}/update/${id}`, newData); 
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 
+
+export async function deleteSp(id) {
+  try {
+    const response = await axios.delete(`${apiURL}/delete/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
 export async function getAllSponsors() {
   try {
     const response = await axios.get(`${apiURL}/getallsp`);

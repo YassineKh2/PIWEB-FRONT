@@ -51,6 +51,7 @@ export async function getTournamentDetails(id) {
     throw error;
   }
 }
+
 export async function getTournamentsByUser(idUser) {
   try {
     const response = await axios.get(`${apiURL}/gettournamentbyuser/${idUser}`);
@@ -61,3 +62,4 @@ export async function getTournamentsByUser(idUser) {
   }
 }
 export default {getTournamentDetails};
+

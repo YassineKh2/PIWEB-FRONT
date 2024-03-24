@@ -1,9 +1,18 @@
-import React, { useState } from "react";
-import { signin } from "../../../../../Services/apiUser"; // Import the signin function
+import React, { useState } from 'react';
+import { signin }  from "../../../../../Services/apiUser"; // Import the signin function
 import { useNavigate } from "react-router-dom";
-
 import Swal from 'sweetalert2';
 
+
+
+
+function SigninPage() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+ 
+  
 
 function SigninPage() {
   const navigate = useNavigate();
@@ -18,9 +27,19 @@ function SigninPage() {
       const userData = { email, password };
       const response = await signin(userData);
 
+      
+     
       if (response.token) {
-        localStorage.setItem("token", response.token);
+       
+        localStorage.setItem('token', response.token);
 
+
+        
+        if (response.user.role === 'A') {
+        
+          navigate('/backoffice', { replace: true });
+        } else if (response.user.role !== 'A') {
+          navigate('/profile');
 
         if (response.user.role === "A") {
           navigate("/backoffice", { replace: true });
@@ -28,11 +47,25 @@ function SigninPage() {
         } else if (response.user.role !== "A") {
           navigate("/profile");
 
+
           //console.log(localStorage);
         }
       } else {
+        
         setError("Token not found");
       }
+
+
+    }  catch (error) {
+      // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
+      const errorMessage = error.response?.data?.error;
+  
+      // Afficher l'alerte spécifique si le compte est bloqué
+      if (errorMessage === 'Votre compte est bloqué') {
+        Swal.fire({
+          icon: 'error',
+          title: 'Compte Bloqué',
+          text: 'Votre compte est bloqué. Veuillez contacter le support pour plus d\'informations.',
 
 
     } catch (error) {
@@ -46,17 +79,18 @@ function SigninPage() {
           title: "Compte Bloqué",
           text: "Votre compte est bloqué. Veuillez contacter le support pour plus d'informations.",
 
+
         });
       } else {
         // Gérer d'autres types d'erreurs ici
         Swal.fire({
-
           icon: 'error',
           title: 'Sorry!',
           text: errorMessage || 'This Account is banned',
         });
       }
   
+
 
           
       }
@@ -66,6 +100,7 @@ function SigninPage() {
       console.error("Sign-in error:", errorMessage);
     }
   
+
 
   return (
     <>
@@ -278,6 +313,7 @@ function SigninPage() {
       </section>
     </>
   );
-}
+
+};
 
 export default SigninPage;

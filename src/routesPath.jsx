@@ -29,6 +29,33 @@ import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
+
+import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
+function RoutesPath() {
+  return (
+    <div>
+      <Routes>
+        <Route path="/signin" element={<SigninPage />} />
+        <Route path="/signup" element={<UserOptions />} />
+        <Route path="/signupu" element ={<SignupPage/>} />
+        <Route path="/signupTM" element={<SignupPageTM/>} />
+        <Route path="/signupTRM" element ={<SignupPageTRM/>} />
+        <Route path="/updateProfile" element ={<UpdateProfile/>}/>
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/addTournament" element={<AddTournament />} />
+        <Route path="/getAllTournament" element={<DisplayAllTournaments />} />
+        <Route path="/tournamentDetails/:id" element={<DisplayTournamentDetails />} />
+        <Route path="/addReservation" element={<AddReservation />} />
+        <Route path="/addsp" element={<AddSponsors/>} />
+        <Route path="/allReservation" element={<AllReservation/>} />
+        <Route path="/allSponsors" element={<AllSponsors/>} />
+        <Route path="/BTicket" element={<BTicket/>} />
+        <Route path="/ticket" element={<AffTicket/>}/>
+        <Route path="/upres" element={<UpReservation/>}/>
+        <Route path="/upsp" element={<UpdateSponsors/>}/>
+
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
 function RoutesPath() {
@@ -105,6 +132,7 @@ function RoutesPath() {
                 />
 
                 <Route path="/" element={<Home/>}/>
+
 
                 <Route element={<RequireAuth allowedRoles={['A']}/>}>
                     <Route path="backoffice" element={<RoutingBackOffice/>}/>
