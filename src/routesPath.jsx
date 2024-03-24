@@ -26,6 +26,7 @@ import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
+import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -49,6 +50,7 @@ function RoutesPath() {
         <Route path="/BTicket" element={<BTicket/>} />
         <Route path="/ticket" element={<AffTicket/>}/>
         <Route path="/upres" element={<UpReservation/>}/>
+        <Route path="/upsp" element={<UpdateSponsors/>}/>
 
         <Route path="/team" element={<AddTeam />} />
         <Route path="signin" element={<SigninPage />} />
