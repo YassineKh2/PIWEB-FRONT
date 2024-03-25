@@ -11,14 +11,17 @@ import {jwtDecode} from "jwt-decode";
 
 function App() {
     const location = useLocation();
-    const [shouldDisplayHeader, setShouldDisplayHeader] = useState(false);
+    const [shouldDisplayHeader, setShouldDisplayHeader] = useState(true);
 
     useEffect(() => {
         const userToken = localStorage.getItem('token');
+        if(userToken!= null)
+        {
         const decodedToken = jwtDecode(userToken);
 
         if(decodedToken.role !== "A"){
             setShouldDisplayHeader(true);
+        }
         }
 
 

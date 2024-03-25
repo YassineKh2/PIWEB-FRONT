@@ -20,6 +20,8 @@ import DefaultLayout from "./DefaultLayout.jsx";
 import RoutingTeamsBack from "./components/Team/RoutingTeamsBack.jsx";
 //import RoutingUsersBack from "./components/User/DisplayUser/displayUser.jsx";
 import RoutingUsersBack from "./components/User/RoutingUser.jsx";
+import RoutingReclamation from "./components/Reclamation/RoutingReclamation.jsx";
+import RoutingAvis from "./components/Avis/RoutingAvis.jsx";
 
 export default function RoutingBackOffice() {
     const [loading, setLoading] = useState(true);
@@ -142,6 +144,26 @@ export default function RoutingBackOffice() {
                             </>
                         }
                     />
+                    <Route
+                        path="reclamation/*"
+                        element={
+                            <>
+                                <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                <RoutingReclamation/>
+                            </>
+                        }
+                    />
+
+                    <Route
+                        path="avis/*"
+                        element={
+                            <>
+                                <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                <RoutingAvis/>
+                            </>
+                        }
+                    />
+
                     <Route
                         path="chart"
                         element={

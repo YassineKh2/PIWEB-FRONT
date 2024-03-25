@@ -7,6 +7,7 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
+import {jwtDecode} from "jwt-decode";
 import {
   Score,
   Side,
@@ -24,6 +25,8 @@ import {
   SingleEliminationBracket,
 } from "@g-loot/react-tournament-brackets";
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
+import { getAvisByTournament, addAvis, updateAvis } from "../../../../../Services/FrontOffice/apiAvis";
+
 
 function DisplayAllTournaments() {
   const { id } = useParams();
@@ -32,6 +35,12 @@ function DisplayAllTournaments() {
   const [RealTeams, setRealTeams] = useState([]);
   const [Matches, setMatches] = useState([]);
   const [refresh, setRefresh] = useState(false);
+  const [Avis, setAvis] = useState([]);
+  const [newAvis, setNewAvis] = useState("");
+  const [rating, setRating] = useState(0);
+  const userToken = localStorage.getItem('token');
+  //const currentUser = userToken ? jwtDecode(userToken) : null;
+  const currentUser = {_id:"65f380284f0fdef2191b85f0"};
 
   const getTournamentDetail = async () => {
     try {
@@ -172,6 +181,62 @@ function DisplayAllTournaments() {
   };
 
   const [Stats, setStats] = useState(initializeStats);
+
+  /* Avis */
+  useEffect(() => {
+    getAvisForTournament(id);
+  }, [id]);
+
+  const getAvisForTournament = async (tournamentId) => {
+    try {
+      const res = await getAvisByTournament(tournamentId);
+      setAvis(res.avis);
+    } catch (error) {
+      console.error("Error fetching avis for tournament:", error);
+    }
+  };
+
+  function StarRating({ value, onClick }) {
+    const stars = ['1', '2', '3', '4', '5'];
+    
+    return (
+      <div className="flex mb-2">
+        {stars.map((star) => (
+          <span
+            key={star}
+            className={`hover:text-yellow cursor-pointer ${
+              value >= star ? 'text-yellow' : 'text-gray-400'
+            }`}
+            onClick={() => onClick(`${star}`)}
+            style={{ fontSize: '1.5rem' }} // Adjust font size here
+          >
+            &#9733;
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  // Function to handle adding or updating avis
+  const handleAvisSubmit = async () => {
+    try {
+      if (!newAvis.trim() || !rating.trim()) return; // Don't add empty avis or rating
+      // Check if user already has an avis, if so update it
+      const userAvis = Avis.find(avis => avis.user._id === currentUser._id);
+      if (userAvis) {
+        await updateAvis(userAvis._id, { comment: newAvis, rating : rating , user : currentUser._id , tournament: id});
+      } else {
+        await addAvis({ tournament: id, comment: newAvis, rating : rating , user : currentUser._id });
+      }
+      // Refresh avis after adding/updating
+      getAvisForTournament(id);
+      setNewAvis(""); // Clear the input field
+      setRating(""); // Clear the rating field
+    } catch (error) {
+      console.error("Error adding/updating avis:", error);
+    }
+  };
+     /* Avis */
   return (
     <div className="mt-26 mb-20 ml-100">
       {Tournament.tournamentType === "League" && (
@@ -393,9 +458,75 @@ function DisplayAllTournaments() {
               })
             }
           />
+
+            {/* Avis section */}
+      <div className=" mt-8">
+        <h2 className="text-lg font-semibold mb-2">Avis</h2>
+        <div className="comments-section">
+          {/* Display existing avis */}
+          <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+          {Avis.map((avisItem, index) => (
+  <div key={index} className="w-full">
+    <div className="wow fadeInUp rounded-md bg-white p-8 shadow-one dark:bg-[#1D2144] lg:px-5 xl:px-8" data-wow-delay=".1s">
+      <div className="mb-5 flex items-center space-x-1">
+        {/* Rating stars */}
+        {[...Array(avisItem.rating)].map((_, i) => (
+          <span key={i} className="text-yellow">
+            <svg width="18" height="16" viewBox="0 0 18 16" className="fill-current">
+              <path d="M9.09815 0.361679L11.1054 6.06601H17.601L12.3459 9.59149L14.3532 15.2958L9.09815 11.7703L3.84309 15.2958L5.85035 9.59149L0.595291 6.06601H7.0909L9.09815 0.361679Z"></path>
+            </svg>
+          </span>
+        ))}
+      </div>
+      <p className="mb-8 border-b border-body-color border-opacity-10 pb-8 text-base leading-relaxed text-body-color dark:border-white dark:border-opacity-10 dark:text-white">
+        {avisItem.comment}
+      </p>
+      <div className="flex items-center">
+        <div className="relative mr-4 h-[30px] w-full max-w-[30px] overflow-hidden rounded-full">
+          <img src='https://static.vecteezy.com/system/resources/thumbnails/020/765/399/small/default-profile-account-unknown-icon-black-silhouette-free-vector.jpg' alt={avisItem.user.email} />
+        </div>
+        <div className="w-full">
+          <h5 className="mb-1 text-lg font-semibold text-dark dark:text-white lg:text-base xl:text-lg">{avisItem.user.firstName+' '+avisItem.user.lastName}</h5>
+          {/* Assuming avisItem.user.role contains the role */}
+          <p className="text-sm text-body-color">{`Contact :${avisItem.user.email}`}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+))}
+</div>
+          {/* Add new avis */}
+          {currentUser && (
+  <div className="mx-4 mt-8 flex flex-wrap">
+  <div className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]" data-wow-delay=".15s">
+    <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">Submit Your Avis</h2>
+    <p className="mb-12 text-base font-medium text-body-color">Share your experience with us.</p>
+    {/* Container to center the form */}
+    <div className="flex justify-center items-center">
+      <div className="-mx-4 flex flex-wrap w-full">
+        <textarea
+          value={newAvis}
+          onChange={(e) => setNewAvis(e.target.value)}
+          placeholder="Add your avis..."
+          rows={5}
+          className="w-full resize-none rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp mb-8"
+        />
+        <StarRating value={rating} onClick={setRating} />
+        <div className="flex justify-end w-full pr-4">
+          <button onClick={handleAvisSubmit} className="rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">Post Avis</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+)}
+        </div>
+      </div>
+
         </>
       )}
     </div>
+    
   );
 }
 
