@@ -3,6 +3,9 @@ import {useEffect, useState} from "react";
 import {getMatchesByTeam, getTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import {getTopPlayers} from "../../../../../Services/apiUser.js";
 import { FaTrophy  as Trophy} from "react-icons/fa";
+import classnames from "classnames";
+import { useNavigate } from "react-router-dom";
+
 
 export default function ShowTeam() {
     const path = "http://localhost:3000/public/images/teams/";
@@ -11,7 +14,7 @@ export default function ShowTeam() {
     const {id} = useParams();
     const [matches, setMatches] = useState([])
     const [trophies, setTrophies] = useState([])
-
+    const navigate = useNavigate();
 
     const positionMapping = {
         "AM": "Attacking Midfielder",
@@ -56,6 +59,45 @@ export default function ShowTeam() {
         }
     }, [team]);
 
+    const modifierButtonClass = classnames(
+        "duration-50",
+        "cursor-pointer",
+        "rounded-md",
+        "border",
+        "border-transparent",
+        "bg-blue-500",
+        "py-1",
+        "px-4",
+        "sm:py-1",
+        "sm:px-2",
+        "text-center",
+        "text-base",
+        "font-smal",
+        "text-white",
+        "outline-none",
+        "transition",
+        "ease-in-out",
+        "hover:bg-opacity-80",
+        "hover:shadow-signUp",
+        "focus-visible:shadow-none",
+        "absolute", // Position absolue pour le positionnement précis
+        "top-44", // Marge en bas de 4 unités
+        "right-3", // Ajout de la classe pour aligner à droite
+    );
+    const handleModifySponsors = () => {
+        navigate("/upsp", {
+            state: {
+                _id: team.sponsors[0]._id,
+                name: team.sponsors[0].name,
+                description: team.sponsors[0].description,
+                contact: team.sponsors[0].contact,
+                adresse: team.sponsors[0].adresse
+            }
+        });
+    };
+    
+      
+      
     function transformDate(date) {
         const dateObj = new Date(date);
         const options = {year: 'numeric', month: 'long', day: 'numeric'};
@@ -87,6 +129,33 @@ export default function ShowTeam() {
                         </div>
                     </div>
                 </div>
+                <div className="absolute top-50 right-70" >
+                {team?.sponsors && team.sponsors.length > 0 && (
+                <div className="grid gap-4">
+                    <div className="grid gap-1">
+                        <h2 className="text-2xl font-bold">Our Sponsors</h2>
+                        {team.sponsors.map((sponsor, index) => (
+                            <div key={index} className="flex flex-col gap-2">
+                                <h3 className="text-lg font-semibold">{sponsor.name}</h3>
+                                <p className="text-gray-500 md:max-w-prose dark:text-gray-400">
+                                    Description: {sponsor.description}
+                                </p>
+                             
+                                <p className="text-gray-500 md:max-w-prose dark:text-gray-400">
+                                    Contact: {sponsor.contact}
+                                </p>
+                                <p className="text-gray-500 md:max-w-prose dark:text-gray-400">
+                                    Address: {sponsor.adresse}
+                                </p>
+                            </div>
+                        ))}  </div>
+                        </div>
+                    )}
+{team?.sponsors && team.sponsors.length > 0 && (
+    <button className={modifierButtonClass} onClick={handleModifySponsors}>Update</button>
+)}
+
+ </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-6">
                     <div>

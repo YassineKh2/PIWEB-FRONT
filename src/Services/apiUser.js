@@ -123,6 +123,14 @@ export async function getAllPlayers() {
         throw error.response.data;
     }
 }
+export async function getAllStaff() {
+    try {
+        const response = await axios.get(`${BASE_URL}/getAllStaff`);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
 
 
 export async function blockUser(userId) {

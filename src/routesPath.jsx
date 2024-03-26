@@ -32,6 +32,8 @@ import UpdateProfile from "./views/FrontOffice/components/User/profile/updatePro
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
+import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
+
 function RoutesPath() {
     return (
         <div>
@@ -114,6 +116,7 @@ function RoutesPath() {
                 />
 
                 <Route path="/" element={<Home/>}/>
+
 
                 <Route element={<RequireAuth allowedRoles={['A']}/>}>
                     <Route path="backoffice" element={<RoutingBackOffice/>}/>
