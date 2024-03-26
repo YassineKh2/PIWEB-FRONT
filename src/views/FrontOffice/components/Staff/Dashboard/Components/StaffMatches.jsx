@@ -5,10 +5,10 @@ import {getUserData} from "../../../../../../Services/apiUser.js";
 import {Dropdown} from 'primereact/dropdown';
 
 
-export default function Matches() {
+export default function PlayerMatches() {
     const [matches, setMatches] = useState([])
     const [FilterdMatches, setFilteredMatches] = useState([])
-    const [teamManager, setteamManager] = useState({})
+    const [player, setplayer] = useState({})
     const [searchTerm, setsearchTerm] = useState("")
 
     const [filteroptions, setfilteroptions] = useState(null);
@@ -28,7 +28,7 @@ export default function Matches() {
             const userToken = localStorage.getItem('token');
             const decodedToken = jwtDecode(userToken);
             getUserData(decodedToken.userId).then((response) => {
-                setteamManager(response.user)
+                setplayer(response.user)
             })
         } catch (e) {
             console.log(e.message)
@@ -45,11 +45,11 @@ export default function Matches() {
 
 
     useEffect(() => {
-        getMatchesByTeam(teamManager.PlayingFor).then((response) => {
+        getMatchesByTeam(player.PlayingFor).then((response) => {
             setMatches(response.matchList)
             setFilteredMatches(response.matchList)
         });
-    }, [teamManager]);
+    }, [player]);
 
 
     useEffect(() => {
@@ -110,16 +110,16 @@ export default function Matches() {
         setFilteredMatches(
             matches.filter((match) => {
                     let enemyTeamName = ""
-                    if (match.team1._id === teamManager.PlayingFor)
+                    if (match.team1._id === player.PlayingFor)
                         enemyTeamName = match.team2.name
                     else
                         enemyTeamName = match.team1.name
 
-                    return(
-                        enemyTeamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        match.tournament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        transformDate(match.matchDate).toLowerCase().includes(searchTerm.toLowerCase())
-                    )
+            return(
+                    enemyTeamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    match.tournament.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    transformDate(match.matchDate).toLowerCase().includes(searchTerm.toLowerCase())
+)
                 }
             )
         );
@@ -202,7 +202,7 @@ export default function Matches() {
                                     {match.scoreTeam1} - {match.scoreTeam2}
                                 </td>
                                 <td className="px-6 py-4">
-                                    {match.team1._id === teamManager.PlayingFor ? match.team2.name : match.team1.name}
+                                    {match.team1._id === player.PlayingFor ? match.team2.name : match.team1.name}
                                 </td>
                                 <td className="px-6 py-4">
                                     {transformDate(match.matchDate)}

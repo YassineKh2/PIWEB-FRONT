@@ -1,6 +1,3 @@
-
-import {useForm} from "react-hook-form";
-
 import {useFieldArray, useForm} from "react-hook-form";
 
 import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
@@ -8,10 +5,6 @@ import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useEffect, useRef, useState} from "react";
 
-import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry} from "../../../../../Services/APis/CountryAPI.js";
-import {DatePickerDemo} from "./DatePicker.jsx";
-import {AiOutlinePicture as Picture} from "react-icons/ai";
-import {motion} from 'framer-motion'
 
 import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry,} from "../../../../../Services/APis/CountryAPI.js";
 import {DatePickerDemo} from "./DatePicker.jsx";
@@ -24,7 +17,7 @@ import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
 import {useNavigate} from "react-router-dom";
 import {FaTrash as Trash} from "react-icons/fa6";
 import {MultiSelect} from 'primereact/multiselect';
-import {getAllPlayers} from "../../../../../Services/apiUser.js";
+import {getAllPlayers, getAllStaff, sendinvitationplayers} from "../../../../../Services/apiUser.js";
 import {addSponsors} from "../../../../../Services/FrontOffice/apiSponsors.js";
 
 
@@ -47,7 +40,12 @@ const schema = yup.object().shape({
             email: yup.string().email().required()
         })
     ),
-    coaches: yup.array()
+    staff: yup.array().of(
+        yup.object({
+            staffname: yup.string().required(),
+            email: yup.string().email().required()
+        })
+    )
 });
 
 const steps = [
@@ -95,31 +93,6 @@ const schemasp = yup.object().shape({
 
 
 
-const steps = [
-    {
-        id: 'Step 1',
-        name: 'General Information',
-        fields: ['name', 'nameAbbreviation', 'country', 'state', 'city', 'image']
-    },
-    {
-        id: 'Step 2',
-        name: 'Team Description',
-        fields: ['description', 'slogan', 'nickname', 'foundedIn', 'founder']
-    },
-    {
-        id: 'Step 3',
-        name: 'Players And Coaches',
-        fields: ['']
-    },
-    {
-        id: 'Step 4',
-        name: 'Additional Information',
-        fields: ['']
-    },
-    {id: 'Step 5', name: 'Choosing Your Plan'}
-]
-
-
 
 export default function AddTeam() {
     const [Countries, setCountries] = useState([]);
@@ -134,9 +107,11 @@ export default function AddTeam() {
 
 
     const [selectedPlayers, setSelectedPlayers] = useState([]);
+    const [selectedStaff, setselectedStaff] = useState([]);
 
 
     const [players, setPlayers] = useState([]);
+    const [staff, setStaff] = useState([]);
 
     useEffect(() => {
         getAllPlayers().then((response) => {
@@ -149,13 +124,17 @@ export default function AddTeam() {
             })
             setPlayers(resPlayers)
         })
+        getAllStaff().then((response) => {
+            console.log(response.users)
+            let resStaff = []
+            response.users.map((staff) => {
+                staff.name = staff.firstName + " " + staff.lastName;
+                staff.id = staff._id;
+                resStaff.push(staff)
+            })
+            setStaff(resStaff)
+        })
     }, []);
-
-
-    const [previousStep, setPreviousStep] = useState(0)
-    const [currentStep, setCurrentStep] = useState(0)
-    const delta = currentStep - previousStep
-
 
 
     const [isMonthly, setIsMonthly] = useState(true);
@@ -170,26 +149,14 @@ export default function AddTeam() {
       logo: "",
       contact: 0,
       adresse: ""
-
-        name: "",
-        description: "",
-        logo: "",
-        contact: "",
-        adresse: "",
-
     });
+
     const [error, setErrors] = useState({
         name: "",
         description: "",
-
         contact: 0,
         adresse: ""
       });
-
-        contact: "",
-        adresse: "",
-    });
-
 
     useEffect(() => {
         GetCountries().then((response) => {
@@ -201,6 +168,8 @@ export default function AddTeam() {
 
     const [showAddPlayer, setShowAddPlayer] = useState(true);
     const [showSearchPlayer, setShowSearchPlayer] = useState(false);
+    const [showAddStaff, setshowAddStaff] = useState(true);
+    const [showSearchStaff, setshowSearchStaff] = useState(false);
 
 
     useEffect(() => {
@@ -236,15 +205,14 @@ export default function AddTeam() {
     const handleLogoChange = (e) => {
         setLogo(e.target.files[0]);
       };
-    const prev = () => {
-        if (currentStep > 0) {
-            setPreviousStep(currentStep)
-            setCurrentStep(step => step - 1)
-        }
-    }
+
 
     const Player = {
         playername: '',
+        email: ''
+    }
+    const Staff = {
+        staffname: '',
         email: ''
     }
 
@@ -259,7 +227,8 @@ export default function AddTeam() {
     } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
-            players: [Player]
+            players: [Player],
+            staff: [Staff]
         }
     })
 
@@ -274,6 +243,12 @@ export default function AddTeam() {
         control,
         name: "players"
     })
+
+    const staffTable = useFieldArray({
+        control,
+        name: "staff",
+    })
+
 
 
     const selectedCountry = watch("country", true);
@@ -297,7 +272,6 @@ export default function AddTeam() {
             });
         }
     }, [selectedState]);
-
 
     useEffect(() => {
         const fetchData = async () => {
@@ -340,46 +314,22 @@ export default function AddTeam() {
     };
 
 
-    useEffect(() => {
-        if (selectedCountry) {
-            setCites([]);
-            GetStateByCountry(selectedCountry).then((response) => {
-                setStates(response);
-            });
-        }
-    }, [selectedCountry]);
 
-    useEffect(() => {
-        if (selectedState) {
-
-            GetCitybyStateAndCountry(selectedCountry, selectedState).then((response) => {
-                setCites(response);
-            });
-        }
-    }, [selectedState]);
-
-
-            GetCitybyStateAndCountry(selectedCountry, selectedState).then(
-                (response) => {
-                    setCites(response);
-                }
-            );
-        }
-    }, [selectedState]);
 
 
     const onSubmit = async (data) => {
         try {
+
+
+            console.log(selectedPlayers)
             data.image = image[0];
             data.imagename = image[0].name;
             data.foundedIn = date;
 
-    
-            const nameValue = watch("name");
 
-    
+
             const lastteam = { ...data, sponsors: sponsor };
-            console.log("azizz: " + JSON.stringify(lastteam)); 
+            console.log("azizz: " + JSON.stringify(lastteam));
 
             await addTeam(lastteam);
             await addSponsors(sponsor);
@@ -388,14 +338,24 @@ export default function AddTeam() {
             await schemasp.validate(sponsor);
             // Ajout de l'équipe
             const addedTeam = await addTeam(data);
-            const teamId = addedTeam.data._id; // Obtenez l'identifiant de l'équipe nouvellement ajoutée
+
+
+            //await sendinvitationplayers(selectedPlayers)
+            const teamId = addedTeam.data._id;
+
+
+
+            let InvitedUsers = {
+                "idTeam": teamId,
+                "invitedPlayers": selectedPlayers
+            }
 
             // Ajout du sponsor avec l'ID de l'équipe associée
-            const sponsorData = {...data, teamId};
-            await addSponsors(sponsorData);
+            if(showForm){
+                const sponsorData = {...data, teamId};
+                await addSponsors(sponsorData);
+            }
 
-            // Afficher les données du sponsor ajouté
-            console.log("Données du sponsor ajouté :", sponsorData);
 
             navigate("/team/all");
 
@@ -406,11 +366,10 @@ export default function AddTeam() {
         }
 
     }
-    
-    
-    
 
-    };
+
+
+
 
 
     return (
@@ -629,240 +588,6 @@ export default function AddTeam() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                        {currentStep === 1 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: 'easeInOut'}}
-                                            >
-
-              "
-                                    >
-
-                                        <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
-                                            Register your Team
-                                        </h2>
-                                        <p className="mb-12 text-base font-medium text-body-color" id="formP">
-                                            {currentStep === 0 && "Start your journey with us by registering your team."}
-                                            {currentStep === 1 && "Enter your team's description details here."}
-                                            {currentStep === 2 && "Add or Search for your players and coaches here."}
-                                            {currentStep === 3 && "Add your sponsors and other details here."}
-                                        </p>
-
-                                        {currentStep === 0 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: 'easeInOut'}}
-                                            >
-
-                                                <div
-                                                    className="rounded-full bg-amber-50 p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
-                                                    <input {...register("image")} type="file" name="image"
-                                                           accept="image/*"
-                                                           id="image"
-                                                           className="hidden"/>
-                                                    <label htmlFor={"image"}
-                                                           className="flex items-baseline justify-center"><Picture
-                                                        className="text-black-2"></Picture></label>
-                                                </div>
-
-
-                                                <div className="-mx-4 flex flex-wrap">
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-
-                                                                htmlFor="date"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Founded In
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <DatePickerDemo date={date} setDate={setDate}/>
-                                                                {!date &&
-                                                                    <p className="text-danger">You must insert a
-                                                                        date</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="name"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Nickname
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("nickname")}
-                                                                    type="text"
-                                                                    name="nickname"
-                                                                    placeholder="Team's Nickname"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-
-                                                                {errors.nickname &&
-                                                                    <p className="text-danger mb-2">{errors.nickname.message}</p>}
-
-                                                                htmlFor="name"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Team Name
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("name")}
-                                                                    type="text"
-                                                                    name="name"
-                                                                    placeholder="Team Name"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-
-                                                                {errors.name &&
-                                                                    <p className="text-danger mb-2">{errors.name.message}</p>}
-
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div className="w-full px-4">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="description"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Description
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                            <textarea
-                                                                {...register("description")}
-                                                                name="description"
-                                                                placeholder="Team's Description"
-                                                                className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                            >
-                                                            </textarea>
-                                                                {errors.description &&
-                                                                    <p className="text-danger mb-2">{errors.description.message}</p>}
-                                                            </div>
-                                                        </div>
-
-
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Team Abbreviation
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("nameAbbreviation")}
-                                                                    type="text"
-                                                                    name="nameAbbreviation"
-                                                                    placeholder="Team Abbreviation"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-                                                                {errors.nameAbbreviation &&
-                                                                    <p className="text-danger">{errors.nameAbbreviation.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Country
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <select
-                                                                    {...register("country")}
-                                                                    name="country"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                >
-                                                                    <option disabled selected>
-                                                                        Select your Country
-                                                                    </option>
-                                                                    {Countries.map((country, index) => (
-                                                                        <option key={index} value={country.iso2}>
-                                                                            {country.name}
-                                                                        </option>
-
-                                                                    ))}
-                                                                </select>
-                                                                {errors.city &&
-                                                                    <p className="text-danger">{errors.city.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                State
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <select
-                                                                    {...register("state")}
-                                                                    name="state"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                >
-                                                                    <option disabled selected>
-                                                                        Select your State
-                                                                    </option>
-                                                                    {States.map((state, index) => (
-                                                                        <option key={index} value={state.iso2}>
-                                                                            {state.name}
-                                                                        </option>
-
-                                                                    ))}
-                                                                </select>
-                                                                {errors.city &&
-                                                                    <p className="text-danger">{errors.city.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                City
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <select
-                                                                    {...register("city")}
-                                                                    name="city"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                >
-                                                                    <option disabled selected>
-                                                                        Select your City
-                                                                    </option>
-                                                                    {Cites.map((city, index) => (
-                                                                        <option key={index} value={city.iso2}>
-                                                                            {city.name}
-                                                                        </option>
-
-                                                                    ))}
-                                                                </select>
-                                                                {errors.city &&
-                                                                    <p className="text-danger">{errors.city.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
                                                     <div className="w-full px-4 md:w-1/2">
                                                         <div className="mb-8">
                                                             <label
@@ -885,8 +610,12 @@ export default function AddTeam() {
                                                         </div>
                                                     </div>
                                                 </div>
+
+
                                             </motion.div>
                                         )}
+
+
                                         {currentStep === 1 && (
                                             <motion.div
                                                 initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
@@ -1017,72 +746,6 @@ export default function AddTeam() {
                                                 className="flex flex-col gap-2"
                                             >
 
-
-{currentStep === 3 && (
-    <motion.div
-        initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-        animate={{x: 0, opacity: 1}}
-        transition={{duration: 0.3, ease: 'easeInOut'}}
-    >
-        <div className="flex items-center">
-        <p className="mr-4 font-bold text-blue-800">Do you have a sponsor to add ?</p>
-    <div className="flex">
-        <input type="radio" id="yes" name="sponsorOption" value="yes" onClick={() => setShowForm(true)} />
-        <label htmlFor="yes" className="mr-2">Yes</label>
-        <input type="radio" id="no" name="sponsorOption" value="no" onClick={() => setShowForm(false)} />
-        <label htmlFor="no" className="mr-4">No</label>
-    </div>
-</div>
-
-
-{showForm && (
-            <div className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11" data-wow-delay=".2s">
-                <div className="flex justify-center items-center mt-16">
-                    <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
-                        <form>
-                            <div className="mb-4">
-                                <label htmlFor="name" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Name:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    value={sponsor.name}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.name && <div className="text-red-500">{error.name}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="description" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Description:
-                                </label>
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    value={sponsor.description}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.description && <div className="text-red-500">{error.description}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Logo:
-                                </label>
-                                <input
-                                    type="file"
-                                    name={sponsor.logo}
-                                    accept="image/*"
-                                    onChange={(e) => handleLogoChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.logo && <div className="text-red-500">{error.logo}</div>}
-                            </div>
-
                                                 <hr className="border-2 my-2"/>
                                                 <p className="mb-12 text-base font-medium text-body-color" id="formP">
                                                     Add your players
@@ -1207,34 +870,125 @@ export default function AddTeam() {
 
                                                 <hr className="border-2 my-2"/>
                                                 <p className="mb-12 text-base font-medium text-body-color" id="formP">
-                                                    Add your Coaches
+                                                    Add your Staff
                                                 </p>
+                                                <label className="inline-flex items-center cursor-pointer mb-2">
+                                                    <input type="checkbox"
+                                                           checked={showAddStaff}
+                                                           onChange={() => setshowAddStaff(prevState => !prevState)}
+                                                           className="sr-only peer"/>
+                                                    <div
+                                                        className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    <span
+                                                        className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Add New Staff Members</span>
+                                                </label>
+                                                {showAddStaff && (
 
+                                                    <div
+                                                        className="bg-gray-200 p-10 rounded-3xl dark:bg-blue-950 ">
 
-                                            </motion.div>
-                                        )}
+                                                        {staffTable.fields.map((staff, index) => {
+                                                            return (
+                                                                <>
+                                                                    <div className="-mx-4 " key={staff.id}>
+                                                                        <div
+                                                                            className="flex items-center justify-between mb-4">
+                                                                            <h1 className="bg-gray-300 rounded-3xl px-3 py-2 dark:bg-blue-600">{index}</h1>
+                                                                            <Trash size={25} className="text-red-600"
+                                                                                   onClick={() => {
+                                                                                       staffTable.remove(index)
+                                                                                   }}/>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap">
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="staffname"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Name
+                                                                                    </label>
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`staff.${index}.staffname`)}
+                                                                                            type="text"
+                                                                                            name={`staff.${index}.staffname`}
+                                                                                            placeholder="Staff Name"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
 
+                                                                                        {errors.staff?.[index]?.staffname &&
+                                                                                            <p className="text-danger mb-2">{errors.staff?.[index]?.staffname?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="email"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Email
+                                                                                    </label>
 
-                            <div className="mb-4">
-                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Adresse:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="adresse"
-                                    name="adresse"
-                                    value={sponsor.adresse}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
-                            </div>
-                        </form>
-                   
-                </div>
-            </div>
-        </div>
-         )}
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`staff.${index}.email`)}
+                                                                                            type="email"
+                                                                                            name={`staff.${index}.email`}
+                                                                                            placeholder="Staff Email"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+                                                                                        {errors.staff?.[index]?.email &&
+                                                                                            <p className="text-danger">{errors.staff?.[index]?.email?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                            </div>
+
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+
+                                                            )
+                                                        })}
+                                                        <button
+                                                            type="button" onClick={() => {
+                                                            staffTable.append(Staff)
+                                                        }}
+                                                            className="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-cyan-500 to-blue-500 group-hover:from-cyan-500 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-cyan-200 dark:focus:ring-cyan-800">
+
+                                                    <span
+                                                        className="relative px-5 py-2.5 transition-all ease-in duration-75 bg-white dark:bg-gray-900 rounded-md group-hover:bg-opacity-0">
+                                                            Add
+                                                    </span>
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                <label className="inline-flex items-center cursor-pointer mt-4 mb-2">
+                                                    <input type="checkbox" value=""
+                                                           onChange={() => setshowSearchStaff(prevState => !prevState)}
+                                                           className="sr-only peer"/>
+                                                    <div
+                                                        className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                                    <span
+                                                        className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">                                                    Invite Existing Staff Members to your team
+                                                    </span>
+                                                </label>
+
+                                                {showSearchStaff && (
+                                                    <MultiSelect value={selectedStaff}
+                                                                 onChange={(e) => setselectedStaff(e.value)}
+                                                                 options={staff} optionLabel="name"
+                                                                 filter placeholder="Select Staff Members"
+                                                                 maxSelectedLabels={3}
+                                                                 virtualScrollerOptions={{itemSize: 40}}
+                                                                 checkboxIcon filterIcon
+                                                                 className="w-full md:w-20rem"/>
+
+                                                )}
+
     </motion.div>
 )}
 
@@ -1244,9 +998,9 @@ export default function AddTeam() {
                                         {/* SPONSORSS CYRINE */}
                                         {currentStep === 3 && (
                                             <motion.div
-                                                initial={{ x: delta >= 0 ? "50%" : "-50%", opacity: 0 }}
-                                                animate={{ x: 0, opacity: 1 }}
-                                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                                initial={{x: delta >= 0 ? "50%" : "-50%", opacity: 0}}
+                                                animate={{x: 0, opacity: 1}}
+                                                transition={{duration: 0.3, ease: "easeInOut"}}
                                             >
                                                 <div className="flex items-center">
                                                     <p className="mr-4 font-bold text-blue-800">
@@ -1450,16 +1204,16 @@ export default function AddTeam() {
                                             className="wow fadeInUp mb-8 flex justify-center md:mb-12 lg:mb-16"
                                             data-wow-delay=".1s"
                                         >
-            <span
-                onClick={() => setIsMonthly(true)}
-                className={`${
-                    isMonthly
-                        ? "pointer-events-none text-primary"
-                        : "text-dark dark:text-white"
-                } mr-4 cursor-pointer text-base font-semibold`}
-            >
-              Monthly
-            </span>
+                                                 <span
+                                                    onClick={() => setIsMonthly(true)}
+                                                    className={`${
+                                                      isMonthly
+                                                    ? "pointer-events-none text-primary"
+                                                    : "text-dark dark:text-white"
+                                                    } mr-4 cursor-pointer text-base font-semibold`}
+                                                    >
+                                                     Monthly
+                                                </span>
                                             <div
                                                 onClick={() => setIsMonthly(!isMonthly)}
                                                 className="flex cursor-pointer items-center"
@@ -1485,8 +1239,8 @@ export default function AddTeam() {
                                                         : "pointer-events-none text-primary"
                                                 } ml-4 cursor-pointer text-base font-semibold`}
                                             >
-              Yearly
-            </span>
+                                                    Yearly
+                                                         </span>
                                         </div>
                                     </div>
 
@@ -1501,7 +1255,7 @@ export default function AddTeam() {
                                             isSubmitting={isSubmitting}
                                             formRef={formRef}
                                         >
-                    <OfferList text="Access To All Tournaments" status="active" />
+                                            <OfferList text="Access To All Tournaments" status="active" />
                                             <OfferList text="Limited Team Management" status="active" />
                                             <OfferList text="Basic Match Scheduling" status="active" />
                                             <OfferList text="Access to Basic Football Stats" status="active" />
@@ -1680,13 +1434,13 @@ export default function AddTeam() {
                         </button>
                     </div>
                     {errors.root && (
-                        <div className="flex mb-4">
-                            {errors.root.message}
+                        <div id="toast-bottom-left"
+                             className="fixed bg-red-500 text-white flex items-center w-full max-w-xs p-4 space-x-4 divide-x rtl:divide-x-reverse divide-gray-200 rounded-lg shadow bottom-5 left-5 dark:text-gray-100 dark:divide-gray-700 space-x dark:bg-red-800"
+                             role="alert">
+                            <div className="text-sm font-normal">{errors.root.message}</div>
                         </div>
                     )}
 
-                </form>
-            </section>
 
             <div className="absolute top-0 left-0 z-[-1]">
                 <svg
@@ -1824,15 +1578,10 @@ export default function AddTeam() {
                     </defs>
                 </svg>
             </div>
-        </>
-    )
 
-
-
-                    <button type='submit'>Submit</button>
+            <button type='submit'>Submit</button>
                 </form>
             </section>
         </>
-    );
-
+    )
 }

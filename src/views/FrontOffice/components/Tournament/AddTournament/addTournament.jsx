@@ -13,7 +13,6 @@ import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
 
 
-import { AiOutlinePicture as Picture } from "react-icons/ai";
 
 import * as yup from "yup";
 import { getGeocodingData } from "../../../../../Services/APis/Geocoding";

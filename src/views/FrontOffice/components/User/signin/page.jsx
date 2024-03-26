@@ -5,13 +5,6 @@ import Swal from 'sweetalert2';
 
 
 
-
-function SigninPage() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
- 
   
 
 function SigninPage() {
@@ -52,21 +45,10 @@ function SigninPage() {
         }
       } else {
         
-        setError("Token not found");
-      }
-
-
-    }  catch (error) {
-      // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
-      const errorMessage = error.response?.data?.error;
-  
-      // Afficher l'alerte spécifique si le compte est bloqué
-      if (errorMessage === 'Votre compte est bloqué') {
-        Swal.fire({
-          icon: 'error',
-          title: 'Compte Bloqué',
-          text: 'Votre compte est bloqué. Veuillez contacter le support pour plus d\'informations.',
-
+        setErro
+        r("Token not found");
+      } }
+    
 
     } catch (error) {
       // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API

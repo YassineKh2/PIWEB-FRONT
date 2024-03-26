@@ -20,7 +20,7 @@ function App() {
 
     if (userToken) {
       const decodedToken = jwtDecode(userToken);
-      if (decodedToken.role === "C") {
+      if (decodedToken.role === "C" || decodedToken.role === "P" || decodedToken.role === "S"){
         setShouldDisplayHeader(1);
       } else if (decodedToken.role === "A") {
         setShouldDisplayHeader(2);

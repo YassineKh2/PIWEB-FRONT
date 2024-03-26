@@ -11,7 +11,7 @@ import AddTournament from "./views/FrontOffice/components/Tournament/AddTourname
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails
     from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
-import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
+
 import AddReservation from "./views/FrontOffice/components/Reservation/AddReservation.jsx";
 import AddSponsors from "./views/FrontOffice/components/Sponsors/AddSponsors.jsx";
 import AllReservation from "./views/BackOffice/components/Reservation/AllReservation.jsx"
@@ -22,6 +22,7 @@ import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
 import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
+import RoutingStaff from "./views/FrontOffice/components/Staff/RoutingStaff.jsx";
 
 import RoutingUsers from "./views/FrontOffice/components/User/profile/profile.jsx"
 import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
@@ -29,34 +30,9 @@ import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
+import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
 import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
-function RoutesPath() {
-  return (
-    <div>
-      <Routes>
-        <Route path="/signin" element={<SigninPage />} />
-        <Route path="/signup" element={<UserOptions />} />
-        <Route path="/signupu" element ={<SignupPage/>} />
-        <Route path="/signupTM" element={<SignupPageTM/>} />
-        <Route path="/signupTRM" element ={<SignupPageTRM/>} />
-        <Route path="/updateProfile" element ={<UpdateProfile/>}/>
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/addTournament" element={<AddTournament />} />
-        <Route path="/getAllTournament" element={<DisplayAllTournaments />} />
-        <Route path="/tournamentDetails/:id" element={<DisplayTournamentDetails />} />
-        <Route path="/addReservation" element={<AddReservation />} />
-        <Route path="/addsp" element={<AddSponsors/>} />
-        <Route path="/allReservation" element={<AllReservation/>} />
-        <Route path="/allSponsors" element={<AllSponsors/>} />
-        <Route path="/BTicket" element={<BTicket/>} />
-        <Route path="/ticket" element={<AffTicket/>}/>
-        <Route path="/upres" element={<UpReservation/>}/>
-        <Route path="/upsp" element={<UpdateSponsors/>}/>
-
-import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
 function RoutesPath() {
     return (
@@ -82,7 +58,6 @@ function RoutesPath() {
                 <Route path="/ticket" element={<AffTicket/>}/>
                 <Route path="/upres" element={<UpReservation/>}/>
 
-                <Route path="/team" element={<AddTeam/>}/>
                 <Route path="signin" element={<SigninPage/>}/>
                 <Route path="signup" element={<SignupPage/>}/>
                 <Route path="about" element={<About/>}/>
@@ -112,6 +87,14 @@ function RoutesPath() {
                         </>
                     }
                 />
+                <Route
+                    path="staff/*"
+                    element={
+                        <>
+                            <RoutingStaff/>
+                        </>
+                    }
+                />
 
                 <Route
                     path="player/*"
@@ -121,6 +104,7 @@ function RoutesPath() {
                         </>
                     }
                 />
+
 
                 <Route
                     path="hotels/*"
