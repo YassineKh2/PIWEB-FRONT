@@ -3,8 +3,9 @@ import Dashboard from "./Dashboard.jsx";
 import Matches from "./Components/Matches.jsx";
 import HomeDash from "./Components/HomeDash.jsx";
 import Tournaments from "./Components/Tournaments.jsx";
-import TeamDetails from "./Components/TeamDetails.jsx";
+import TeamProfile from "./Components/TeamProfile.jsx";
 import Invitations from "./Components/Invitations.jsx";
+import LineUps from "./Components/LineUps.jsx";
 
 
 export default function RoutingDashboardTeam() {
@@ -34,11 +35,15 @@ export default function RoutingDashboardTeam() {
 
                 <Route
                     path="profile"
-                    element={ <TeamDetails/> }
+                    element={ <TeamProfile/> }
                 />
                 <Route
                     path="invitations"
                     element={ <Invitations/> }
+                />
+                <Route
+                    path="lineups"
+                    element={ <LineUps/> }
                 />
 
             </Route>

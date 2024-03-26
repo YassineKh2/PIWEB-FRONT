@@ -7,11 +7,13 @@ import {HiOutlineAdjustmentsHorizontal as Preferences} from "react-icons/hi2";
 import {AiOutlineTeam as Team} from "react-icons/ai";
 import {jwtDecode} from "jwt-decode";
 import {getUserData} from "../../../../../..//Services/apiUser.js";
+import { TbSoccerField as Field} from "react-icons/tb";
 
 
 export default function Sidebar() {
     const [ShowAccountSettings, setShowAccountSettings] = useState(false)
     const [notifications, setNotifications] = useState(0)
+
 
     useEffect(() => {
         try {
@@ -88,6 +90,14 @@ export default function Sidebar() {
                                 </Link>
                             </li>
                             <li>
+                                <Link to="lineups"
+                                      className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+
+                                    <Field size={23} className="text-gray-500"/>
+                                    <span className="flex-1 ms-3 whitespace-nowrap">LineUps</span>
+                                </Link>
+                            </li>
+                            <li>
                                 <a onClick={() => setShowAccountSettings(!ShowAccountSettings)}
                                    className="hover:text-gray-900 hover:cursor-pointer flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                     <AccountProfile size={20} className="text-gray-500 hover:text-gray-900"/>
@@ -99,11 +109,11 @@ export default function Sidebar() {
                                     <>
                                         <ul className="ml-4">
                                             <li>
-                                                <Link to="credentials"
+                                                <Link to="profile"
                                                       className="hover:text-gray-900 flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                                     <Credentials size={20}
                                                                  className="text-gray-500 hover:text-gray-900"/>
-                                                    <span className="flex-1 ms-3 whitespace-nowrap">Credentials</span>
+                                                    <span className="flex-1 ms-3 whitespace-nowrap">Team Profile</span>
                                                 </Link>
                                             </li>
                                             <li>
@@ -115,11 +125,11 @@ export default function Sidebar() {
                                                 </Link>
                                             </li>
                                             <li>
-                                                <Link to="team"
+                                                <Link to="members"
                                                       className="hover:text-gray-900 flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                                     <Team size={20} className="text-gray-500 hover:text-gray-900"/>
                                                     <span
-                                                        className="flex-1 ms-3 whitespace-nowrap">Team And Profile</span>
+                                                        className="flex-1 ms-3 whitespace-nowrap">Players And Coaches</span>
                                                 </Link>
                                             </li>
                                         </ul>

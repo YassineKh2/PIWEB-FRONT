@@ -13,7 +13,26 @@ export default function ShowTeam() {
     const [trophies, setTrophies] = useState([])
 
 
-    useEffect(() => {
+    const positionMapping = {
+        "AM": "Attacking Midfielder",
+        "CB": "Center Back",
+        "CF": "Center Forward",
+        "CM": "Central Midfielder",
+        "D": "Defender",
+        "DM": "Defensive Midfielder",
+        "FB": "Full Back",
+        "F": "Forward",
+        "GK": "Goalkeeper",
+        "LM": "Left Midfielder",
+        "M": "Midfielder",
+        "RM": "Right Midfielder",
+        "S": "Striker",
+        "SS": "Second Striker",
+        "WB": "Wing Back",
+        "W": "Winger",
+
+    }
+        useEffect(() => {
         getTeam(id).then((response) => {
             setTeam(response.team)
             setTrophies(response.team.trophies)
@@ -90,7 +109,7 @@ export default function ShowTeam() {
                                             />
                                             <div className="grid gap-1.5">
                                                 <h3 className="font-bold">{player.firstName} {player.lastName}</h3>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">{player.position}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{positionMapping[player.position]}</p>
                                             </div>
                                         </Link>
                                     </>

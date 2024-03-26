@@ -240,5 +240,13 @@ export async function updateStaffImage(userData) {
         throw error.response.data;
     }
 }
+export async function getplayersbyteam(idteam) {
+    try {
+        const response = await axios.get(`${BASE_URL}/getplayersbyteam/${idteam}`);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
 
 

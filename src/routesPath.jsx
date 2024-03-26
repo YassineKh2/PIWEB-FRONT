@@ -94,17 +94,15 @@ function RoutesPath() {
                     }
                 />
 
+                <Route
+                    path="player/*"
+                    element={
+                        <>
+                            <RoutingPlayers/>
+                        </>
+                    }
+                />
 
-                <Route element={<RequireAuth allowedRoles={['P']}/>}>
-                    <Route
-                        path="player/*"
-                        element={
-                            <>
-                                <RoutingPlayers/>
-                            </>
-                        }
-                    />
-                </Route>
 
                 <Route
                     path="hotels/*"
