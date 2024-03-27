@@ -13,19 +13,19 @@ import {
 import { jwtDecode } from "jwt-decode";
 
 const schema = yup.object().shape({
-  firstName: yup.string().required(),
-  lastName: yup.string().required(),
-  email: yup.string().required(),
-  password: yup.string().required(),
-  confirmPassword: yup.string().required(),
-  birthDate: yup.date().required(),
-  cin: yup.number().required(),
-  height: yup.number().positive().required(),
-  position: yup.string(),
-  image: yup.string(),
-  description: yup.string(),
-  preferredFoot: yup.string(),
-  socialMediaHandle: yup.string(),
+    firstName: yup.string().required(),
+    lastName: yup.string().required(),
+    email: yup.string().required(),
+    password: yup.string().required(),
+    confirmPassword: yup.string().required(),
+    birthDate: yup.date().required(),
+    cin: yup.number().required(),
+    height: yup.number().positive().required(),
+    position: yup.string(),
+    image: yup.string(),
+    bio: yup.string(),
+    preferredFoot: yup.string(),
+    socialMediaHandle: yup.string(),
 });
 export default function CompleteSingUp() {
   const navigate = useNavigate();

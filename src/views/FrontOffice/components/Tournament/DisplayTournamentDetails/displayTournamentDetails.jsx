@@ -412,7 +412,7 @@ function DisplayAllTournaments() {
     const handleMatchesDraw = async () => {
       try {
         const response = await getTournamentMatchesDraw(Tournament._id);
-        
+
         if (response.matchList.length === 0) {
           addMatchAfterGroupStage();
         } else {
@@ -2060,6 +2060,7 @@ function DisplayAllTournaments() {
                     <Popupcontent
                       ref={popupRef}
                       match={selectedMatch}
+                      Tournament={Tournament}
                       onClose={() => {
                         setIsPopupOpen(false);
                         setSelectedMatch(null);

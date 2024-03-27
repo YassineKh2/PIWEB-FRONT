@@ -203,12 +203,10 @@ function DisplayAllTournaments() {
                   </button>
                 )}
                 <button
-            
-                  onClick={() =>navigate(`/hotels/details/${tournament._id}`)}
+                  onClick={() => navigate(`/hotels/details/${tournament._id}`)}
                   className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
-
                 >
-                 Hotels
+                  Hotels
                 </button>
               </div>
             </div>
