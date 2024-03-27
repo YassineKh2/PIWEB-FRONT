@@ -1,6 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getTournamentDetails } from "../../../../../Services/FrontOffice/apiTournament";
-import { getTournamentMatches } from "../../../../../Services/FrontOffice/apiMatch";
+import {
+  addMatch,
+  getTournamentMatches,
+  getTournamentMatchesDraw,
+} from "../../../../../Services/FrontOffice/apiMatch";
 import { useParams } from "react-router-dom";
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import Table from "@mui/material/Table";
@@ -13,24 +17,11 @@ import { TbPlayFootball as Played } from "react-icons/tb";
 import { HiMagnifyingGlass as Loop } from "react-icons/hi2";
 import { BiFootball as Football } from "react-icons/bi";
 import { AiOutlineFieldTime as Active } from "react-icons/ai";
-
-import {
-  Score,
-  Side,
-  StyledMatch,
-  Team,
-  TopText,
-  BottomText,
-  Wrapper,
-  Line,
-  Anchor,
-} from "@g-loot/react-tournament-brackets/dist/esm/components/match/styles";
-
-import { useNavigate } from "react-router-dom";
+import TvIcon from "@mui/icons-material/Tv";
+import { GiSoccerField } from "react-icons/gi";
 
 import {
   Match,
-  SVGViewer,
   SingleEliminationBracket,
 } from "@g-loot/react-tournament-brackets";
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
@@ -38,23 +29,28 @@ import { Card, CardContent } from "@mui/material";
 
 import Popupcontent from "./popup";
 import { io } from "socket.io-client";
+import { jwtDecode } from "jwt-decode";
+import { IoIosFootball } from "react-icons/io";
 
 function DisplayAllTournaments() {
   const { id } = useParams();
   const popupRef = useRef(null);
   const [activeTab, setActiveTab] = useState("matches");
-  const socket = io.connect("http://localhost:3000/");
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
+  const path = "http://localhost:3000/public/images/teams/";
+  const pathTournament = "http://localhost:3000/public/images/tournaments/";
+  const socket = useMemo(() => io.connect("http://localhost:3000/"), []);
+
   const [Tournament, setTournament] = useState({});
   const [Teams, setTeams] = useState([]);
   const [RealTeams, setRealTeams] = useState([]);
   const [Matches, setMatches] = useState([]);
+  const [MatchesDrawGroupStage, setMatchesDrawGroupStage] = useState([]);
   const [MatchesCopy, setMatchesCopy] = useState([]);
   const [RealMatches, setRealMatches] = useState([]);
-  const [refresh, setRefresh] = useState(false);
-
+  const [DrawMatchesGroupStage, setDrawMatchesGroupStage] = useState([]);
+  const [userInfo, setUserInfo] = useState();
+  const [tabChange, setTabChange] = useState();
+  const [numberOfGroups, setnumberOfGroups] = useState();
   const getTournamentDetail = async () => {
     try {
       const res = await getTournamentDetails(id);
@@ -63,9 +59,22 @@ function DisplayAllTournaments() {
       console.error(err);
     }
   };
+  useEffect(() => {
+    const userToken = localStorage.getItem("token");
+
+    if (userToken) {
+      const decodedToken = jwtDecode(userToken);
+      setUserInfo(decodedToken);
+    }
+  }, []);
+  useEffect(() => {
+    const numbergroup = Tournament.nbTeamPartipate / 4;
+    setnumberOfGroups(numbergroup);
+  }, [Tournament]);
+
   const getAllTournamentMatches = async () => {
     try {
-      const res = await getTournamentMatches(Tournament._id);
+      const res = await getTournamentMatches(id);
       setRealMatches(res.matchList);
       setMatchesCopy(res.matchList);
     } catch (err) {
@@ -78,124 +87,67 @@ function DisplayAllTournaments() {
   }, []);
   useEffect(() => {
     getAllTournamentMatches();
-  }, [Tournament]);
-
-  useEffect(() => {
-    if (Tournament && Tournament.teams) {
-      const fetchTeamDetails = async () => {
-        const teamDetails = await Promise.all(
-          Tournament.teams.map(async (teamId) => {
-            try {
-              const response = await getTeamDetails(teamId);
-              // Replace with your API function
-              return response.team; // Assuming the team details are in 'team' property
-            } catch (error) {
-              console.error(
-                `Error fetching team details for team ID ${teamId}:`,
-                error
-              );
-              return null;
-            }
-          })
-        );
-        setRealTeams(teamDetails);
-      };
-
-      fetchTeamDetails();
+  }, []);
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "matches") {
+      setTabChange("matches");
+    } else {
+      getAllTournamentMatches();
     }
-  }, [Tournament]);
-  const changeScore = (teamId, score) => {
-    console.log(teamId, score);
   };
   useEffect(() => {
-    const numberOfTeams = Tournament.nbTeamPartipate || 0;
-    const teams = Array.from({ length: numberOfTeams }, (_, index) => ({
-      id: `team-${index + 1}`, // Assign a unique id to each team
-      name: `Team ${index + 1}`,
-    }));
-    setTeams(teams);
+    if (Tournament && Tournament.teams) {
+      if (Tournament.tournamentType === "Group Stage") {
+        const fetchTeamDetails = async () => {
+          const teamDetails = await Promise.all(
+            Tournament.teamsGroupStage.map(async (team) => {
+              try {
+                const response = await getTeamDetails(team.teamId);
+                // Replace with your API function
+                return response.team; // Assuming the team details are in 'team' property
+              } catch (error) {
+                console.error(
+                  `Error fetching team details for team ID ${team.teamId}:`,
+                  error
+                );
+                return null;
+              }
+            })
+          );
+          setRealTeams(teamDetails);
+        };
+        fetchTeamDetails();
+      } else {
+        const fetchTeamDetails = async () => {
+          const teamDetails = await Promise.all(
+            Tournament.teams.map(async (teamId) => {
+              try {
+                const response = await getTeamDetails(teamId);
+                // Replace with your API function
+                return response.team; // Assuming the team details are in 'team' property
+              } catch (error) {
+                console.error(
+                  `Error fetching team details for team ID ${teamId}:`,
+                  error
+                );
+                return null;
+              }
+            })
+          );
+          setRealTeams(teamDetails);
+        };
 
-    // Update Matches with dynamic team information
-    const updatedMatches = [
-      {
-        id: 1,
-        nextMatchId: 3, // Id for the nextMatch in the bracket, if it's final match it must be null OR undefined
-        tournamentRoundText: "1", // Text for Round Header
-        startTime: "2021-05-30",
-        state: "DONE",
-        participants: [
-          {
-            id: "TEAM 1", // Unique identifier of any kind
-            resultText: "WON", // Any string works
-            isWinner: false,
-            status: "PLAYED", // 'PLAYED' | 'NO_SHOW' | 'WALK_OVER' | 'NO_PARTY' | null
-            name: "giacomo123",
-          },
-          {
-            id: "TEAM 2", // Unique identifier of any kind
-            resultText: "WON", // Any string works
-            isWinner: true,
-            status: "PLAYED", // 'PLAYED' | 'NO_SHOW' | 'WALK_OVER' | 'NO_PARTY' | null
-            name: "giacomo123",
-          },
-        ],
-      },
-      {
-        id: 2,
-        nextMatchId: 3, // Id for the nextMatch in the bracket, if it's final match it must be null OR undefined
-        tournamentRoundText: "4", // Text for Round Header
-        startTime: "2021-05-30",
-        state: "DONE",
-        participants: [
-          {
-            id: "TEAM 3", // Unique identifier of any kind
-            resultText: "11", // Any string works
-            isWinner: true,
-            status: "PLAYED", // 'PLAYED' | 'NO_SHOW' | 'WALK_OVER' | 'NO_PARTY' | null
-            name: "Real madrid",
-          },
-          {
-            id: "TEAM 4", // Unique identifier of any kind
-            resultText: "1", // Any string works
-            isWinner: false,
-            status: "PLAYED", // 'PLAYED' | 'NO_SHOW' | 'WALK_OVER' | 'NO_PARTY' | null
-            name: "Barcelona",
-          },
-        ],
-      },
-      {
-        id: 3,
-        nextMatchId: null, // Id for the nextMatch in the bracket, if it's final match it must be null OR undefined
-        tournamentRoundText: "1", // Text for Round Header
-        startTime: "2021-05-30",
-        state: "DONE",
-        participants: [
-          {
-            id: "TEAM 2", // Unique identifier of any kind
-            resultText: "WON", // Any string works
-            isWinner: true,
-            status: "PLAYED", // 'PLAYED' | 'NO_SHOW' | 'WALK_OVER' | 'NO_PARTY' | null
-            name: "giacomo123",
-          },
-          {
-            id: "TEAM 3", // Unique identifier of any kind
-            resultText: "WON", // Any string works
-            isWinner: false,
-            status: "PLAYED", // 'PLAYED' | 'NO_SHOW' | 'WALK_OVER' | 'NO_PARTY' | null
-            name: "giacomo123",
-          },
-        ],
-      },
-
-      // ConsultTeams more matches as needed
-    ];
-
-    setMatches(updatedMatches);
+        fetchTeamDetails();
+      }
+    }
   }, [Tournament]);
+
   const initializeStats = () => {
     const initialStats = RealTeams.map((team) => ({
       teamId: team._id,
       teamName: team.name,
+      teamLogo: team.image,
       points: 0,
       matchesPlayed: 0,
       wins: 0,
@@ -204,14 +156,361 @@ function DisplayAllTournaments() {
       goalsFor: 0,
       goalsAgainst: 0,
       goalDifference: 0,
+      groupNumber: 0, // Initialize groupNumber to 0
     }));
     return initialStats;
   };
+
   const [standing, setStanding] = useState([]);
   const [sortStandings, setSortStandings] = useState([]);
+  const [GroupStageCompleted, setGroupStageCompleted] = useState(false);
+  const updateGroupStageStandings = () => {
+    const numberGroups = Tournament.nbTeamPartipate / 4;
+    const standings = initializeStats();
+    for (let groupNumber = 1; groupNumber <= numberGroups; groupNumber++) {
+      const groupMatches = RealMatches.filter(
+        (match) => match.groupNumber === groupNumber
+      );
+
+      groupMatches.forEach((match) => {
+        const team1Id = match.team1._id;
+        const team2Id = match.team2._id;
+        const scoreTeam1 = parseInt(match.scoreTeam1);
+        const scoreTeam2 = parseInt(match.scoreTeam2);
+        const team1 = standings.find((team) => team.teamId === team1Id);
+        const team2 = standings.find((team) => team.teamId === team2Id);
+        if (team1.groupNumber === 0) team1.groupNumber = groupNumber;
+        if (team2.groupNumber === 0) team2.groupNumber = groupNumber;
+        if (!isNaN(scoreTeam1) && !isNaN(scoreTeam2)) {
+          // The match has been played
+
+          if (team1 && team2) {
+            if (scoreTeam1 > scoreTeam2) {
+              team1.points += 3;
+              team1.wins += 1;
+              team2.losses += 1;
+              team1.goalsFor += scoreTeam1;
+              team1.goalsAgainst += scoreTeam2;
+              team2.goalsFor += scoreTeam2;
+              team2.goalsAgainst += scoreTeam1;
+            } else if (scoreTeam1 < scoreTeam2) {
+              // Team 2 wins
+              team2.points += 3;
+              team2.wins += 1;
+              team1.losses += 1;
+              team1.goalsFor += scoreTeam1;
+              team1.goalsAgainst += scoreTeam2;
+              team2.goalsFor += scoreTeam2;
+              team2.goalsAgainst += scoreTeam1;
+              // Update other stats similarly...
+            } else {
+              // It's a draw
+              team1.points += 1;
+              team2.points += 1;
+              team1.goalsFor += scoreTeam1;
+              team1.goalsAgainst += scoreTeam2;
+              team2.goalsFor += scoreTeam2;
+              team2.goalsAgainst += scoreTeam1;
+
+              // Update other stats similarly...
+            }
+            team1.goalDifference += scoreTeam1 - scoreTeam2;
+            team2.goalDifference += scoreTeam2 - scoreTeam1;
+            team1.matchesPlayed++;
+            team2.matchesPlayed++;
+          }
+        }
+      });
+    }
+    for (let i = 0; i < standings.length; i++) {
+      if (standings[i].matchesPlayed !== 3) {
+        setGroupStageCompleted(false);
+      }
+      if (i === standings.length - 1 && standings[i].matchesPlayed === 3) {
+        setGroupStageCompleted(true);
+      }
+    }
+    setStanding(standings);
+  };
+
+  useEffect(() => {
+    const addMatchAfterGroupStage = async () => {
+      let winners = [];
+      let runnerups = [];
+      let groups = [];
+      let numGroup = numberOfGroups;
+      if (GroupStageCompleted === true) {
+        let maxPoints = 0;
+        let runnerUpPoints = 0;
+        while (numGroup > 0) {
+          if (!groups[numGroup]) {
+            groups[numGroup] = [];
+          }
+          if (!winners[numGroup]) {
+            winners[numGroup] = [];
+          }
+          if (!runnerups[numGroup]) {
+            runnerups[numGroup] = [];
+          }
+          standing.forEach((team) => {
+            if (team.groupNumber === numGroup) {
+              groups[numGroup].push(team);
+            }
+          });
+          numGroup--;
+        }
+        numGroup = numberOfGroups;
+
+        while (numGroup !== 0) {
+          groups[numGroup].forEach((team) => {
+            if (team.points > maxPoints) {
+              runnerups[numGroup] = winners[numGroup];
+              maxPoints = team.points;
+              winners[numGroup] = [team];
+            } else if (
+              team.points === maxPoints &&
+              team.goalDifference > winners[numGroup][0].goalDifference
+            ) {
+              runnerups[numGroup] = winners[numGroup];
+              maxPoints = team.points;
+              winners[numGroup] = [team];
+            } else if (team.points > runnerUpPoints) {
+              runnerUpPoints = team.points;
+              runnerups[numGroup] = [team];
+            } else if (team.points === runnerUpPoints) {
+              runnerups[numGroup].push(team);
+            }
+          });
+          maxPoints = 0;
+          runnerUpPoints = 0;
+          numGroup--;
+        }
+        winners = winners.slice(1);
+        runnerups = runnerups.slice(1);
+        const numberOfTeamsQualified = runnerups.length + winners.length;
+        const numRealMatches = numberOfTeamsQualified / 2;
+        let idNextMatch = numberOfTeamsQualified / 2;
+
+        if (
+          winners.length === numRealMatches &&
+          runnerups.length === numRealMatches
+        ) {
+          // Remove the first element from each array
+          console.log(winners);
+
+          console.log(winners);
+          const flattenedWinners = winners.flat();
+          const flattenedRunnerups = runnerups.flat();
+          const matches = [];
+          console.log(flattenedWinners);
+          console.log(flattenedRunnerups);
+
+          if (numberOfGroups === 1) {
+            for (let i = 0; i < numRealMatches - 1; i++) {
+              const winnerTeam = flattenedWinners[i];
+              const runnerUpTeam = flattenedRunnerups[i];
+              console.log(winnerTeam);
+              console.log(runnerUpTeam);
+              const matchData = {
+                id: i + 1,
+                win: "",
+                loss: "",
+                matchDate: new Date(),
+                scoreTeam1: "",
+                scoreTeam2: "",
+                knockoutStageAfterGroup: "Draw",
+                fixture: "",
+                idTeam1: winnerTeam.teamId,
+                idTeam2: runnerUpTeam.teamId,
+                idTournament: Tournament._id,
+              };
+
+              matches.push(matchData);
+              await addMatch(matchData);
+            }
+          } else {
+            let k = 0;
+            let selectedRunnerUps = [];
+            for (let i = 0; i < winners.length; i++) {
+              const winnerTeam = flattenedWinners[i];
+              let runnerUpFound = false;
+              // Array to store selected runner-up teams
+
+              for (
+                let j = 0;
+                j < runnerups.length && runnerUpFound === false;
+                j++
+              ) {
+                const runnerUpTeam = flattenedRunnerups[j]; // Access the first (and only) object in the array
+
+                console.log("Winner Group Number:", winnerTeam.groupNumber);
+                console.log(
+                  "Runner-Up Group Number:",
+                  runnerUpTeam.groupNumber
+                );
+
+                if (
+                  !selectedRunnerUps.includes(runnerUpTeam) &&
+                  winnerTeam.groupNumber !== runnerUpTeam.groupNumber
+                ) {
+                  k++;
+                  console.log("Groups are different");
+                  const matchData = {
+                    id: matches.length + 1,
+                    win: "",
+                    loss: "",
+                    matchDate: new Date(),
+                    nextMatchId: idNextMatch + 1,
+                    scoreTeam1: "",
+                    scoreTeam2: "",
+                    knockoutStageAfterGroup: "Draw",
+                    fixture: "",
+                    idTeam1: winnerTeam.teamId,
+                    idTeam2: runnerUpTeam.teamId,
+                    idTournament: Tournament._id,
+                  };
+                  if (k % 2 === 0 && k != 0) {
+                    idNextMatch++;
+                  }
+                  matches.push(matchData);
+                  await addMatch(matchData);
+                  selectedRunnerUps.push(runnerUpTeam); // Add the selected runner-up to the list
+                  runnerUpFound = true;
+                }
+              }
+            }
+          }
+          console.log(numberOfTeamsQualified / 2);
+          for (let h = 0; h < numRealMatches - 1; h++) {
+            if (h % 2 === 0) {
+              idNextMatch++;
+            }
+
+            if (idNextMatch > numRealMatches * 2 - 1) {
+              idNextMatch = null;
+            }
+
+            const emptyMatch = {
+              id: numRealMatches + h + 1,
+              win: "",
+              loss: "",
+              nextMatchId: idNextMatch,
+              matchDate: new Date(),
+              scoreTeam1: "",
+              scoreTeam2: "",
+              knockoutStageAfterGroup: "Draw",
+              fixture: "",
+              participants: [],
+              idTournament: Tournament._id,
+            };
+            matches.push(emptyMatch);
+            await addMatch(emptyMatch);
+          }
+        }
+      }
+    };
+    const handleMatchesDraw = async () => {
+      try {
+        const response = await getTournamentMatchesDraw(Tournament._id);
+
+        if (response.matchList.length === 0) {
+          addMatchAfterGroupStage();
+        } else {
+          setDrawMatchesGroupStage(response.matchList);
+          console.log("they already exits the draw matches");
+        }
+      } catch (error) {
+        // Handle any errors
+        console.error(error);
+      }
+    };
+    handleMatchesDraw();
+  }, [GroupStageCompleted]);
+  useEffect(() => {
+    const updatedMatches = [];
+    let nextmatch = DrawMatchesGroupStage.length;
+    let j = 1;
+    let resultTeam1 = "";
+    let resultTeam2 = "";
+    // Iterate over each match in realMatches
+    if (DrawMatchesGroupStage.length !== 0) {
+      let loopCounter = 0;
+      let Participant = [];
+      DrawMatchesGroupStage.forEach((match, index) => {
+        if (match.scoreTeam1 > match.scoreTeam2) {
+          /*setResultTeam1("WON");
+          setResultTeam1("LOST");*/
+          resultTeam1 = "Won";
+          resultTeam2 = "Lost";
+        }
+        if (match.scoreTeam1 < match.scoreTeam2) {
+          resultTeam2 = "Won";
+          resultTeam1 = "Lost";
+        }
+        if (match.team1 === null && match.team2 === null) {
+          Participant = [];
+        } else if (match.team1 != null && match.team2 === null) {
+          Participant = [
+            {
+              id: match.team1._id,
+              resultText: match.scoreTeam1,
+              isWinner: resultTeam1 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team1.name,
+            },
+            {},
+          ];
+        } else if (match.team1 === null && match.team2 != null) {
+          Participant = [
+            {},
+            {
+              id: match.team2._id,
+              resultText: match.scoreTeam2,
+              isWinner: resultTeam2 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team2.name,
+            },
+          ];
+        } else if (match.team1 != null && match.team2 != null) {
+          Participant = [
+            {
+              id: match.team1._id,
+              resultText: match.scoreTeam1,
+              isWinner: resultTeam1 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team1.name,
+            },
+            {
+              id: match.team2._id,
+              resultText: match.scoreTeam2,
+              isWinner: resultTeam2 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team2.name,
+            },
+          ];
+        }
+        const newMatch = {
+          id: index + 1,
+          nextMatchId: match.nextMatchId,
+          tournamentRoundText: "1",
+          startTime: match.matchDate,
+          state: "DONE",
+          participants: Participant,
+        };
+        loopCounter++;
+        resultTeam1 = "";
+        resultTeam2 = "";
+        if (loopCounter % 2 === 0) {
+          nextmatch++;
+        }
+        updatedMatches.push(newMatch);
+      });
+    }
+    setMatchesDrawGroupStage(updatedMatches);
+  }, [DrawMatchesGroupStage]);
   const updateStandings = () => {
-    const standings = initializeStats(); // Assuming you have an initializeStats function
-    console.log(standings);
+    const standings = initializeStats();
+
     RealMatches.forEach((match) => {
       const team1Id = match.team1._id;
       const team2Id = match.team2._id;
@@ -226,46 +525,67 @@ function DisplayAllTournaments() {
           standings.find((team) => team.teamId === team1Id).points += 3;
           standings.find((team) => team.teamId === team1Id).wins += 1;
           standings.find((team) => team.teamId === team2Id).losses += 1;
-          standings.find((team) => team.teamId === team1Id).goalsFor += scoreTeam1;
-          standings.find((team) => team.teamId === team2Id).goalsFor += scoreTeam2;
-          standings.find((team) => team.teamId === team1Id).goalsAgainst += scoreTeam2;
-          standings.find((team) => team.teamId === team2Id).goalsAgainst += scoreTeam1;
-          standings.find((team) => team.teamId === team1Id).goalDifference += (scoreTeam1-scoreTeam2);
-          standings.find((team) => team.teamId === team2Id).goalDifference += (scoreTeam2-scoreTeam1);
-
+          standings.find((team) => team.teamId === team1Id).goalsFor +=
+            scoreTeam1;
+          standings.find((team) => team.teamId === team2Id).goalsFor +=
+            scoreTeam2;
+          standings.find((team) => team.teamId === team1Id).goalsAgainst +=
+            scoreTeam2;
+          standings.find((team) => team.teamId === team2Id).goalsAgainst +=
+            scoreTeam1;
+          standings.find((team) => team.teamId === team1Id).goalDifference +=
+            scoreTeam1 - scoreTeam2;
+          standings.find((team) => team.teamId === team2Id).goalDifference +=
+            scoreTeam2 - scoreTeam1;
         } else if (scoreTeam1 < scoreTeam2) {
-          
           standings.find((team) => team.teamId === team2Id).points += 3;
           standings.find((team) => team.teamId === team2Id).wins += 1;
           standings.find((team) => team.teamId === team1Id).losses += 1;
-          standings.find((team) => team.teamId === team1Id).goalsFor += scoreTeam1;
-          standings.find((team) => team.teamId === team2Id).goalsFor += scoreTeam2;
-          standings.find((team) => team.teamId === team1Id).goalsAgainst += scoreTeam2;
-          standings.find((team) => team.teamId === team2Id).goalsAgainst += scoreTeam1;
-          standings.find((team) => team.teamId === team1Id).goalDifference += (scoreTeam1-scoreTeam2);
-          standings.find((team) => team.teamId === team2Id).goalDifference += (scoreTeam2-scoreTeam1);
+          standings.find((team) => team.teamId === team1Id).goalsFor +=
+            scoreTeam1;
+          standings.find((team) => team.teamId === team2Id).goalsFor +=
+            scoreTeam2;
+          standings.find((team) => team.teamId === team1Id).goalsAgainst +=
+            scoreTeam2;
+          standings.find((team) => team.teamId === team2Id).goalsAgainst +=
+            scoreTeam1;
+          standings.find((team) => team.teamId === team1Id).goalDifference +=
+            scoreTeam1 - scoreTeam2;
+          standings.find((team) => team.teamId === team2Id).goalDifference +=
+            scoreTeam2 - scoreTeam1;
         } else {
-          
           standings.find((team) => team.teamId === team1Id).points += 1;
           standings.find((team) => team.teamId === team2Id).points += 1;
           standings.find((team) => team.teamId === team1Id).draws += 1;
           standings.find((team) => team.teamId === team2Id).draws += 1;
-          standings.find((team) => team.teamId === team1Id).goalsFor += scoreTeam1;
-          standings.find((team) => team.teamId === team2Id).goalsFor += scoreTeam2;
-          standings.find((team) => team.teamId === team1Id).goalsAgainst += scoreTeam2;
-          standings.find((team) => team.teamId === team2Id).goalsAgainst += scoreTeam1;
-          standings.find((team) => team.teamId === team1Id).goalDifference += (scoreTeam1-scoreTeam2);
-          standings.find((team) => team.teamId === team2Id).goalDifference += (scoreTeam2-scoreTeam1);
+          standings.find((team) => team.teamId === team1Id).goalsFor +=
+            scoreTeam1;
+          standings.find((team) => team.teamId === team2Id).goalsFor +=
+            scoreTeam2;
+          standings.find((team) => team.teamId === team1Id).goalsAgainst +=
+            scoreTeam2;
+          standings.find((team) => team.teamId === team2Id).goalsAgainst +=
+            scoreTeam1;
+          standings.find((team) => team.teamId === team1Id).goalDifference +=
+            scoreTeam1 - scoreTeam2;
+          standings.find((team) => team.teamId === team2Id).goalDifference +=
+            scoreTeam2 - scoreTeam1;
         }
         standings.find((team) => team.teamId === team1Id).matchesPlayed += 1;
         standings.find((team) => team.teamId === team2Id).matchesPlayed += 1;
-        
       }
     });
     setStanding(standings);
   };
   useEffect(() => {
-    updateStandings();
+    if (Tournament.tournamentType === "League") {
+      updateStandings();
+    }
+  }, [RealMatches]);
+  useEffect(() => {
+    if (Tournament.tournamentType === "Group Stage") {
+      updateGroupStageStandings();
+    }
   }, [RealMatches]);
   useEffect(() => {
     StandingsSort();
@@ -277,11 +597,10 @@ function DisplayAllTournaments() {
       if (b.points !== a.points) {
         return b.points - a.points;
       }
-  
+
       // If points are equal, sort by goal difference in descending order
       return b.goalDifference - a.goalDifference;
     });
-  
     setSortStandings(sortedStandings);
   };
 
@@ -326,6 +645,7 @@ function DisplayAllTournaments() {
   const handleMatchClick = (match) => {
     setSelectedMatch(match);
     setIsPopupOpen(true);
+    getAllTournamentMatches();
   };
   useEffect(() => {
     socket.on("updateScore", (updatedMatch) => {
@@ -348,13 +668,102 @@ function DisplayAllTournaments() {
       }
     });
   }, [socket]);
+
+  useEffect(() => {
+    const numberOfTeams = Tournament.nbTeamPartipate || 0;
+    const teams = Array.from({ length: numberOfTeams }, (_, index) => ({
+      id: `team-${index + 1}`,
+      name: `Team ${index + 1}`,
+    }));
+    setTeams(teams);
+
+    const updatedMatches = [];
+    let nextmatch = RealMatches.length;
+    let j = 1;
+    let resultTeam1 = "";
+    let resultTeam2 = "";
+    // Iterate over each match in realMatches
+    if (RealMatches.length !== 0) {
+      let loopCounter = 0;
+      let Participant = [];
+      RealMatches.forEach((match, index) => {
+        if (match.scoreTeam1 > match.scoreTeam2) {
+          /*setResultTeam1("WON");
+          setResultTeam1("LOST");*/
+          resultTeam1 = "Won";
+          resultTeam2 = "Lost";
+        }
+        if (match.scoreTeam1 < match.scoreTeam2) {
+          resultTeam2 = "Won";
+          resultTeam1 = "Lost";
+        }
+        if (match.team1 === null && match.team2 === null) {
+          Participant = [];
+        } else if (match.team1 != null && match.team2 === null) {
+          Participant = [
+            {
+              id: match.team1._id,
+              resultText: match.scoreTeam1,
+              isWinner: resultTeam1 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team1.name,
+            },
+            {},
+          ];
+        } else if (match.team1 === null && match.team2 != null) {
+          Participant = [
+            {},
+            {
+              id: match.team2._id,
+              resultText: match.scoreTeam2,
+              isWinner: resultTeam2 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team2.name,
+            },
+          ];
+        } else if (match.team1 != null && match.team2 != null) {
+          Participant = [
+            {
+              id: match.team1._id,
+              resultText: match.scoreTeam1,
+              isWinner: resultTeam1 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team1.name,
+            },
+            {
+              id: match.team2._id,
+              resultText: match.scoreTeam2,
+              isWinner: resultTeam2 === "Won" ? true : false,
+              status: "PLAYED",
+              name: match.team2.name,
+            },
+          ];
+        }
+        const newMatch = {
+          id: index + 1,
+          nextMatchId: match.nextMatchId,
+          tournamentRoundText: "1",
+          startTime: match.matchDate,
+          state: "DONE",
+          participants: Participant,
+        };
+        loopCounter++;
+        resultTeam1 = "";
+        resultTeam2 = "";
+        if (loopCounter % 2 === 0) {
+          nextmatch++;
+        }
+        updatedMatches.push(newMatch);
+      });
+    }
+    setMatches(updatedMatches);
+  }, [RealMatches]);
   const MatchesComponent = ({ RealMatches, currentPage, handlePageClick }) => {
     const startIndex = currentPage * itemsPerPage;
     const displayedMatches = RealMatches.slice(
       startIndex,
       startIndex + itemsPerPage
     );
-
     return (
       <div>
         <div className="flex flex-wrap justify-center">
@@ -370,27 +779,27 @@ function DisplayAllTournaments() {
                     alt="Team A logo"
                     className="rounded-full overflow-hidden border object-cover w-8 h-8 ml-2"
                     height="30"
-                    src="/images/placeholderTeam.png"
+                    src={path + match.team1?.image}
                     style={{
                       aspectRatio: "30/30",
                       objectFit: "cover",
                     }}
                     width="30"
                   />
-                  <div className="font-semibold">{match.team1.name}</div>
+                  <div className="font-semibold">{match.team1?.name}</div>
                   <div className="text-4xl font-bold mx-2">vs</div>
                   <img
                     alt="Team B logo"
                     className="rounded-full overflow-hidden border object-cover w-8 h-8"
                     height="30"
-                    src="/images/placeholderTeam.png"
+                    src={path + match.team2?.image}
                     style={{
                       aspectRatio: "30/30",
                       objectFit: "cover",
                     }}
                     width="30"
                   />
-                  <div className="font-semibold">{match.team2.name}</div>
+                  <div className="font-semibold">{match.team2?.name}</div>
                 </div>
                 <div className="flex items-center justify-center mb-4">
                   {match.scoreTeam1 === "" && match.scoreTeam2 === "" ? (
@@ -467,6 +876,1096 @@ function DisplayAllTournaments() {
     <div className="">
       {Tournament.tournamentType === "League" && (
         <>
+          <div className="flex justify-center items-start pt-8 mb-3 ml-20">
+            <a
+              href="#"
+              className="flex  ml-10 flex-col  bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+              style={{ width: "50%" }} // Adjust the width as needed
+            >
+              <div className="flex items-center ml-3 mt-3">
+                <IoIosFootball
+                  className="text-black mr-2"
+                  style={{ fontSize: "1.3rem" }}
+                />
+                <p className="text-black font-medium text-[0.8rem]">FOOTBALL</p>
+                <span className="mx-2 text-gray-400">{">"}</span>
+                <p className="text-black font-medium text-[0.9rem]">
+                  {Tournament.city}
+                </p>
+              </div>
+              <div className="flex items-center mb-4 ml-6 mt-4">
+                <img
+                  alt="Team A logo"
+                  className="rounded-md overflow-hidden border object-cover w-16 h-16 mr-4"
+                  src={pathTournament + Tournament.image}
+                  style={{
+                    aspectRatio: "1/1",
+                    objectFit: "cover",
+                  }}
+                />
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">
+                    {Tournament.name}
+                  </h2>
+
+                  <p className="text-sm text-gray-600">
+                    {Tournament.description}
+                  </p>
+                </div>
+              </div>
+              <hr className="border-t  border-white mb-2 " />{" "}
+              <div className="flex justify-start gap-2 ml-4 ">
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "matches"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("matches")}
+                >
+                  <span>Matches</span>
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "results"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("results")}
+                >
+                  RESULTS
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "fixtures"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("fixtures")}
+                >
+                  FIXTURES
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "standings"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("standings")}
+                >
+                  STANDINGS
+                </button>
+              </div>
+            </a>
+          </div>
+
+          {activeTab === "matches" && (
+            <div className="flex flex-wrap justify-center">
+              <ul className="flex-column  space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
+                <li>
+                  <button
+                    onClick={all}
+                    className="gap-1 inline-flex items-center px-4 py-3 text-[#555e61] hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg active w-full dark:bg-blue-600"
+                    aria-current="page"
+                  >
+                    <Football size={20} className="text-[#555e61]" />
+                    All
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={upcoming}
+                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Upcoming size={20} />
+                    Upcoming
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={active}
+                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Active size={20} />
+                    Active
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={played}
+                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Played size={20} />
+                    Played
+                  </button>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Loop size={20} />
+                    Discover
+                  </a>
+                </li>
+              </ul>
+
+              <MatchesComponent
+                RealMatches={RealMatches}
+                currentPage={currentPage}
+                handlePageClick={handlePageClick}
+              />
+
+              {isPopupOpen &&
+                selectedMatch &&
+                userInfo &&
+                userInfo.userId === Tournament.creator && (
+                  <div>
+                    <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                    <Popupcontent
+                      ref={popupRef}
+                      match={selectedMatch}
+                      Tournament={Tournament}
+                      onClose={() => {
+                        setIsPopupOpen(false);
+                        setSelectedMatch(null);
+                      }}
+                      socket={socket}
+                    />
+                  </div>
+                )}
+            </div>
+          )}
+          {activeTab === "fixtures" && (
+            <>
+              <div className="flex justify-center mb-5 ">
+                <div
+                  href="#"
+                  className="flex flex-col ml-30 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                  style={{ width: "47.5%" }} // Adjust the width as needed
+                >
+                  {RealMatches.reduce((acc, match, index) => {
+                    const lastGroup = acc[acc.length - 1];
+                    if (!lastGroup || lastGroup[0]?.fixture !== match.fixture) {
+                      // Create a new group for matches with a new fixture number
+                      acc.push([match]);
+                    } else {
+                      // Add the match to the existing group
+                      lastGroup.push(match);
+                    }
+                    return acc;
+                  }, []).map((group, groupIndex) => (
+                    <div key={groupIndex}>
+                      <a
+                        href="#"
+                        className="mt-2 mb-1 flex flex-col ml-5 mr-5 h-6 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center ml-5 mt-1 ">
+                          <p className="text-[#555e61] font-medium text-[0.7rem]">
+                            ROUND {group[0].fixture}
+                          </p>
+                        </div>
+                      </a>
+                      {group.map((match, matchIndex) => (
+                        <div
+                          key={matchIndex}
+                          className="transition duration-500 hover:bg-[#e9e8e9] ml-5 mr-5"
+                        >
+                          <div className="flex items-center ml-10 mt-1 ">
+                            <p className="text-[#555e61] font-medium mr-3 text-[0.8rem]">
+                              {formatDate(match.matchDate)}
+                            </p>
+                            <div>
+                              <div className="flex items-center mb-2">
+                                <div className="flex items-center space-x-62.5">
+                                  <div className="flex items-center">
+                                    <img
+                                      alt="Team A logo"
+                                      className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                      src={path + match.team1.image}
+                                      style={{
+                                        aspectRatio: "1/1",
+                                        objectFit: "cover",
+                                      }}
+                                    />
+                                    <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                      {match.team1.name}
+                                    </p>
+                                  </div>
+                                  {match.scoreTeam1 !== "" &&
+                                    match.scoreTeam2 !== "" && (
+                                      <span className="mx-2 text-black font-semibold text-[13px]">
+                                        {match.scoreTeam1}
+                                      </span>
+                                    )}
+                                  {(match.scoreTeam1 === "" ||
+                                    match.scoreTeam2 === "") && (
+                                    <span className="mx-2 text-[#555e61]">
+                                      -
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center ">
+                                <div className="flex items-center space-x-62.5">
+                                  <div className="flex items-center">
+                                    <img
+                                      alt="Team A logo"
+                                      className=" overflow-hidden border object-cover w-4 h-4 mr-3"
+                                      src={path + match.team2.image}
+                                      style={{
+                                        aspectRatio: "1/1",
+                                        objectFit: "cover",
+                                      }}
+                                    />
+                                    <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                      {match.team2.name}
+                                    </p>
+                                  </div>
+                                  {match.scoreTeam1 !== "" &&
+                                    match.scoreTeam2 !== "" && (
+                                      <>
+                                        <span className="mx-2 text-black font-semibold text-[13px]">
+                                          {match.scoreTeam2}
+                                        </span>
+                                      </>
+                                    )}
+                                  {(match.scoreTeam1 === "" ||
+                                    match.scoreTeam2 === "") && (
+                                    <span className="mx-2 text-[#555e61]">
+                                      -
+                                    </span>
+                                  )}
+                                </div>
+                                <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
+                                <GiSoccerField
+                                  size={18}
+                                  className="-mt-7 mr-10"
+                                />
+                                <TvIcon
+                                  className="-mt-7"
+                                  style={{ fontSize: "small" }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {activeTab === "results" && (
+            <>
+              <div className="flex justify-center mb-5 ">
+                <div
+                  href="#"
+                  className="flex flex-col ml-30 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                  style={{ width: "47.5%" }} // Adjust the width as needed
+                >
+                  {RealMatches.reduce((acc, match, index) => {
+                    const lastGroup = acc[acc.length - 1];
+                    if (!lastGroup || lastGroup[0]?.fixture !== match.fixture) {
+                      // Create a new group for matches with a new fixture number
+                      acc.push([match]);
+                    } else {
+                      // Add the match to the existing group
+                      lastGroup.push(match);
+                    }
+                    return acc;
+                  }, []).map((group, groupIndex) => (
+                    <div key={groupIndex}>
+                      {group.some(
+                        (match) =>
+                          match.scoreTeam1 !== "" && match.scoreTeam2 !== ""
+                      ) && (
+                        <a
+                          href="#"
+                          className="mt-2 mb-1 flex flex-col ml-5 mr-5 h-6 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                        >
+                          <div className="flex items-center ml-5 mt-1 ">
+                            <p className="text-[#555e61] font-medium text-[0.7rem]">
+                              ROUND {group[0].fixture}
+                            </p>
+                          </div>
+                        </a>
+                      )}
+                      {group
+                        .filter(
+                          (match) =>
+                            match.scoreTeam1 !== "" && match.scoreTeam2 !== ""
+                        )
+                        .map((match, matchIndex) => (
+                          <div
+                            key={matchIndex}
+                            className="transition duration-500 hover:bg-[#e9e8e9] ml-5 mr-5"
+                          >
+                            <div className="flex items-center ml-10 mt-1 ">
+                              <p className="text-[#555e61] font-medium mr-3 text-[0.8rem]">
+                                {formatDate(match.matchDate)}
+                              </p>
+                              <div>
+                                <div className="flex items-center mb-2">
+                                  <div className="flex items-center space-x-62.5">
+                                    <div className="flex items-center">
+                                      <img
+                                        alt="Team A logo"
+                                        className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                        src={path + match.team1.image}
+                                        style={{
+                                          aspectRatio: "1/1",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                      <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                        {match.team1.name}
+                                      </p>
+                                    </div>
+                                    <span className="mx-2 text-black font-semibold text-[13px]">
+                                      {match.scoreTeam1}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center ">
+                                  <div className="flex items-center space-x-62.5">
+                                    <div className="flex items-center">
+                                      <img
+                                        alt="Team A logo"
+                                        className=" overflow-hidden border object-cover w-4 h-4 mr-3"
+                                        src={path + match.team2.image}
+                                        style={{
+                                          aspectRatio: "1/1",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                      <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                        {match.team2.name}
+                                      </p>
+                                    </div>
+                                    <span className="mx-2 text-black font-semibold text-[13px]">
+                                      {match.scoreTeam2}
+                                    </span>
+                                  </div>
+                                  <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
+                                  <GiSoccerField
+                                    size={18}
+                                    className="-mt-7 mr-10"
+                                  />
+                                  <TvIcon
+                                    className="-mt-7"
+                                    style={{ fontSize: "small" }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                          </div>
+                        ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "standings" && (
+            <>
+              <div className="flex justify-center mb-5 ">
+                <div
+                  href="#"
+                  className="flex flex-col ml-30  bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                  style={{ width: "50%" }} // Adjust the width as needed
+                >
+                  <Table className="lg:max-w-[755px] bg-white sm:max-w-[10px] mb-10 mt-5">
+                    <TableHead className="  text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                      <TableRow>
+                        <TableCell className="w-12">#</TableCell>
+                        <TableCell>TEAM</TableCell>
+                        <TableCell>MP</TableCell>
+                        <TableCell>W</TableCell>
+                        <TableCell>D</TableCell>
+                        <TableCell>L</TableCell>
+                        <TableCell>GF</TableCell>
+                        <TableCell>GA</TableCell>
+                        <TableCell>GD</TableCell>
+                        <TableCell>Pts</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sortStandings.map((team, index) => (
+                        <TableRow key={index} className=" dark:bg-white">
+                          <TableCell className="font-bold">
+                            {index + 1}
+                          </TableCell>
+                          <TableCell className="flex gap-2 items-center">
+                            <div className="flex items-center">
+                              <img
+                                alt="Team logo"
+                                className="rounded-lg"
+                                height="40"
+                                src={path + team?.teamLogo}
+                                style={{
+                                  aspectRatio: "40/40",
+                                  objectFit: "cover",
+                                }}
+                                width="40"
+                              />
+                              <div className="ml-1">{team.teamName}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{team.matchesPlayed}</TableCell>
+                          <TableCell>{team.wins}</TableCell>
+                          <TableCell>{team.draws}</TableCell>
+                          <TableCell>{team.losses}</TableCell>
+                          <TableCell>{team.goalsFor}</TableCell>
+                          <TableCell>{team.goalsAgainst}</TableCell>
+                          <TableCell>{team.goalDifference}</TableCell>
+                          <TableCell className="font-bold">
+                            {team.points}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+      {Tournament.tournamentType === "Group Stage" && (
+        <>
+          <div className="flex justify-center items-start pt-8 mb-3 ml-20">
+            <a
+              href="#"
+              className="flex  ml-10 flex-col  bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+              style={{ width: "50%" }} // Adjust the width as needed
+            >
+              <div className="flex items-center ml-3 mt-3">
+                <IoIosFootball
+                  className="text-black mr-2"
+                  style={{ fontSize: "1.3rem" }}
+                />
+                <p className="text-black font-medium text-[0.8rem]">FOOTBALL</p>
+                <span className="mx-2 text-gray-400">{">"}</span>
+                <p className="text-black font-medium text-[0.9rem]">
+                  {Tournament.city}
+                </p>
+              </div>
+              <div className="flex items-center mb-4 ml-6 mt-4">
+                <img
+                  alt="Team A logo"
+                  className="rounded-md overflow-hidden border object-cover w-16 h-16 mr-4"
+                  src={pathTournament + Tournament.image}
+                  style={{
+                    aspectRatio: "1/1",
+                    objectFit: "cover",
+                  }}
+                />
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">
+                    {Tournament.name}
+                  </h2>
+
+                  <p className="text-sm text-gray-600">
+                    {Tournament.description}
+                  </p>
+                </div>
+              </div>
+              <hr className="border-t  border-white mb-2 " />{" "}
+              <div className="flex justify-start gap-2 ml-4 ">
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "matches"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("matches")}
+                >
+                  <span>Matches</span>
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "results"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("results")}
+                >
+                  RESULTS
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "fixtures"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("fixtures")}
+                >
+                  FIXTURES
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "standings"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("standings")}
+                >
+                  STANDINGS
+                </button>
+                <button
+                  className={`inline-flex items-center justify-center ${
+                    activeTab === "draw"
+                      ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                      : "bg-transparent text-[#555e61] hover:text-black"
+                  } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                  onClick={() => handleTabChange("draw")}
+                >
+                  Draw
+                </button>
+              </div>
+            </a>
+          </div>
+
+          {activeTab === "matches" && (
+            <div className="flex flex-wrap justify-center">
+              <ul className="flex-column  space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
+                <li>
+                  <button
+                    onClick={all}
+                    className="gap-1 inline-flex items-center px-4 py-3 text-[#555e61] hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-lg active w-full dark:bg-blue-600"
+                    aria-current="page"
+                  >
+                    <Football size={20} className="text-[#555e61]" />
+                    All
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={upcoming}
+                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Upcoming size={20} />
+                    Upcoming
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={active}
+                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Active size={20} />
+                    Active
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={played}
+                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Played size={20} />
+                    Played
+                  </button>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    <Loop size={20} />
+                    Discover
+                  </a>
+                </li>
+              </ul>
+
+              <MatchesComponent
+                RealMatches={RealMatches}
+                currentPage={currentPage}
+                handlePageClick={handlePageClick}
+              />
+
+              {isPopupOpen &&
+                selectedMatch &&
+                userInfo &&
+                userInfo.userId === Tournament.creator && (
+                  <div>
+                    <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                    <Popupcontent
+                      ref={popupRef}
+                      match={selectedMatch}
+                      Tournament={Tournament}
+                      onClose={() => {
+                        setIsPopupOpen(false);
+                        setSelectedMatch(null);
+                      }}
+                      socket={socket}
+                    />
+                  </div>
+                )}
+            </div>
+          )}
+          {activeTab === "results" && (
+            <>
+              <div className="flex justify-center mb-5 ">
+                <div
+                  href="#"
+                  className="flex flex-col ml-30 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                  style={{ width: "47.5%" }} // Adjust the width as needed
+                >
+                  {RealMatches.reduce((acc, match, index) => {
+                    const lastGroup = acc[acc.length - 1];
+                    if (
+                      !lastGroup ||
+                      lastGroup[0]?.groupNumber !== match.groupNumber
+                    ) {
+                      // Create a new group for matches with a new fixture number
+                      acc.push([match]);
+                    } else {
+                      // Add the match to the existing group
+                      lastGroup.push(match);
+                    }
+                    return acc;
+                  }, []).map((group, groupIndex) => (
+                    <div key={groupIndex}>
+                      {group.some(
+                        (match) =>
+                          match.scoreTeam1 !== "" && match.scoreTeam2 !== ""
+                      ) && (
+                        <a
+                          href="#"
+                          className="mt-2 mb-1 flex flex-col ml-5 mr-5 h-6 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                        >
+                          <div className="flex items-center ml-5 mt-1 ">
+                            <p className="text-[#555e61] font-medium text-[0.7rem]">
+                              GROUP {group[0].groupNumber}
+                            </p>
+                          </div>
+                        </a>
+                      )}
+                      {group
+                        .filter(
+                          (match) =>
+                            match.scoreTeam1 !== "" && match.scoreTeam2 !== ""
+                        )
+                        .map((match, matchIndex) => (
+                          <div
+                            key={matchIndex}
+                            className="transition duration-500 hover:bg-[#e9e8e9] ml-5 mr-5"
+                          >
+                            <div className="flex items-center ml-10 mt-1 ">
+                              <p className="text-[#555e61] font-medium mr-3 text-[0.8rem]">
+                                {formatDate(match.matchDate)}
+                              </p>
+                              <div>
+                                <div className="flex items-center mb-2">
+                                  <div className="flex items-center space-x-62.5">
+                                    <div className="flex items-center">
+                                      <img
+                                        alt="Team A logo"
+                                        className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                        src={path + match.team1.image}
+                                        style={{
+                                          aspectRatio: "1/1",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                      <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                        {match.team1.name}
+                                      </p>
+                                    </div>
+                                    <span className="mx-2 text-black font-semibold text-[13px]">
+                                      {match.scoreTeam1}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center ">
+                                  <div className="flex items-center space-x-62.5">
+                                    <div className="flex items-center">
+                                      <img
+                                        alt="Team A logo"
+                                        className=" overflow-hidden border object-cover w-4 h-4 mr-3"
+                                        src={path + match.team2.image}
+                                        style={{
+                                          aspectRatio: "1/1",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                      <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                        {match.team2.name}
+                                      </p>
+                                    </div>
+                                    <span className="mx-2 text-black font-semibold text-[13px]">
+                                      {match.scoreTeam2}
+                                    </span>
+                                  </div>
+                                  <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
+                                  <GiSoccerField
+                                    size={18}
+                                    className="-mt-7 mr-10"
+                                  />
+                                  <TvIcon
+                                    className="-mt-7"
+                                    style={{ fontSize: "small" }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                          </div>
+                        ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {activeTab === "fixtures" && (
+            <>
+              <div className="flex justify-center mb-5 ">
+                <div
+                  href="#"
+                  className="flex flex-col ml-30 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                  style={{ width: "47.5%" }} // Adjust the width as needed
+                >
+                  {RealMatches.reduce((acc, match, index) => {
+                    const lastGroup = acc[acc.length - 1];
+                    if (
+                      !lastGroup ||
+                      lastGroup[0]?.groupNumber !== match.groupNumber
+                    ) {
+                      // Create a new group for matches with a new fixture number
+                      acc.push([match]);
+                    } else {
+                      // Add the match to the existing group
+                      lastGroup.push(match);
+                    }
+                    return acc;
+                  }, []).map((group, groupIndex) => (
+                    <div key={groupIndex}>
+                      <a
+                        href="#"
+                        className="mt-2 mb-1 flex flex-col ml-5 mr-5 h-6 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center ml-5 mt-1 ">
+                          <p className="text-[#555e61] font-medium text-[0.7rem]">
+                            GROUP {group[0].groupNumber}
+                          </p>
+                        </div>
+                      </a>
+                      {group
+                        .filter((match) => !match.knockoutStageAfterGroup)
+                        .map((match, matchIndex) => {
+                          return (
+                            <div
+                              key={matchIndex}
+                              className="transition duration-500 hover:bg-[#e9e8e9] ml-5 mr-5"
+                            >
+                              <div className="flex items-center ml-10 mt-1 ">
+                                <p className="text-[#555e61] font-medium mr-3 text-[0.8rem]">
+                                  {formatDate(match.matchDate)}
+                                </p>
+                                <div>
+                                  <div className="flex items-center mb-2">
+                                    <div className="flex items-center space-x-62.5">
+                                      <div className="flex items-center">
+                                        <img
+                                          alt="Team A logo"
+                                          className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                          src={path + match.team1.image}
+                                          style={{
+                                            aspectRatio: "1/1",
+                                            objectFit: "cover",
+                                          }}
+                                        />
+                                        <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                          {match.team1.name}
+                                        </p>
+                                      </div>
+                                      {match.scoreTeam1 !== "" &&
+                                        match.scoreTeam2 !== "" && (
+                                          <span className="mx-2 text-black font-semibold text-[13px]">
+                                            {match.scoreTeam1}
+                                          </span>
+                                        )}
+                                      {(match.scoreTeam1 === "" ||
+                                        match.scoreTeam2 === "") && (
+                                        <span className="mx-2 text-[#555e61]">
+                                          -
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center ">
+                                    <div className="flex items-center space-x-62.5">
+                                      <div className="flex items-center">
+                                        <img
+                                          alt="Team A logo"
+                                          className=" overflow-hidden border object-cover w-4 h-4 mr-3"
+                                          src={path + match.team2.image}
+                                          style={{
+                                            aspectRatio: "1/1",
+                                            objectFit: "cover",
+                                          }}
+                                        />
+                                        <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                          {match.team2.name}
+                                        </p>
+                                      </div>
+                                      {match.scoreTeam1 !== "" &&
+                                        match.scoreTeam2 !== "" && (
+                                          <>
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam2}
+                                            </span>
+                                          </>
+                                        )}
+                                      {(match.scoreTeam1 === "" ||
+                                        match.scoreTeam2 === "") && (
+                                        <span className="mx-2 text-[#555e61]">
+                                          -
+                                        </span>
+                                      )}
+                                    </div>
+                                    <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
+                                    <GiSoccerField
+                                      size={18}
+                                      className="-mt-7 mr-10"
+                                    />
+                                    <TvIcon
+                                      className="-mt-7"
+                                      style={{ fontSize: "small" }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                      <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+          {activeTab === "standings" && (
+            <>
+              {Array.from({ length: numberOfGroups }).map(
+                (_, groupIndex) =>
+                  groupIndex % 2 === 0 && (
+                    <div key={groupIndex} className="flex justify-center mb-5">
+                      <div className="flex">
+                        <div
+                          href="#"
+                          className="flex flex-col ml-8 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                          style={{ width: "50%" }}
+                        >
+                          {/* Your anchor tag with group info */}
+                          <a
+                            href="#"
+                            className="mt-2 flex flex-col ml-5 mr-5 h-8 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              height: "100%",
+                            }}
+                          >
+                            <div className="flex items-center ml-5">
+                              <p className="text-[#555e61] font-medium text-[0.7rem]">
+                                GROUP {groupIndex + 1}
+                              </p>
+                            </div>
+                          </a>
+                          {/* Table for the first group */}
+                          <Table className="lg:max-w-[755px] bg-white sm:max-w-[10px] mb-10 mt-5">
+                            {/* Table header */}
+                            <TableHead className="text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                              <TableRow>
+                                <TableCell className="w-12">#</TableCell>
+                                <TableCell>TEAM</TableCell>
+                                <TableCell>MP</TableCell>
+                                <TableCell>W</TableCell>
+                                <TableCell>D</TableCell>
+                                <TableCell>L</TableCell>
+                                <TableCell>GF</TableCell>
+                                <TableCell>GA</TableCell>
+                                <TableCell>GD</TableCell>
+                                <TableCell>Pts</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {/* Filter standings for the current group and map over them */}
+                              {sortStandings
+                                .filter(
+                                  (team) => team.groupNumber === groupIndex + 1
+                                )
+                                .map((team, index) => (
+                                  <TableRow
+                                    key={index}
+                                    className="dark:bg-white"
+                                  >
+                                    {/* Table cells for each team */}
+                                    <TableCell className="font-bold">
+                                      {index + 1}
+                                    </TableCell>
+                                    <TableCell className="flex gap-2 items-center">
+                                      <div className="flex items-center">
+                                        {/* Team logo */}
+                                        <img
+                                          alt="Team logo"
+                                          className="rounded-lg"
+                                          height="40"
+                                          src={path + team?.teamLogo}
+                                          style={{
+                                            aspectRatio: "40/40",
+                                            objectFit: "cover",
+                                          }}
+                                          width="40"
+                                        />
+                                        {/* Team name */}
+                                        <div className="ml-1">
+                                          {team.teamName}
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    {/* Other statistics for the team */}
+                                    <TableCell>{team.matchesPlayed}</TableCell>
+                                    <TableCell>{team.wins}</TableCell>
+                                    <TableCell>{team.draws}</TableCell>
+                                    <TableCell>{team.losses}</TableCell>
+                                    <TableCell>{team.goalsFor}</TableCell>
+                                    <TableCell>{team.goalsAgainst}</TableCell>
+                                    <TableCell>{team.goalDifference}</TableCell>
+                                    <TableCell className="font-bold">
+                                      {team.points}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        {groupIndex + 1 < numberOfGroups && (
+                          <div
+                            href="#"
+                            className="flex flex-col ml-15 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                            style={{ width: "50%" }}
+                          >
+                            {/* Your anchor tag with group info */}
+                            <a
+                              href="#"
+                              className="mt-2 flex flex-col ml-5 mr-5 h-8 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                height: "100%",
+                              }}
+                            >
+                              <div className="flex items-center ml-5">
+                                <p className="text-[#555e61] font-medium text-[0.7rem]">
+                                  GROUP {groupIndex + 2}
+                                </p>
+                              </div>
+                            </a>
+                            {/* Table for the second group */}
+                            <Table className="lg:max-w-[755px] bg-white sm:max-w-[10px] mb-10 mt-5">
+                              {/* Table header */}
+                              <TableHead className="text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
+                                <TableRow>
+                                  <TableCell className="w-12">#</TableCell>
+                                  <TableCell>TEAM</TableCell>
+                                  <TableCell>MP</TableCell>
+                                  <TableCell>W</TableCell>
+                                  <TableCell>D</TableCell>
+                                  <TableCell>L</TableCell>
+                                  <TableCell>GF</TableCell>
+                                  <TableCell>GA</TableCell>
+                                  <TableCell>GD</TableCell>
+                                  <TableCell>Pts</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {/* Filter standings for the current group and map over them */}
+                                {sortStandings
+                                  .filter(
+                                    (team) =>
+                                      team.groupNumber === groupIndex + 2
+                                  )
+                                  .map((team, index) => (
+                                    <TableRow
+                                      key={index}
+                                      className="dark:bg-white"
+                                    >
+                                      {/* Table cells for each team */}
+                                      <TableCell className="font-bold">
+                                        {index + 1}
+                                      </TableCell>
+                                      <TableCell className="flex gap-2 items-center">
+                                        <div className="flex items-center">
+                                          {/* Team logo */}
+                                          <img
+                                            alt="Team logo"
+                                            className="rounded-lg"
+                                            height="40"
+                                            src={path + team?.teamLogo}
+                                            style={{
+                                              aspectRatio: "40/40",
+                                              objectFit: "cover",
+                                            }}
+                                            width="40"
+                                          />
+                                          {/* Team name */}
+                                          <div className="ml-1">
+                                            {team.teamName}
+                                          </div>
+                                        </div>
+                                      </TableCell>
+                                      {/* Other statistics for the team */}
+                                      <TableCell>
+                                        {team.matchesPlayed}
+                                      </TableCell>
+                                      <TableCell>{team.wins}</TableCell>
+                                      <TableCell>{team.draws}</TableCell>
+                                      <TableCell>{team.losses}</TableCell>
+                                      <TableCell>{team.goalsFor}</TableCell>
+                                      <TableCell>{team.goalsAgainst}</TableCell>
+                                      <TableCell>
+                                        {team.goalDifference}
+                                      </TableCell>
+                                      <TableCell className="font-bold">
+                                        {team.points}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+              )}
+            </>
+          )}
+          {MatchesDrawGroupStage.length > 0 && activeTab === "draw" && (
+            <SingleEliminationBracket
+              matches={MatchesDrawGroupStage}
+              matchComponent={Match}
+              style={{ width: "50%", height: "50%" }}
+            />
+          )}
+        </>
+      )}
+
+      {Tournament.tournamentType === "Knockout" && Teams.length > 0 && (
+        <>
           <div className="flex justify-center gap-4 mt-4">
             <button
               className={`${
@@ -486,11 +1985,16 @@ function DisplayAllTournaments() {
               } px-4 py-2 rounded-md focus:outline-none mb-5`}
               onClick={() => handleTabChange("standings")}
             >
-              Standings
+              Draw
             </button>
-            
           </div>
-
+          {activeTab === "standings" && (
+            <SingleEliminationBracket
+              matches={Matches}
+              matchComponent={Match}
+              style={{ width: "50%", height: "50%" }}
+            />
+          )}
           {activeTab === "matches" && (
             <div className="flex flex-wrap justify-center">
               <ul className="flex-column  space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
@@ -546,250 +2050,46 @@ function DisplayAllTournaments() {
                 currentPage={currentPage}
                 handlePageClick={handlePageClick}
               />
-              {isPopupOpen && selectedMatch && (
-                <div>
-                  <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
-                  <Popupcontent
-                    ref={popupRef}
-                    match={selectedMatch}
-                    onClose={() => {
-                      setIsPopupOpen(false);
-                      setSelectedMatch(null);
-                    }}
-                    socket={socket}
-                  />
-                </div>
-              )}
+
+              {isPopupOpen &&
+                selectedMatch &&
+                userInfo &&
+                userInfo.userId === Tournament.creator && (
+                  <div>
+                    <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                    <Popupcontent
+                      ref={popupRef}
+                      match={selectedMatch}
+                      Tournament={Tournament}
+                      onClose={() => {
+                        setIsPopupOpen(false);
+                        setSelectedMatch(null);
+                      }}
+                      socket={socket}
+                    />
+                  </div>
+                )}
             </div>
           )}
-
-          {activeTab === "standings" && (
-            <div className="flex flex-wrap justify-center mb-10">
-              <div className="overflow-x-auto lg:w-3/12 xl:w-9/12 ">
-                <div className="bg-gradient-to-r from-[#2f2f7f] to-[#5c57d7] text-white py-2 px-4 rounded-t-lg">
-                  <h2 className="text-lg font-semibold">{Tournament.name}</h2>
-                </div>
-                <Table className="min-w-[600px] bg-white">
-                  <TableHead className="-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
-                    <TableRow>
-                      <TableCell className="w-12" />
-                      <TableCell>Team</TableCell>
-                      <TableCell>MP</TableCell>
-                      <TableCell>W</TableCell>
-                      <TableCell>D</TableCell>
-                      <TableCell>L</TableCell>
-                      <TableCell>GF</TableCell>
-                      <TableCell>GA</TableCell>
-                      <TableCell>GD</TableCell>
-                      <TableCell>Pts</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {sortStandings.map((team, index) => (
-                      <TableRow key={index} className=" dark:bg-white">
-                        <TableCell className="font-bold">{index + 1}</TableCell>
-                        <TableCell className="flex gap-2 items-center">
-                          <div className="flex items-center">
-                            <img
-                              alt="Team logo"
-                              className="rounded-lg"
-                              height="40"
-                              src={`/images/download (2).jpg`}
-                              style={{
-                                aspectRatio: "40/40",
-                                objectFit: "cover",
-                              }}
-                              width="40"
-                            />
-                            <div className="ml-1">{team.teamName}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{team.matchesPlayed}</TableCell>
-                        <TableCell>{team.wins}</TableCell>
-                        <TableCell>{team.draws}</TableCell>
-                        <TableCell>{team.losses}</TableCell>
-                        <TableCell>{team.goalsFor}</TableCell>
-                        <TableCell>{team.goalsAgainst}</TableCell>
-                        <TableCell>{team.goalDifference}</TableCell>
-                        <TableCell className="font-bold">
-                          {team.points}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {Tournament.tournamentType === "Group Stage" && <p>Group Stage</p>}
-      {Tournament.tournamentType === "Knockout" && Teams.length > 0 && (
-        <>
-          <p>Knockout</p>
-          <SingleEliminationBracket
-            matches={Matches}
-            matchComponent={({
-              match,
-              onMatchClick,
-              onPartyClick,
-              onMouseEnter,
-              onMouseLeave,
-              topParty,
-              bottomParty,
-              topWon,
-              bottomWon,
-              topHovered,
-              bottomHovered,
-              topText,
-              bottomText,
-              connectorColor,
-              computedStyles,
-              teamNameFallback,
-              resultFallback,
-            }) =>
-              _jsxs(Wrapper, {
-                children: [
-                  _jsxs(
-                    "div",
-                    Object.assign(
-                      {
-                        style: {
-                          display: "flex",
-                          justifyContent: "space-between",
-                        },
-                      },
-                      {
-                        children: [
-                          _jsx(TopText, { children: topText }),
-                          (match.href || typeof onMatchClick === "function") &&
-                            _jsx(
-                              Anchor,
-                              Object.assign(
-                                {
-                                  href: match.href,
-                                  onClick: (event) =>
-                                    onMatchClick === null ||
-                                    onMatchClick === void 0
-                                      ? void 0
-                                      : onMatchClick({
-                                          match,
-                                          topWon,
-                                          bottomWon,
-                                          event,
-                                        }),
-                                },
-                                {
-                                  children: _jsx(TopText, {
-                                    children: "Match Details",
-                                  }),
-                                }
-                              )
-                            ),
-                        ],
-                      }
-                    )
-                  ),
-                  _jsxs(StyledMatch, {
-                    children: [
-                      _jsxs(
-                        Side,
-                        Object.assign(
-                          {
-                            onMouseEnter: () => onMouseEnter(topParty.id),
-                            onMouseLeave: onMouseLeave,
-                            won: topWon,
-                            hovered: topHovered,
-                            onClick: () =>
-                              onPartyClick === null || onPartyClick === void 0
-                                ? void 0
-                                : onPartyClick(topParty, topWon),
-                          },
-                          {
-                            children: [
-                              _jsx(Team, {
-                                children:
-                                  topParty === null || topParty === void 0
-                                    ? void 0
-                                    : topParty.name,
-                              }),
-                              <input
-                                type="text"
-                                onChange={(event) =>
-                                  changeScore(topParty.id, event.target.value)
-                                }
-                                value={topParty.resultText}
-                                style={{
-                                  display: "flex",
-                                  height: "100%",
-                                  padding: "0 1rem",
-                                  alignItems: "center",
-                                  width: "20%",
-                                  justifyContent: "center",
-                                  background: "#10131C",
-                                  color: "#707582",
-                                }}
-                              />,
-                            ],
-                          }
-                        )
-                      ),
-                      _jsx(Line, { highlighted: topHovered || bottomHovered }),
-                      _jsxs(
-                        Side,
-                        Object.assign(
-                          {
-                            onMouseEnter: () => onMouseEnter(bottomParty.id),
-                            onMouseLeave: onMouseLeave,
-                            won: bottomWon,
-                            hovered: bottomHovered,
-                            onClick: () =>
-                              onPartyClick === null || onPartyClick === void 0
-                                ? void 0
-                                : onPartyClick(bottomParty, bottomWon),
-                          },
-                          {
-                            children: [
-                              _jsx(Team, {
-                                children:
-                                  bottomParty === null || bottomParty === void 0
-                                    ? void 0
-                                    : bottomParty.name,
-                              }),
-                              _jsx(
-                                Score,
-                                Object.assign(
-                                  { won: bottomWon },
-                                  {
-                                    children:
-                                      bottomParty === null ||
-                                      bottomParty === void 0
-                                        ? void 0
-                                        : bottomParty.resultText,
-                                  }
-                                )
-                              ),
-                            ],
-                          }
-                        )
-                      ),
-                    ],
-                  }),
-                  _jsx(BottomText, {
-                    children:
-                      bottomText !== null && bottomText !== void 0
-                        ? bottomText
-                        : " ",
-                  }),
-                ],
-              })
-            }
-          />
         </>
       )}
     </div>
   );
+}
+function formatDate(startDate) {
+  const date = new Date(startDate);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}.${month}. ${hours}:${minutes}`;
+}
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 export default DisplayAllTournaments;

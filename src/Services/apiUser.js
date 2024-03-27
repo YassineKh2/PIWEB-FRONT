@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = 'http://localhost:3000/user';
+const BASE_URL = "http://localhost:3000/user";
 
 
 export async function signup(userData) {
@@ -102,17 +102,21 @@ export async function getUserData(userId) {
 }
 
 export async function finishplayerprofile(userData) {
-    try {
-        const response = await axios.post(`${BASE_URL}/finishplayerprofile`, userData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-        // localStorage.setItem('token', response.data.token);
-        return response.data;
-    } catch (error) {
-        throw error.response.data;
-    }
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/finishplayerprofile`,
+      userData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    // localStorage.setItem('token', response.data.token);
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
 }
 
 export async function getAllPlayers() {
