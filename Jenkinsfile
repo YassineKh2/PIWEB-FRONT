@@ -4,7 +4,7 @@ pipeline {
         stage('Install dependendencies  ') {
             steps {
                 script {
-                    sh('npm install')
+                    sh('npm install --force')
                 }
             }
         }
