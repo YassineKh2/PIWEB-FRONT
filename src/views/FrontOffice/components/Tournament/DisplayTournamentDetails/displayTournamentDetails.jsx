@@ -35,6 +35,7 @@ import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
 import { IoIosFootball } from "react-icons/io";
 import { getUserData } from "../../../../../Services/apiUser";
+import StatsSelectedMatch from "./statsSelectedMatch";
 
 function DisplayAllTournaments() {
   const { id } = useParams();
@@ -716,6 +717,7 @@ function DisplayAllTournaments() {
     setIsPopupOpen(true);
     getAllTournamentMatches();
   };
+
   useEffect(() => {
     socket.on("updateScore", (updatedMatch) => {
       setRealMatches((prevMatches) =>
@@ -945,9 +947,9 @@ function DisplayAllTournaments() {
     <div className="">
       {Tournament.tournamentType === "League" && (
         <>
-          <div className="flex justify-center items-start pt-8 mb-3 ">
+          <div className="flex justify-start ml-30 items-start pt-8 mb-3 ">
             <div>
-              <a className="flex flex-col ml-30 mr-10 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+              <a className="flex flex-col ml-30 mr-10 min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">
@@ -1314,6 +1316,7 @@ function DisplayAllTournaments() {
                                       </div>
                                       <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
                                       <GiSoccerField
+                                        onClick={() => handleMatchClick(match)}
                                         size={18}
                                         className="-mt-7 mr-10"
                                       />
@@ -1329,6 +1332,24 @@ function DisplayAllTournaments() {
                             <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
                           </div>
                         ))}
+                        {isPopupOpen &&
+                          selectedMatch &&
+                          userInfo &&
+                          userInfo.userId === Tournament.creator && (
+                            <div>
+                              <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                              <StatsSelectedMatch
+                                ref={popupRef}
+                                match={selectedMatch}
+                                Tournament={Tournament}
+                                onClose={() => {
+                                  setIsPopupOpen(false);
+                                  setSelectedMatch(null);
+                                }}
+                                socket={socket}
+                              />
+                            </div>
+                          )}
                       </div>
                     </div>
                   </>
@@ -1520,9 +1541,9 @@ function DisplayAllTournaments() {
       )}
       {Tournament.tournamentType === "Group Stage" && (
         <>
-          <div className="flex justify-center items-start pt-8 mb-3">
+          <div className="flex justify-start ml-30 items-start pt-8 mb-3">
             <div>
-              <a className="flex flex-col  mr-8 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+              <a className="flex flex-col min-h-screen  mr-8 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">
@@ -2266,111 +2287,219 @@ function DisplayAllTournaments() {
 
       {Tournament.tournamentType === "Knockout" && Teams.length > 0 && (
         <>
-          <div className="flex justify-center gap-4 mt-4">
-            <button
-              className={`${
-                activeTab === "matches"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-800"
-              } px-4 py-2 rounded-md focus:outline-none mb-5`}
-              onClick={() => handleTabChange("matches")}
-            >
-              Matches
-            </button>
-            <button
-              className={`${
-                activeTab === "standings"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-800"
-              } px-4 py-2 rounded-md focus:outline-none mb-5`}
-              onClick={() => handleTabChange("standings")}
-            >
-              Draw
-            </button>
-          </div>
-          {activeTab === "standings" && (
-            <SingleEliminationBracket
-              matches={Matches}
-              matchComponent={Match}
-              style={{ width: "50%", height: "50%" }}
-            />
-          )}
-          {activeTab === "matches" && (
-            <div className="flex flex-wrap justify-center">
-              <ul className="flex-column  space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
-                <li>
-                  <button
-                    onClick={all}
-                    className="gap-1 inline-flex items-center px-4 py-3 text-white bg-blue-700 rounded-lg active w-full dark:bg-blue-600"
-                    aria-current="page"
-                  >
-                    <Football size={20} />
-                    All
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={upcoming}
-                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    <Upcoming size={20} />
-                    Upcoming
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={active}
-                    className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    <Active size={20} />
-                    Active
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={played}
-                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    <Played size={20} />
-                    Played
-                  </button>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-gray-50 hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    <Loop size={20} />
-                    Discover
-                  </a>
-                </li>
-              </ul>
-              <MatchesComponent
-                RealMatches={RealMatches}
-                currentPage={currentPage}
-                handlePageClick={handlePageClick}
-              />
+          <div className="flex justify-start ml-20 items-start pt-8 mb-3">
+            <div>
+              <a className="flex flex-col min-h-screen  mr-8 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                <div className="flex mt-4 mb-2 ml-2 mr-2">
+                  <MdGrade size={20} className="mr-1" />
+                  <p className="text-black font-medium text-[0.9rem]">
+                    PINNED TOURNAMENTS
+                  </p>
+                </div>
+                {AllTournament.map((innerArray, index) => (
+                  <div key={index} className="w-full">
+                    {innerArray.map((tournament) => {
+                      return (
+                        <div
+                          key={tournament._id}
+                          className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200"
+                        >
+                          <img
+                            alt="Team A logo"
+                            className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                            src={pathTournament + tournament.image}
+                            style={{
+                              aspectRatio: "1/1",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <div>
+                            <button
+                              className="text-[1rem]"
+                              onClick={() =>
+                                handleOnClickOnFavorite(tournament)
+                              }
+                            >
+                              {tournament.name}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
 
-              {isPopupOpen &&
-                selectedMatch &&
-                userInfo &&
-                userInfo.userId === Tournament.creator && (
-                  <div>
-                    <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
-                    <Popupcontent
-                      ref={popupRef}
-                      match={selectedMatch}
-                      Tournament={Tournament}
-                      onClose={() => {
-                        setIsPopupOpen(false);
-                        setSelectedMatch(null);
-                      }}
-                      socket={socket}
+                <div className="flex mt-4 mb-2 ml-2 mr-2">
+                  <MdGrade size={20} className="mr-1" />
+                  <p className="text-black font-medium text-[0.9rem]">
+                    FAVORITES TOURNAMENTS
+                  </p>
+                </div>
+                {favoritesTournament.map((tournament) => (
+                  <div key={tournament._id} className="w-full">
+                    <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
+                      <img
+                        alt="Team A logo"
+                        className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                        src={pathTournament + tournament.image}
+                        style={{
+                          aspectRatio: "1/1",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <div>
+                        <button
+                          className="text-[1rem]"
+                          onClick={() => handleOnClickOnFavorite(tournament)}
+                        >
+                          {tournament.name}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex mt-4 mb-2 ml-2 mr-2">
+                  <MdGrade size={20} className="mr-1" />
+                  <p className="text-black font-medium text-[0.9rem]">
+                    FAVORITES TEAMS
+                  </p>
+                </div>
+                {favoritesTeams.map((team) => (
+                  <div key={team._id} className="w-full">
+                    <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
+                      <img
+                        alt="Team A logo"
+                        className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                        src={path + team.image}
+                        style={{
+                          aspectRatio: "1/1",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <div>
+                        <button
+                          className="text-[1rem]"
+                          onClick={() => handleOnClickOnFavoriteTeam(team)}
+                        >
+                          {team.name}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </a>
+            </div>
+            <div>
+              <div>
+                <button
+                  className={`${
+                    activeTab === "matches"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-800"
+                  } px-4 py-2 rounded-md focus:outline-none mb-5 mr-5`}
+                  onClick={() => handleTabChange("matches")}
+                >
+                  Matches
+                </button>
+                <button
+                  className={`${
+                    activeTab === "standings"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-800"
+                  } px-4 py-2 rounded-md focus:outline-none mb-5`}
+                  onClick={() => handleTabChange("standings")}
+                >
+                  Draw
+                </button>
+              </div>
+              <div className="">
+                {activeTab === "standings" && (
+                  <div className="flex justify-center">
+                    <SingleEliminationBracket
+                      matches={Matches}
+                      matchComponent={Match}
                     />
                   </div>
                 )}
+                {activeTab === "matches" && (
+                  <div>
+                    <ul className="flex items-center justify-center space-y-2 space-x-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-5">
+                      <li>
+                        <button
+                          onClick={all}
+                          className="gap-1 inline-flex items-center mt-2 px-4 py-3 text-[#555e61] hover:text-gray-900 bg-[#f6f8ff] hover:bg-gray-100 rounded-lg active w-full dark:bg-blue-600"
+                          aria-current="page"
+                        >
+                          <Football size={20} className="text-[#555e61]" />
+                          All
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={upcoming}
+                          className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-[#f6f8ff] hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                        >
+                          <Upcoming size={20} />
+                          Upcoming
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={active}
+                          className="inline-flex gap-1 items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-[#f6f8ff] hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                        >
+                          <Active size={20} />
+                          Active
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={played}
+                          className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-[#f6f8ff] hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                        >
+                          <Played size={20} />
+                          Played
+                        </button>
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          className=" gap-1 inline-flex items-center px-4 py-3 rounded-lg hover:text-gray-900 bg-[#f6f8ff] hover:bg-gray-100 w-full dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:text-white"
+                        >
+                          <Loop size={20} />
+                          Discover
+                        </a>
+                      </li>
+                    </ul>
+                    <MatchesComponent
+                      RealMatches={RealMatches}
+                      currentPage={currentPage}
+                      handlePageClick={handlePageClick}
+                    />
+
+                    {isPopupOpen &&
+                      selectedMatch &&
+                      userInfo &&
+                      userInfo.userId === Tournament.creator && (
+                        <div>
+                          <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
+                          <Popupcontent
+                            ref={popupRef}
+                            match={selectedMatch}
+                            Tournament={Tournament}
+                            onClose={() => {
+                              setIsPopupOpen(false);
+                              setSelectedMatch(null);
+                            }}
+                            socket={socket}
+                          />
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </div>
         </>
       )}
     </div>

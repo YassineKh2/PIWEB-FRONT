@@ -560,7 +560,18 @@ function AddTournament() {
 
         if (Tournament.tournamentType === "League") {
           let teamOrder = selectedTeams.slice();
+          const tournamentStartDate = new Date(Tournament.startDate);
+          const tournamentEndDate = new Date(Tournament.endDate);
 
+          // Initialize the match date (start from the tournament start date)
+          let currentMatchDate = new Date(tournamentStartDate);
+
+          // Helper function to add hours to a date
+          function addHours(date, hours) {
+            const newDate = new Date(date);
+            newDate.setHours(newDate.getHours() + hours);
+            return newDate;
+          }
           for (let round = 0; round < totalRounds; round++) {
             for (let match = 0; match < matchesPerRound; match++) {
               // Determine the indices for the home and away teams
@@ -570,9 +581,10 @@ function AddTournament() {
               // Get the team IDs based on the current order
               const idTeam1 = teamOrder[homeIndex];
               const idTeam2 = teamOrder[awayIndex];
-
+              const randomHours = Math.floor(Math.random() * 24); // Random hour (0-23)
+              currentMatchDate = addHours(currentMatchDate, randomHours);
               // Create match data only if it's not the same team
-              if (idTeam1 !== idTeam2) {
+              if (idTeam1 !== idTeam2 && currentMatchDate.getHours() >= 8 && currentMatchDate.getHours() < 24) {
                 const matchData = {
                   win: "",
                   loss: "",
