@@ -12,7 +12,8 @@ import { IoIosFootball } from "react-icons/io";
 function StatsSelectedMatch({ match, onClose, socket, Tournament }) {
   const path = "http://localhost:3000/public/images/teams/";
   const [activeTab, setActiveTab] = useState("matches");
-
+  const [homeTeam, setHomeTeam] = useState(match.team1.currentLineup);
+  const [awayTeam, setAwayTeam] = useState(match.team2.currentLineup);
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === "matches") {
@@ -96,7 +97,50 @@ function StatsSelectedMatch({ match, onClose, socket, Tournament }) {
       console.error("Error updating match:", error);
     }
   };
+  const [Squad, setSquad] = useState({
+    gk: null,
+    df: [],
+    cdm: [],
+    cm: [],
+    cam: [],
+    fw: [],
+  });
+  useEffect(() => {
+    const updatedSquad = { ...Squad }; // Copy the current state
+    console.log(updatedSquad);
+    homeTeam.forEach((player) => {
+      switch (player.position) {
+        case "GK":
+          updatedSquad.gk = player;
+          break;
+        case "FB":
+          updatedSquad.df.push(player);
+          break;
+        case "DM":
+          updatedSquad.cdm.push(player);
+          break;
+        case "M":
+          updatedSquad.cm.push(player);
+          break;
+        case "cam":
+          updatedSquad.cam.push(player);
+          break;
+        case "LM":
+          updatedSquad.fw.push(player);
+          break;
+        case "AM":
+          updatedSquad.fw.push(player);
+          break;
+        default:
+          break;
+      }
+    });
 
+    setSquad(updatedSquad);
+  }, [homeTeam]);
+  const [teamXL, setTeamXL] = useState({
+    squad: Squad,
+  });
   return (
     <div>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -234,7 +278,7 @@ function StatsSelectedMatch({ match, onClose, socket, Tournament }) {
                       size={"responsive"}
                       color={"#588f58"}
                       pattern={"squares"}
-                      //homeTeam={teamXL}
+                      homeTeam={teamXL}
                     />
                   </div>
                 </>
