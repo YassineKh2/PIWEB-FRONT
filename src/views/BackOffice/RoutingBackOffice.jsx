@@ -1,5 +1,5 @@
 import PageTitle from "./components/PageTitle.jsx";
-import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ECommerce from "./Pages/Dashbord/ECommerce.jsx";
 import FormElements from "./Pages/Form/FormElements.jsx";
@@ -23,100 +23,109 @@ import RoutingStadiumsBack from "./components/Stadium/RoutingStadiumsBack.jsx";
 //import RoutingUsersBack from "./components/User/DisplayUser/displayUser.jsx";
 import RoutingUsersBack from "./components/User/RoutingUser.jsx";
 import { useRefresh } from "./hooks/useRefreshHook.js";
-import RequireAuth from "../FrontOffice/components/User/requireAuth.jsx";
+import RequireAuth from "../FrontOffice/components/User/requireAuth.jsx"
 
 export default function RoutingBackOffice() {
-  const [loading, setLoading] = useState(true);
-  const { pathname } = useLocation();
-  const [error, setError] = useState("");
+    const [loading, setLoading] = useState(true);
+    const {pathname} = useLocation();
+    const [error, setError] = useState('');
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    useEffect(() => {
 
-  useEffect(() => {
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
+        window.scrollTo(0, 0);
+    }, [pathname]);
 
-  return (
-    <>
-      <Routes>
-        <Route element={<RequireAuth allowedRoles={["A"]} />}>
-          <Route
-            path="backoffice"
-            element={
-              <>
-                <PageTitle title="eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                <DefaultLayout />
-              </>
-            }
-          >
-            {
-              <Route
-                path="users/*"
-                element={
-                  <>
-                    <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                    <RoutingUsersBack />
-                  </>
-                }
-              />
-            }
-            <Route
-              path=""
-              element={
-                <>
-                  <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                  <ECommerce />
-                </>
-              }
-            />
+    
 
-            <Route
-              path="calendar"
-              element={
-                <>
-                  <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                  <Calendar />
-                </>
-              }
-            />
-            <Route
-              path="profile"
-              element={
-                <>
-                  <PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                  <Profile />
-                </>
-              }
-            />
-            <Route
-              path="BTicket"
-              element={
-                <>
-                  <PageTitle title="Ticket | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                  <BTicket />
-                </>
-              }
-            />
-            <Route
-              path="allReservation"
-              element={
-                <>
-                  <PageTitle title="Reservation | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                  <AllReservation />
-                </>
-              }
-            />
-            <Route
-              path="allSponsors"
-              element={
-                <>
-                  <PageTitle title=" Sponsors | TailAdmin - Tailwind CSS Admin Dashboard Template" />
-                  <AllSponsors />
-                </>
-              }
-            />
+  
+
+    useEffect(() => {
+        setTimeout(() => setLoading(false), 1000);
+
+    }, []);
+
+    return  (
+        
+        <>
+            <Routes>
+                <Route element={<RequireAuth allowedRoles={['A']}/>} >
+                    <Route
+                        path="backoffice"
+                        element={
+                            <>
+                                <PageTitle
+                                    title="eCommerce Dashboard | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                <DefaultLayout/>
+                            </>
+                        }
+                    >
+
+
+
+                        { <Route
+                            path="users/*"
+                            element={
+                                <>
+                                    <PageTitle title="Settings | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                    <RoutingUsersBack/>
+                                </>
+                            }
+                        /> }
+                        <Route
+                            path=""
+                            element={
+                                <>
+                                    <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                    <ECommerce/>
+                                </>
+                            }
+                        />
+
+                        <Route
+                            path="calendar"
+                            element={
+                                <>
+                                    <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                    <Calendar/>
+                                </>
+                            }
+                        />
+                        <Route
+                            path="profile"
+                            element={
+                                <>
+                                    <PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                                    <Profile/>
+                                </>
+                            }
+                        />
+                        <Route
+                            path="BTicket"
+                            element={
+                                <>
+                                    <PageTitle title="Ticket | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                                    <BTicket />
+                                </>
+                            }
+                        />
+                        <Route
+                            path= "allReservation"
+                            element={
+                                <>
+                                    <PageTitle title="Reservation | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                                    <AllReservation />
+                                </>
+                            }
+                        />
+                        <Route
+                            path="allSponsors"
+                            element={
+                                <>
+                                    <PageTitle title=" Sponsors | TailAdmin - Tailwind CSS Admin Dashboard Template" />
+                                    <AllSponsors />
+                                </>
+                            }
+                        />
 
             <Route
               path="tables"

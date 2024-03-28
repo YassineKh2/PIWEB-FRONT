@@ -20,13 +20,13 @@ function App() {
 
     if (userToken) {
       const decodedToken = jwtDecode(userToken);
-      if (decodedToken.role === "C") {
+      if (decodedToken.role === "C" || decodedToken.role === "P" || decodedToken.role === "S"){
         setShouldDisplayHeader(1);
       } else if (decodedToken.role === "A") {
         setShouldDisplayHeader(2);
-      } else if (decodedToken.role === "TRM") {
+      }else if (decodedToken.role === "TRM") {
         setShouldDisplayHeader(3);
-      } else if (decodedToken.role === "TM") {
+      }else if (decodedToken.role === "TM") {
         setShouldDisplayHeader(4);
       }
     }
@@ -48,14 +48,14 @@ function App() {
           <Footer />
         </Providers>
       )}
-      {shouldDisplayHeader === 3 && (
+       {shouldDisplayHeader === 3 && (
         <Providers>
           <Header />
           <RoutesPath />
           <Footer />
         </Providers>
       )}
-      {shouldDisplayHeader === 4 && (
+       {shouldDisplayHeader === 4 && (
         <Providers>
           <Header />
           <RoutesPath />

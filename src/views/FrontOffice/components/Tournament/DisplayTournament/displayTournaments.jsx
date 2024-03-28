@@ -53,10 +53,10 @@ function DisplayAllTournaments() {
     <>
       {userInfo && userInfo.role === "TRM" && (
         <div className="flex justify-between mt-10">
-          <form class="max-w-sm ml-10">
+          <form className="max-w-sm ml-10">
             <label
               for="countries"
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
             >
               Select an option
             </label>
@@ -203,12 +203,10 @@ function DisplayAllTournaments() {
                   </button>
                 )}
                 <button
-            
-                  onClick={() =>navigate(`/hotels/details/${tournament._id}`)}
+                  onClick={() => navigate(`/hotels/details/${tournament._id}`)}
                   className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
-
                 >
-                 Hotels
+                  Hotels
                 </button>
               </div>
             </div>
