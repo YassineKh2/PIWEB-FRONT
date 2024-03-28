@@ -105,7 +105,7 @@ function StatsSelectedMatch({ match, onClose, socket, Tournament }) {
     cam: [],
     fw: [],
   });
- /* useEffect(() => {
+  useEffect(() => {
     const updatedSquad = { ...Squad }; // Copy the current state
     console.log(updatedSquad);
     homeTeam.forEach((player) => {
@@ -140,7 +140,7 @@ function StatsSelectedMatch({ match, onClose, socket, Tournament }) {
   }, [homeTeam]);
   const [teamXL, setTeamXL] = useState({
     squad: Squad,
-  });*/
+  });
   return (
     <div>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -278,7 +278,7 @@ function StatsSelectedMatch({ match, onClose, socket, Tournament }) {
                       size={"responsive"}
                       color={"#588f58"}
                       pattern={"squares"}
-                      //homeTeam={teamXL}
+                      homeTeam={teamXL}
                     />
                   </div>
                 </>
