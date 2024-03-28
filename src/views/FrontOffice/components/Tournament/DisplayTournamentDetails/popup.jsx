@@ -34,7 +34,10 @@ function PopupContent({ match, onClose, socket, Tournament }) {
 
     try {
       // Emit the updateScore event to the server
-      if (Tournament.tournamentType === "Knockout") {
+      if (
+        Tournament.tournamentType === "Knockout" ||
+        match.knockoutStageAfterGroup === "Draw"
+      ) {
         if (match.nextMatchId !== null) {
           const emptyMatch = await getEmptyMatche(
             match.nextMatchId,
