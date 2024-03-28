@@ -94,7 +94,7 @@ function AddTournament() {
   const [showLeague, setLeague] = useState(true);
   const [userInfo, setUserInfo] = useState();
 
-  //hotel
+  //hotel//
 
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
@@ -109,6 +109,7 @@ function AddTournament() {
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
+  //stadium//
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -291,7 +292,16 @@ function AddTournament() {
 
 
 
-/////////hotelll
+/////////////////////////////////////////////////////////////Stadiums/////////////////////////////////////////////////////////////
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+/////////////////////////////////////////////////////////////Hotel/////////////////////////////////////////////////////////////
 const hideNotifications = () => {
   setShowErrorNotification(false);
   setShowSuccessNotification(false);
@@ -419,7 +429,7 @@ const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
 const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
