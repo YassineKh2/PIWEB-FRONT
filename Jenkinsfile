@@ -47,5 +47,17 @@ pipeline {
                 }
             }
         }
+        stage('Run application ') {
+            steps{
+                script {
+                    docker.withRegistry("http://"+registry, registryCredentials
+                    ) {
+                    sh('docker pull $registry/reactapp:1.0 ')
+                    sh('docker-compose up -d ')
+                    }
+                    }
+                }
+        }
+
 }
 }
