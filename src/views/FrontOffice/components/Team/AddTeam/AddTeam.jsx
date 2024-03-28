@@ -82,13 +82,13 @@ export default function AddTeam() {
       name: "",
       description: "",
       logo: "",
-      contact: "",
+      contact: 0,
       adresse: ""
     });
     const [error, setErrors] = useState({
         name: "",
         description: "",
-        contact: "",
+        contact: 0,
         adresse: ""
       });
 
@@ -118,28 +118,9 @@ export default function AddTeam() {
 
         }
     }
-useEffect(() => {
-        const fetchData = async () => {
-            if (currentStep === 4 && showForm) {        
-                try {
-                    // Récupérer la valeur du champ "name" en utilisant watch
-                    const nameValue = watch("name");
-    
-                    // Créer l'objet de données à envoyer à addSponsors en incluant la valeur du champ "name"
-                    const data = { ...sponsor, nameteam : nameValue };
-    
-                    // Appeler addSponsors avec les données mises à jour
-                    await addSponsors(data);
-                } catch (error) {
-                    setError("root", {
-                        message: error.message
-                    });
-                }
-            }
-        };
-    
-        fetchData();
-    }, [currentStep, showForm]);
+    const handleLogoChange = (e) => {
+        setLogo(e.target.files[0]);
+      };
     const prev = () => {
         if (currentStep > 0) {
             setPreviousStep(currentStep)
@@ -198,21 +179,16 @@ useEffect(() => {
             data.image = image[0];
             data.imagename = image[0].name;
             data.foundedIn = date;
-            await schemasp.validate(sponsor);
-            // Ajout de l'équipe
-            const addedTeam = await addTeam(data);
-            const teamId = addedTeam.data._id; // Obtenez l'identifiant de l'équipe nouvellement ajoutée
-            
-            // Ajout du sponsor avec l'ID de l'équipe associée
-            const sponsorData = { ...data, teamId };
-            await addSponsors(sponsorData);
     
-            // Afficher les données du sponsor ajouté
-            console.log("Données du sponsor ajouté :", sponsorData);
-        
+            const nameValue = watch("name");
+
     
+            const lastteam = { ...data, sponsors: sponsor };
+            console.log("azizz: " + JSON.stringify(lastteam)); 
+
+            await addTeam(lastteam);
+            await addSponsors(sponsor);
             navigate('/team/all');
-    
         } catch (error) {
             setError("root", {
                 message: error.message
@@ -625,7 +601,7 @@ useEffect(() => {
                                 </label>
                                 <input
                                     type="file"
-                                    name="logo"
+                                    name={sponsor.logo}
                                     accept="image/*"
                                     onChange={(e) => handleLogoChange(e)}
                                     className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"

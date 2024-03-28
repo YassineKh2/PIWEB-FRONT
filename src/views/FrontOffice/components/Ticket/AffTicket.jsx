@@ -128,7 +128,7 @@ function AffTicket() {
                     <div style={{ marginTop: "18px", display: "flex", justifyContent: "space-between" }}>
                         <input
                             type="submit"
-                            value="Annuler"
+                            value="Delete"
                             onClick={(e) => {
                                 e.preventDefault();
                                 Swal.fire({
@@ -147,7 +147,7 @@ function AffTicket() {
                             className="duration-80 cursor-pointer rounded-md border border-transparent bg-green-500 py-2 px-4 sm:py-3 sm:px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
                         />
                         <div>
-                            <button className={modifierButtonClass} onClick={handleModifyTicket}>Modifier</button>
+                            <button className={modifierButtonClass} onClick={handleModifyTicket}>Update</button>
                             <button className={payerButtonClass} onClick={handlePayment}>Payer</button>
                         </div>
                     </div>
