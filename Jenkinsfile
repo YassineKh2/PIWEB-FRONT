@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    environment {
+        registryCredentials = "nexus"
+        registry = "192.168.33.10:8083"
+    }
+
     stages {
         stage('Install dependendencies  ') {
             steps {
@@ -32,5 +37,14 @@ pipeline {
                 }
             }
         }
-    }
+        stage('Deploy to Nexus') {
+            steps{
+                script {
+                    docker.withRegistry("http://"+registry,
+                    registryCredentials ) {
+                    sh('docker push $registry/reactapp:1.0 ')
+                    }
+                }
+            }
+        }
 }
