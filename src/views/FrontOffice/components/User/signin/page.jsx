@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 
 
 
+
 function SigninPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -12,6 +13,14 @@ function SigninPage() {
   const [error, setError] = useState('');
  
   
+
+function SigninPage() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+
   const handleSignin = async (e) => {
     e.preventDefault();
     try {
@@ -24,18 +33,28 @@ function SigninPage() {
        
         localStorage.setItem('token', response.token);
 
+
         
         if (response.user.role === 'A') {
         
           navigate('/backoffice', { replace: true });
         } else if (response.user.role !== 'A') {
           navigate('/profile');
+
+        if (response.user.role === "A") {
+          navigate("/backoffice", { replace: true });
+          window.location.reload();
+        } else if (response.user.role !== "A") {
+          navigate("/profile");
+
+
           //console.log(localStorage);
         }
       } else {
         
         setError("Token not found");
       }
+
 
     }  catch (error) {
       // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
@@ -47,6 +66,20 @@ function SigninPage() {
           icon: 'error',
           title: 'Compte Bloqué',
           text: 'Votre compte est bloqué. Veuillez contacter le support pour plus d\'informations.',
+
+
+    } catch (error) {
+      // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
+      const errorMessage = error.response?.data?.error;
+
+      // Afficher l'alerte spécifique si le compte est bloqué
+      if (errorMessage === "Votre compte est bloqué") {
+        Swal.fire({
+          icon: "error",
+          title: "Compte Bloqué",
+          text: "Votre compte est bloqué. Veuillez contacter le support pour plus d'informations.",
+
+
         });
       } else {
         // Gérer d'autres types d'erreurs ici
@@ -57,10 +90,16 @@ function SigninPage() {
         });
       }
   
+
+
+          
+      }
+
+
       // Logger l'erreur pour le débogage
       console.error("Sign-in error:", errorMessage);
     }
-  };
+  
 
 
   return (

@@ -79,7 +79,7 @@ function DisplayAllTournaments() {
                       <p className="text-xs text-body-color">test</p>
                     </div>
                   </div>
-                  <div className="inline-block flex">
+                  <div className="inline-block">
                     <div className="mr-4">
                       <h4 className="mb-1 text-sm font-medium text-dark dark:text-white">
                         Start Date
@@ -122,6 +122,7 @@ function DisplayAllTournaments() {
                 >
                   Details
                 </button>
+
                 <button
                   onClick={() =>
                     navigate(`/tournament/update`, { state: { tournament } })
@@ -129,6 +130,32 @@ function DisplayAllTournaments() {
                   className="mb-4 -mt-4 mr-4 ease-in-up hidden rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8 ml-auto "
                 >
                   Update
+
+                {userInfo && userInfo.role === "TRM" && (
+                  <button
+                    onClick={() =>
+                      navigate(`/tournament/update`, { state: { tournament } })
+                    }
+                    className="mb-4 -mt-4 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
+                    style={{
+                      display: userTournaments.some(
+                        (t) => t._id === tournament._id
+                      )
+                        ? "block"
+                        : "none",
+                    }}
+                  >
+                    Update
+                  </button>
+                )}
+                <button
+            
+                  onClick={() =>navigate(`/hotels/details/${tournament._id}`)}
+                  className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
+
+                >
+                 Hotels
+
                 </button>
               </div>
             </div>

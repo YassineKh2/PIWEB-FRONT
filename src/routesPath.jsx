@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import SigninPage from "./views/FrontOffice/components/User/signin/page.jsx";
 
 import SignupPageTRM from "./views/FrontOffice/components/User/signup/page1.jsx"
@@ -9,7 +9,8 @@ import Blog from "./views/FrontOffice/HomePage/components/Blog/index.jsx";
 import Home from "./views/FrontOffice/HomePage/page.jsx";
 import AddTournament from "./views/FrontOffice/components/Tournament/AddTournament/addTournament.jsx";
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
-import DisplayTournamentDetails from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
+import DisplayTournamentDetails
+    from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
 import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
 import AddReservation from "./views/FrontOffice/components/Reservation/AddReservation.jsx";
 import AddSponsors from "./views/FrontOffice/components/Sponsors/AddSponsors.jsx";
@@ -20,14 +21,14 @@ import UpReservation from "./views/FrontOffice/components/Reservation/UpReservat
 import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
+import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
+
 import RoutingUsers from "./views/FrontOffice/components/User/profile/profile.jsx"
 import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
 import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
-import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
-import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -51,47 +52,66 @@ function RoutesPath() {
         <Route path="/BTicket" element={<BTicket/>} />
         <Route path="/ticket" element={<AffTicket/>}/>
         <Route path="/upres" element={<UpReservation/>}/>
-        <Route path="/upsp" element={<UpdateSponsors/>}/>
-        <Route path="/syGenie" element={<SyGenie/>}/>
 
-        <Route path="/team" element={<AddTeam />} />
-        <Route path="signin" element={<SigninPage />} />
-        <Route path="signup" element={<SignupPage />} />
-        <Route path="about" element={<About />} />
-        <Route path="blog" element={<Blog />} />
-          <Route
-              path="tournament/*"
-              element={
-                  <>
-                      <RoutingTournaments/>
-                  </>
-              }
-          />
- <Route
-            path="profile/*"
-            element={
-              <>
-                <RoutingUsers/>
-              </>
-            }
-        />
-        
-        <Route
-            path="team/*"
-            element={
-              <>
-                <RoutingTeams/>
-              </>
-            }
-        />
-        <Route path="/" element={<Home />} />
+                <Route path="/team" element={<AddTeam/>}/>
+                <Route path="signin" element={<SigninPage/>}/>
+                <Route path="signup" element={<SignupPage/>}/>
+                <Route path="about" element={<About/>}/>
+                <Route path="blog" element={<Blog/>}/>
+                <Route
+                    path="tournament/*"
+                    element={
+                        <>
+                            <RoutingTournaments/>
+                        </>
+                    }
+                />
+                <Route
+                    path="profile/*"
+                    element={
+                        <>
+                            <RoutingUsers/>
+                        </>
+                    }
+                />
 
-        <Route element={<RequireAuth allowedRoles={['A']}/>}>
-                        <Route path="backoffice" element={<RoutingBackOffice/>}/>
-                        </Route>
-      </Routes>
-    </div>
-  );
+                <Route
+                    path="team/*"
+                    element={
+                        <>
+                            <RoutingTeams/>
+                        </>
+                    }
+                />
+
+                <Route
+                    path="player/*"
+                    element={
+                        <>
+                            <RoutingPlayers/>
+                        </>
+                    }
+                />
+
+                <Route
+                    path="hotels/*"
+                    element={
+                        <>
+                            <RoutingHotels/>
+                        </>
+                    }
+                />
+
+                <Route path="/" element={<Home/>}/>
+
+
+                <Route element={<RequireAuth allowedRoles={['A']}/>}>
+                    <Route path="backoffice" element={<RoutingBackOffice/>}/>
+                </Route>
+
+            </Routes>
+        </div>
+    );
 }
 
 export default RoutesPath;
