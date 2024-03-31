@@ -146,11 +146,8 @@ function DisplayAllTournaments() {
       </div>
       {userInfo && userInfo.role === "TRM" && (
         <div className="flex justify-between mt-10">
-          <form class="max-w-sm ml-10">
-            <label
-              for="countries"
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
+          <form className="max-w-sm ml-10">
+            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
               Select an option
             </label>
             <select
@@ -304,27 +301,46 @@ function DisplayAllTournaments() {
                   >
                     Hotels
                   </button>
-                  <div>
-                    {likedTournaments[tournament._id] ? (
-                      isHovered[tournament._id] ? (
-                        <BrokenHeart
-                          onMouseEnter={() =>
-                            setIsHovered((prevState) => ({
-                              ...prevState,
-                              [tournament._id]: true,
-                            }))
-                          }
-                          onMouseLeave={() =>
-                            setIsHovered((prevState) => ({
-                              ...prevState,
-                              [tournament._id]: false,
-                            }))
-                          }
-                          size={25}
-                          onClick={() => unlike(tournament._id)}
-                          className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
-                        />
-                      ) : (
+                  {userInfo && userInfo.userId === tournament.creator && (
+                    <div>
+                      {likedTournaments[tournament._id] ? (
+                        isHovered[tournament._id] ? (
+                          <BrokenHeart
+                            onMouseEnter={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: true,
+                              }))
+                            }
+                            onMouseLeave={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: false,
+                              }))
+                            }
+                            size={25}
+                            onClick={() => unlike(tournament._id)}
+                            className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
+                          />
+                        ) : (
+                          <FullHeart
+                            onMouseEnter={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: true,
+                              }))
+                            }
+                            onMouseLeave={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: false,
+                              }))
+                            }
+                            size={25}
+                            className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
+                          />
+                        )
+                      ) : isHovered[tournament._id] ? (
                         <FullHeart
                           onMouseEnter={() =>
                             setIsHovered((prevState) => ({
@@ -339,46 +355,29 @@ function DisplayAllTournaments() {
                             }))
                           }
                           size={25}
-                          className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
+                          onClick={() => like(tournament._id)}
+                          className="text-red-600 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
                         />
-                      )
-                    ) : isHovered[tournament._id] ? (
-                      <FullHeart
-                        onMouseEnter={() =>
-                          setIsHovered((prevState) => ({
-                            ...prevState,
-                            [tournament._id]: true,
-                          }))
-                        }
-                        onMouseLeave={() =>
-                          setIsHovered((prevState) => ({
-                            ...prevState,
-                            [tournament._id]: false,
-                          }))
-                        }
-                        size={25}
-                        onClick={() => like(tournament._id)}
-                        className="text-red-600 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
-                      />
-                    ) : (
-                      <EmptyHeart
-                        onMouseEnter={() =>
-                          setIsHovered((prevState) => ({
-                            ...prevState,
-                            [tournament._id]: true,
-                          }))
-                        }
-                        onMouseLeave={() =>
-                          setIsHovered((prevState) => ({
-                            ...prevState,
-                            [tournament._id]: false,
-                          }))
-                        }
-                        size={25}
-                        className="text-gray-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
-                      />
-                    )}
-                  </div>
+                      ) : (
+                        <EmptyHeart
+                          onMouseEnter={() =>
+                            setIsHovered((prevState) => ({
+                              ...prevState,
+                              [tournament._id]: true,
+                            }))
+                          }
+                          onMouseLeave={() =>
+                            setIsHovered((prevState) => ({
+                              ...prevState,
+                              [tournament._id]: false,
+                            }))
+                          }
+                          size={25}
+                          className="text-gray-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

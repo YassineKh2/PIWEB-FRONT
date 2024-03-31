@@ -3,6 +3,7 @@ import AddTournament from "./AddTournament/addTournament.jsx";
 import DisplayAllTournaments from "./DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails from "./DisplayTournamentDetails/displayTournamentDetails.jsx";
 import UpdateTournament from "./updateTournament/updateTournament.jsx";
+import StatsSelectedMatch from "./DisplayTournamentDetails/statsSelectedMatch.jsx";
 
 export default function RoutingTournaments() {
 
@@ -38,6 +39,14 @@ export default function RoutingTournaments() {
                 element={
                     <>
                         <UpdateTournament/>
+                    </>
+                }
+            />
+            <Route
+                path="matchStats"
+                element={
+                    <>
+                        <StatsSelectedMatch/>
                     </>
                 }
             />
