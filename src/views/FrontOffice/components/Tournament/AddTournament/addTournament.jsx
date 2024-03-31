@@ -562,17 +562,12 @@ function AddTournament() {
           let teamOrder = selectedTeams.slice();
           const tournamentStartDate = new Date(Tournament.startDate);
           const tournamentEndDate = new Date(Tournament.endDate);
-
+          let currentDate = new Date(tournamentStartDate);
           // Initialize the match date (start from the tournament start date)
-          let currentMatchDate = new Date(tournamentStartDate);
 
-          // Helper function to add hours to a date
-          function addHours(date, hours) {
-            const newDate = new Date(date);
-            newDate.setHours(newDate.getHours() + hours);
-            return newDate;
-          }
           for (let round = 0; round < totalRounds; round++) {
+            const randomHour = 8 + Math.floor(Math.random() * 12); // Random hour between 8 and 19
+            currentDate.setHours(randomHour, 0, 0, 0);
             for (let match = 0; match < matchesPerRound; match++) {
               // Determine the indices for the home and away teams
               const homeIndex = match;
@@ -581,14 +576,13 @@ function AddTournament() {
               // Get the team IDs based on the current order
               const idTeam1 = teamOrder[homeIndex];
               const idTeam2 = teamOrder[awayIndex];
-              const randomHours = Math.floor(Math.random() * 24); // Random hour (0-23)
-              currentMatchDate = addHours(currentMatchDate, randomHours);
+
               // Create match data only if it's not the same team
-              if (idTeam1 !== idTeam2 && currentMatchDate.getHours() >= 8 && currentMatchDate.getHours() < 24) {
+              if (idTeam1 !== idTeam2) {
                 const matchData = {
                   win: "",
                   loss: "",
-                  matchDate: new Date(),
+                  matchDate: new Date(currentDate),
                   scoreTeam1: "",
                   scoreTeam2: "",
                   fixture: round + 1, // Assign the round number as the fixture number
@@ -598,8 +592,10 @@ function AddTournament() {
                 };
 
                 await addMatch(matchData);
+                currentDate.setHours(currentDate.getHours() + 3);
               }
             }
+            currentDate.setDate(currentDate.getDate() + 1); 
 
             // Rotate the array of teams for the next round, keeping the first team fixed
             teamOrder = [teamOrder[0]].concat(teamOrder.slice(2), teamOrder[1]);
