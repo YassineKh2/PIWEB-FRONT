@@ -12,55 +12,7 @@ import {
 import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
 
-
 import { AiOutlinePicture as Picture } from "react-icons/ai";
-
-import * as yup from "yup";
-import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
-import { AiOutlinePicture as Picture } from "react-icons/ai";
-import Select from "react-select";
-import makeAnimated from "react-select/animated";
-import { jwtDecode } from "jwt-decode";
-
-const animatedComponents = makeAnimated();
-const firstStepSchema = yup.object().shape({
-  name: yup.string().required("Name is required"),
-  description: yup.string().required("Description is required"),
-  image: yup.string().required("Image is required"),
-  country: yup.string().required("Country is required"),
-  state: yup.string().required("State is required"),
-  city: yup.string().required("City is required"),
-});
-const secondStepSchema = yup.object().shape({
-  startDate: yup
-    .date()
-    .required("Start Date is required")
-    .min(new Date(), "Start Date should be in the future"),
-  endDate: yup
-    .date()
-    .required("End Date is required")
-    .min(yup.ref("startDate"), "End Date should be after Start Date"),
-  nbTeamPartipate: yup
-    .mixed()
-    .required("Number of Teams to Participate is required"),
-  tournamentType: yup.string().required("Tournament Type is required"),
-  teams: yup
-    .array()
-    .required("Select at least one team")
-    .min(
-      yup.ref("nbTeamPartipate"),
-      "Selected Teams sould be equal to the number of the teams participating"
-    )
-    .max(
-      yup.ref("nbTeamPartipate"),
-      "Selected Teams sould be equal to the number of the teams participating"
-    ),
-});
-
-import hotelService from '../../../../../Services/APis/HotelAPI.js';
-import HotelService from '../../../../../Services/FrontOffice/apiHotel.js';
-
-
 const steps = [
   {
     id: "Step 1",
@@ -94,28 +46,6 @@ function AddTournament() {
   const [SelectedCities, setSelectedCities] = useState("");
   const [Teams, setTeams] = useState([]);
   const [selectedTeams, setSelectedTeams] = useState([]);
-
-
-  const [showComboboxKnokout, setshowComboboxKnokout] = useState(false);
-  const [showLeague, setLeague] = useState(true);
-  const [userInfo, setUserInfo] = useState();
-
-  //hotel
-
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
-  const [radius, setRadius] = useState();
-  const [hotelData, setHotelData] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hotelsPerPage] = useState(10); // Number of hotels to display per page
-  const [selectedHotels, setSelectedHotels] = useState([]);
-  const [addedHotelsId, setaddedHotelsId] = useState([]);
-  const [showErrorNotification, setShowErrorNotification] = useState(false);
-  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-
-
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -255,146 +185,6 @@ function AddTournament() {
   useEffect(() => {
     getTeams();
   }, []);
-
-
-
-/////////hotelll
-const hideNotifications = () => {
-  setShowErrorNotification(false);
-  setShowSuccessNotification(false);
-};
-
-
-
-
-const fetchData = async (city) => {
-  setLoading(true);
-
-  try {
-    const geocodingData = await getGeocodingData(city);
-    console.log('Geocoding Data:', geocodingData);
-
-    const response = await hotelService.getHotelsByGeoCode(
-      geocodingData.latitude,
-      geocodingData.longitude,
-      radius
-    );
-    console.log('API Response:', response);
-
-    if (response) {
-      setHotelData(response.data); // Assuming response directly contains hotel data
-      setError(null);
-    } else {
-      setHotelData([]);
-      setError('Invalid response format. Please try again.');
-    }
-  } catch (error) {
-    console.error('API Error:', error);
-
-    if (error.response) {
-      setError(`API Error: ${error.response.data.message}`);
-    } else if (error.request) {
-      setError('Network Error. Please check your internet connection.');
-    } else {
-      setError('Error fetching hotels. Please try again.');
-    }
-
-    setHotelData([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-// useEffect hook
-useEffect(() => {
-  fetchData(SelectedCities);
-}, [SelectedCities]);
-
-// Log hotelData state
-console.log('Hotel Data:', hotelData);
-
-// Check hotelData length before slicing
-console.log('Hotel Data Length:', hotelData.length);
-
-
-const toggleHotelSelection = (hotelId) => {
-//setError(null);
-//setShowErrorNotification(null);
-setShowSuccessNotification(null);
-// Toggle the selection status of the hotel
-setSelectedHotels((prevSelected) =>
-  prevSelected.includes(hotelId)
-    ? prevSelected.filter((id) => id !== hotelId)
-    : [...prevSelected, hotelId]
-);
-};
-const handleInputChange = (e) => {
-const { name, value } = e.target;
-if (name === 'radius') {
-  setRadius(value);
-}
-};
-
-const addHotelsToDatabase = async (hotels, tournamentId) => {
-  try {
-    const hotelsToAdd = hotels.filter((hotel) => selectedHotels.includes(hotel.hotelId));
-
-    if (hotelsToAdd.length === 0) {
-      console.log("No hotels selected to add.");
-      return;
-    }
-
-    await Promise.all(
-      hotelsToAdd.map(async (hotel) => {
-        try {
-          hotel.idTournament = tournamentId;
-          const addHotelResponse = await HotelService.addHotel([hotel]);
-          console.log('Hotel added to database:', addHotelResponse);
-        } catch (error) {
-          if (error.response && error.response.status === 400) {
-            console.error('Hotel already exists:', error.response.data.message);
-          } else {
-            console.error('Error adding hotel to database:', error);
-          }
-        }
-      })
-    );
-
-    setShowSuccessNotification(true);
-    setTimeout(hideNotifications, 2000);
-  } catch (error) {
-    console.error('Error adding selected hotels to database:', error);
-    setShowErrorNotification(true);
-    setTimeout(hideNotifications, 2000);
-  }
-};
-const handleCityChange = (e) => {
-setCity(e.target.value);
-};
-const handleRadiusChange = () => {
-fetchData();
-};
-
-// Calculate the index of the last hotel on the current page
-const indexOfLastHotel = currentPage * hotelsPerPage;
-// Calculate the index of the first hotel on the current page
-const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
-// Get the hotels for the current page
-const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
-
-// Change page
-const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
   const add = async (e) => {
     e.preventDefault();
     const fileReader = new FileReader();
@@ -420,6 +210,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
       try {
         await addTournament(imageData);
         const latestTournamentId = await getLatestTournamentId();
+
         const numTeams = selectedTeams.length;
         let fixtureNumber = 1;
         let fixtureNextTeam = 1;
@@ -458,14 +249,13 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
           }
         }
 
-
         /*let j = 1;
         for (let i = 0; i < matches.length; i++) {
           if (Fixtures[j] === numTeams / 2) {
             j++;
             teamsParticipate = [];
           }
-
+          
           if (
             !teamsParticipate.includes(matches[i].idTeam1) &&
             !teamsParticipate.includes(matches[i].idTeam2)
@@ -510,9 +300,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
         //console.log(Fixtures);
 
-
         navigate("/tournament/showAll");
-        addHotelsToDatabase(hotelData, latestTournamentId.latestTournamentId);
       } catch (error) {
         console.log(error.response.data.message);
       }
@@ -776,88 +564,8 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
             )}
 
             {currentStep === 3 && (
-              <>
-              <div>
-      <div>
-      <h1 className="text-center pb-8 " >Hotel List</h1>
-      </div>
-<div className="flex  gap-4 ml-10 ">
-  <div className="">
-      <label>
-        Radius (in km):
-        <input
-          type="number"
-          name="radius"
-          value={radius}
-          onChange={handleInputChange}
-          placeholder="Enter Radius"
-        />
-      </label>
-  </div>
-      <div className="pb-5 ">
-      <button onClick={handleRadiusChange} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Change Radius</button>
-      </div>
-</div>
-
-
-
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
-
-      <div className={`flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 ${showErrorNotification ? 'block' : 'hidden'}`} role="alert">
-        <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-        </svg>
-        <span className="sr-only">Info</span>
-        <div>
-          <span className="font-medium">Hotel already exists!</span> Change a few things up and try submitting again.
-        </div>
-      </div>
-
-      <div className={`flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400 ${showSuccessNotification ? 'block' : 'hidden'}`} role="alert">
-        <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16ZM3 10a7 7 0 1 0 14 0ZM10 12a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1Z"/>
-        </svg>
-        <span className="sr-only">Success</span>
-        <div>
-          <span className="font-medium">Success alert!</span> Hotel successfully added.
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4  mx-10">
-        {currentHotels.map((hotel, index) => (
-           <div key={index} className="border p-4 rounded-md ">
-           <label>
-             <input className=" mx-2"
-               type="checkbox"
-               checked={selectedHotels.includes(hotel.hotelId)}
-               onChange={() => toggleHotelSelection(hotel.hotelId)}
-             />
-             {hotel.name}
-           </label>
-           <h3>chainCode:{hotel.chainCode}</h3>
-           <p> Id: {hotel.hotelId}</p>
-         </div>
-       ))}
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: Math.ceil(hotelData.length / hotelsPerPage) }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => handlePageChange(index + 1)}
-            className={`mx-2 px-3 py-2 border ${
-              currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
-            }`}
-          >
-            {index + 1}
-          </button>
-        ))}
-      </div>
-    </div>
-              </>
+              <p>hello</p>
+              /* Step 4 fields and UI */
               /* Include form fields and validation logic */
             )}
 

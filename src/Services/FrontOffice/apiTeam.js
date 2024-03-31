@@ -1,7 +1,6 @@
 import axios from "axios";
 
 const apiURL = "http://localhost:3000/team";
-const apiURLUser = "http://localhost:3000/user";
 
 export async function addTeam(teamData) {
   try {
@@ -10,25 +9,6 @@ export async function addTeam(teamData) {
             'Content-Type': 'multipart/form-data'
         }
     });
-
-
-
-
-
-
-      if(teamData.players.length > 0){
-        let team = response.data;
-
-        const teamId = team.Team._id;
-        const players = teamData.players;
-        const playersData = {
-          teamId,
-          players
-        }
-        await axios.post(`${apiURLUser}/addplayers`, playersData);
-      }
-
-
     return response.data;
 
   } catch (error) {
