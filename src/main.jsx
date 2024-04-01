@@ -9,7 +9,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 ReactDOM.createRoot(document.getElementById('root')).render(
 
 
-    <React.StrictMode>
+    
         <BrowserRouter>
             <PrimeReactProvider value={{ unstyled: true, pt: Tailwind }}>
             <GoogleOAuthProvider clientId="555697194556-cn6eo2qkn3p84fjfmnkvoa83ipi27me1.apps.googleusercontent.com">
@@ -17,5 +17,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 </GoogleOAuthProvider>
             </PrimeReactProvider>
         </BrowserRouter>
-    </React.StrictMode>,
+    
 )

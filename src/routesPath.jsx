@@ -11,7 +11,7 @@ import AddTournament from "./views/FrontOffice/components/Tournament/AddTourname
 import DisplayAllTournaments from "./views/FrontOffice/components/Tournament/DisplayTournament/displayTournaments.jsx";
 import DisplayTournamentDetails
     from "./views/FrontOffice/components/Tournament/DisplayTournamentDetails/displayTournamentDetails.jsx";
-import AddTeam from "./views/FrontOffice/components/Team/AddTeam/AddTeam.jsx";
+
 import AddReservation from "./views/FrontOffice/components/Reservation/AddReservation.jsx";
 import AddSponsors from "./views/FrontOffice/components/Sponsors/AddSponsors.jsx";
 import AllReservation from "./views/BackOffice/components/Reservation/AllReservation.jsx"
@@ -22,6 +22,7 @@ import BTicket from "./views/BackOffice/components/ticket/BTicket.jsx";
 import RoutingTeams from "./views/FrontOffice/components/Team/RoutingTeams.jsx";
 import RoutingTournaments from "./views/FrontOffice/components/Tournament/RoutingTournaments.jsx";
 import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
+import RoutingStaff from "./views/FrontOffice/components/Staff/RoutingStaff.jsx";
 
 import RoutingUsers from "./views/FrontOffice/components/User/profile/profile.jsx"
 import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
@@ -31,6 +32,8 @@ import UpdateProfile from "./views/FrontOffice/components/User/profile/updatePro
 import UpdatePassword from "./views/FrontOffice/components/User/profile/updatePassword.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
+
+import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 
 function RoutesPath() {
     return (
@@ -58,7 +61,6 @@ function RoutesPath() {
                 <Route path="/ticket" element={<AffTicket/>}/>
                 <Route path="/upres" element={<UpReservation/>}/>
 
-                <Route path="/team" element={<AddTeam/>}/>
                 <Route path="signin" element={<SigninPage/>}/>
                 <Route path="signup" element={<SignupPage/>}/>
                 <Route path="about" element={<About/>}/>
@@ -88,6 +90,14 @@ function RoutesPath() {
                         </>
                     }
                 />
+                <Route
+                    path="staff/*"
+                    element={
+                        <>
+                            <RoutingStaff/>
+                        </>
+                    }
+                />
 
                 <Route
                     path="player/*"
@@ -97,6 +107,7 @@ function RoutesPath() {
                         </>
                     }
                 />
+
 
                 <Route
                     path="hotels/*"
@@ -108,6 +119,7 @@ function RoutesPath() {
                 />
 
                 <Route path="/" element={<Home/>}/>
+
 
                 <Route element={<RequireAuth allowedRoles={['A']}/>}>
                     <Route path="backoffice" element={<RoutingBackOffice/>}/>

@@ -6,15 +6,28 @@ import {
 } from "../../../../../Services/FrontOffice/apiTournament";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-
+import {
+  FaHeart as FullHeart,
+  FaHeartBroken as BrokenHeart,
+  FaRegHeart as EmptyHeart,
+} from "react-icons/fa";
+import {
+  getUserData,
+  updateFollowedTournaments,
+} from "../../../../../Services/apiUser";
+import SectionTitle from "../../../HomePage/components/Common/SectionTitle";
 function DisplayAllTournaments() {
   const path = "http://localhost:3000/public/images/tournaments/";
   const navigate = useNavigate();
   const [Tournaments, setTournaments] = useState([]);
   const [userTournaments, setUserTournaments] = useState([]);
   const [userInfo, setUserInfo] = useState();
+  const [user, setUser] = useState();
   const [selectedOption, setSelectedOption] = useState("AllTournaments");
-
+  const [followedTournaments, setfollowedTournaments] = useState();
+  const [liked, setLiked] = useState(false);
+  const [isHovered, setIsHovered] = useState({});
+  const [likedTournaments, setLikedTournaments] = useState({});
   const displayTournaments =
     selectedOption === "AllTournaments" ? Tournaments : userTournaments;
   const getTournaments = async () => {
@@ -31,10 +44,18 @@ function DisplayAllTournaments() {
   }, []);
   useEffect(() => {
     const userToken = localStorage.getItem("token");
-
     if (userToken) {
       const decodedToken = jwtDecode(userToken);
       setUserInfo(decodedToken);
+      getUserData(decodedToken.userId).then((response) => {
+        setUser(response.user);
+        setfollowedTournaments(response.user.followedTournaments);
+        const likedTournamentsObj = {};
+        response.user.followedTournaments.forEach((tournamentId) => {
+          likedTournamentsObj[tournamentId] = true;
+        });
+        setLikedTournaments(likedTournamentsObj);
+      });
     }
   }, []);
   const getUserTournament = async () => {
@@ -49,15 +70,84 @@ function DisplayAllTournaments() {
   useEffect(() => {
     if (userInfo) getUserTournament();
   }, [userInfo]);
+  useEffect(() => {
+    if (user) setfollowedTournaments(user.followedTournaments);
+  }, [user]);
+  const like = (idTournament) => {
+    const updatedLikedTournaments = { ...likedTournaments };
+    followedTournaments.push(idTournament);
+    user.followedTournaments = followedTournaments;
+    updateFollowedTournaments(user).then(() => {
+      console.log("Liked team :", idTournament);
+    });
+    updatedLikedTournaments[idTournament] = true;
+    setLikedTournaments(updatedLikedTournaments);
+  };
+
+  const unlike = (idTournament) => {
+    const updatedLikedTournaments = { ...likedTournaments };
+    followedTournaments.pop(idTournament);
+    user.followedTournaments = followedTournaments;
+    updateFollowedTournaments(user).then(() => {
+      console.log("Unliked team :", idTournament);
+    });
+    updatedLikedTournaments[idTournament] = false;
+    setLikedTournaments(updatedLikedTournaments);
+  };
   return (
     <>
+      <SectionTitle
+        title="Disvover All Tournaments"
+        paragraph="Explore the wide range of  tournaments. Get to know their results, standings, and more."
+        center
+      />
+
+      <div className="max-w-md mx-auto mb-4">
+        <label
+          htmlFor="default-search"
+          className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
+        >
+          Search
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+            <svg
+              className="w-4 h-4 text-gray-500 dark:text-gray-400"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 20 20"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+              />
+            </svg>
+          </div>
+          <input
+            type="search"
+            id="default-search"
+            className="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            // value={searchData}
+            placeholder="Search for your favorite team"
+            required
+          />
+          <button
+            type="submit"
+            //  onClick={Search}
+            className="text-white absolute end-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Search
+          </button>
+        </div>
+      </div>
       {userInfo && userInfo.role === "TRM" && (
         <div className="flex justify-between mt-10">
-          <form class="max-w-sm ml-10">
-            <label
-              for="countries"
-              class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
+          <form className="max-w-sm ml-10">
+            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
               Select an option
             </label>
             <select
@@ -181,7 +271,7 @@ function DisplayAllTournaments() {
                   onClick={() =>
                     navigate(`/tournament/details/${tournament._id}`)
                   }
-                  className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
+                  className="mb-4 -mt-2 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
                 >
                   Details
                 </button>
@@ -190,7 +280,7 @@ function DisplayAllTournaments() {
                     onClick={() =>
                       navigate(`/tournament/update`, { state: { tournament } })
                     }
-                    className="mb-4 -mt-4 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
+                    className="mb-4 -mt-2 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
                     style={{
                       display: userTournaments.some(
                         (t) => t._id === tournament._id
@@ -202,14 +292,93 @@ function DisplayAllTournaments() {
                     Update
                   </button>
                 )}
-                <button
-            
-                  onClick={() =>navigate(`/hotels/details/${tournament._id}`)}
-                  className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
-
-                >
-                 Hotels
-                </button>
+                <div className="flex items-stretch">
+                  <button
+                    onClick={() =>
+                      navigate(`/hotels/details/${tournament._id}`)
+                    }
+                    className="mb-4 -mt-2 lg:mr-15 max-sm:mr-3 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8"
+                  >
+                    Hotels
+                  </button>
+                  {userInfo && userInfo.userId === tournament.creator && (
+                    <div>
+                      {likedTournaments[tournament._id] ? (
+                        isHovered[tournament._id] ? (
+                          <BrokenHeart
+                            onMouseEnter={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: true,
+                              }))
+                            }
+                            onMouseLeave={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: false,
+                              }))
+                            }
+                            size={25}
+                            onClick={() => unlike(tournament._id)}
+                            className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
+                          />
+                        ) : (
+                          <FullHeart
+                            onMouseEnter={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: true,
+                              }))
+                            }
+                            onMouseLeave={() =>
+                              setIsHovered((prevState) => ({
+                                ...prevState,
+                                [tournament._id]: false,
+                              }))
+                            }
+                            size={25}
+                            className="text-red-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
+                          />
+                        )
+                      ) : isHovered[tournament._id] ? (
+                        <FullHeart
+                          onMouseEnter={() =>
+                            setIsHovered((prevState) => ({
+                              ...prevState,
+                              [tournament._id]: true,
+                            }))
+                          }
+                          onMouseLeave={() =>
+                            setIsHovered((prevState) => ({
+                              ...prevState,
+                              [tournament._id]: false,
+                            }))
+                          }
+                          size={25}
+                          onClick={() => like(tournament._id)}
+                          className="text-red-600 self-end mr-4 cursor-pointer transition ease-in-out hover:-translate-y-1 hover:scale-110  duration-130"
+                        />
+                      ) : (
+                        <EmptyHeart
+                          onMouseEnter={() =>
+                            setIsHovered((prevState) => ({
+                              ...prevState,
+                              [tournament._id]: true,
+                            }))
+                          }
+                          onMouseLeave={() =>
+                            setIsHovered((prevState) => ({
+                              ...prevState,
+                              [tournament._id]: false,
+                            }))
+                          }
+                          size={25}
+                          className="text-gray-500 self-end mr-4 cursor-pointer transition ease-in-out duration-500"
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

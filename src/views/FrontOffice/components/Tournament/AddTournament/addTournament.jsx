@@ -17,7 +17,9 @@ import { AiOutlinePicture as Picture } from "react-icons/ai";
 import Select from "react-select";
 import makeAnimated from "react-select/animated";
 import { jwtDecode } from "jwt-decode";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
 
+import { HTML5Backend } from "react-dnd-html5-backend";
 const animatedComponents = makeAnimated();
 const firstStepSchema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -40,7 +42,7 @@ const secondStepSchema = yup.object().shape({
     .mixed()
     .required("Number of Teams to Participate is required"),
   tournamentType: yup.string().required("Tournament Type is required"),
-  teams: yup
+  /* teams: yup
     .array()
     .required("Select at least one team")
     .min(
@@ -50,11 +52,11 @@ const secondStepSchema = yup.object().shape({
     .max(
       yup.ref("nbTeamPartipate"),
       "Selected Teams sould be equal to the number of the teams participating"
-    ),
+    ),*/
 });
 
-import hotelService from '../../../../../Services/APis/HotelAPI.js';
-import HotelService from '../../../../../Services/FrontOffice/apiHotel.js';
+import hotelService from "../../../../../Services/APis/HotelAPI.js";
+import HotelService from "../../../../../Services/FrontOffice/apiHotel.js";
 
 const steps = [
   {
@@ -91,13 +93,15 @@ function AddTournament() {
   const [Teams, setTeams] = useState([]);
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [showComboboxKnokout, setshowComboboxKnokout] = useState(false);
-  const [showLeague, setLeague] = useState(true);
+  const [showLeague, setLeague] = useState(false);
+  const [showPots, setShowPots] = useState(false);
   const [userInfo, setUserInfo] = useState();
+  const [selectTeamPots, setSelectTeamsPots] = useState({});
 
   //hotel
 
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [radius, setRadius] = useState();
   const [hotelData, setHotelData] = useState([]);
   const [error, setError] = useState(null);
@@ -134,6 +138,8 @@ function AddTournament() {
     idTeam2: {},
     idTournament: {},
   });
+
+  const path = "http://localhost:3000/public/images/teams/";
   useEffect(() => {
     const userToken = localStorage.getItem("token");
 
@@ -196,9 +202,16 @@ function AddTournament() {
     if (Tournament.tournamentType === "Knockout") {
       setLeague(false);
       setshowComboboxKnokout(true);
+      setShowPots(false);
     } else if (Tournament.tournamentType === "League") {
       setshowComboboxKnokout(false);
+      setShowPots(false);
       setLeague(true);
+    }
+    if (Tournament.tournamentType === "Group Stage") {
+      setLeague(false);
+      setShowPots(true);
+      setshowComboboxKnokout(true);
     }
   }, [Tournament.tournamentType]);
 
@@ -289,144 +302,127 @@ function AddTournament() {
     getTeams();
   }, []);
 
+  /////////hotelll
+  const hideNotifications = () => {
+    setShowErrorNotification(false);
+    setShowSuccessNotification(false);
+  };
 
+  const fetchData = async (city) => {
+    setLoading(true);
 
-/////////hotelll
-const hideNotifications = () => {
-  setShowErrorNotification(false);
-  setShowSuccessNotification(false);
-};
+    try {
+      const geocodingData = await getGeocodingData(city);
 
+      const response = await hotelService.getHotelsByGeoCode(
+        geocodingData.latitude,
+        geocodingData.longitude,
+        radius
+      );
 
+      if (response) {
+        setHotelData(response.data); // Assuming response directly contains hotel data
+        setError(null);
+      } else {
+        setHotelData([]);
+        setError("Invalid response format. Please try again.");
+      }
+    } catch (error) {
+      console.error("API Error:", error);
 
+      if (error.response) {
+        setError(`API Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        setError("Network Error. Please check your internet connection.");
+      } else {
+        setError("Error fetching hotels. Please try again.");
+      }
 
-const fetchData = async (city) => {
-  setLoading(true);
-
-  try {
-    const geocodingData = await getGeocodingData(city);
-    console.log('Geocoding Data:', geocodingData);
-
-    const response = await hotelService.getHotelsByGeoCode(
-      geocodingData.latitude,
-      geocodingData.longitude,
-      radius
-    );
-    console.log('API Response:', response);
-
-    if (response) {
-      setHotelData(response.data); // Assuming response directly contains hotel data
-      setError(null);
-    } else {
       setHotelData([]);
-      setError('Invalid response format. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('API Error:', error);
+  };
 
-    if (error.response) {
-      setError(`API Error: ${error.response.data.message}`);
-    } else if (error.request) {
-      setError('Network Error. Please check your internet connection.');
-    } else {
-      setError('Error fetching hotels. Please try again.');
-    }
+  // useEffect hook
+  useEffect(() => {
+    fetchData(SelectedCities);
+  }, [SelectedCities]);
 
-    setHotelData([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-// useEffect hook
-useEffect(() => {
-  fetchData(SelectedCities);
-}, [SelectedCities]);
-
-// Log hotelData state
-console.log('Hotel Data:', hotelData);
-
-// Check hotelData length before slicing
-console.log('Hotel Data Length:', hotelData.length);
-
-
-const toggleHotelSelection = (hotelId) => {
-//setError(null);
-//setShowErrorNotification(null);
-setShowSuccessNotification(null);
-// Toggle the selection status of the hotel
-setSelectedHotels((prevSelected) =>
-  prevSelected.includes(hotelId)
-    ? prevSelected.filter((id) => id !== hotelId)
-    : [...prevSelected, hotelId]
-);
-};
-const handleInputChange = (e) => {
-const { name, value } = e.target;
-if (name === 'radius') {
-  setRadius(value);
-}
-};
-
-const addHotelsToDatabase = async (hotels, tournamentId) => {
-  try {
-    const hotelsToAdd = hotels.filter((hotel) => selectedHotels.includes(hotel.hotelId));
-
-    if (hotelsToAdd.length === 0) {
-      console.log("No hotels selected to add.");
-      return;
-    }
-
-    await Promise.all(
-      hotelsToAdd.map(async (hotel) => {
-        try {
-          hotel.idTournament = tournamentId;
-          const addHotelResponse = await HotelService.addHotel([hotel]);
-          console.log('Hotel added to database:', addHotelResponse);
-        } catch (error) {
-          if (error.response && error.response.status === 400) {
-            console.error('Hotel already exists:', error.response.data.message);
-          } else {
-            console.error('Error adding hotel to database:', error);
-          }
-        }
-      })
+  const toggleHotelSelection = (hotelId) => {
+    //setError(null);
+    //setShowErrorNotification(null);
+    setShowSuccessNotification(null);
+    // Toggle the selection status of the hotel
+    setSelectedHotels((prevSelected) =>
+      prevSelected.includes(hotelId)
+        ? prevSelected.filter((id) => id !== hotelId)
+        : [...prevSelected, hotelId]
     );
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "radius") {
+      setRadius(value);
+    }
+  };
 
-    setShowSuccessNotification(true);
-    setTimeout(hideNotifications, 2000);
-  } catch (error) {
-    console.error('Error adding selected hotels to database:', error);
-    setShowErrorNotification(true);
-    setTimeout(hideNotifications, 2000);
-  }
-};
-const handleCityChange = (e) => {
-setCity(e.target.value);
-};
-const handleRadiusChange = () => {
-fetchData();
-};
+  const addHotelsToDatabase = async (hotels, tournamentId) => {
+    try {
+      const hotelsToAdd = hotels.filter((hotel) =>
+        selectedHotels.includes(hotel.hotelId)
+      );
 
-// Calculate the index of the last hotel on the current page
-const indexOfLastHotel = currentPage * hotelsPerPage;
-// Calculate the index of the first hotel on the current page
-const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
-// Get the hotels for the current page
-const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
+      if (hotelsToAdd.length === 0) {
+        console.log("No hotels selected to add.");
+        return;
+      }
 
-// Change page
-const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+      await Promise.all(
+        hotelsToAdd.map(async (hotel) => {
+          try {
+            hotel.idTournament = tournamentId;
+            const addHotelResponse = await HotelService.addHotel([hotel]);
+            console.log("Hotel added to database:", addHotelResponse);
+          } catch (error) {
+            if (error.response && error.response.status === 400) {
+              console.error(
+                "Hotel already exists:",
+                error.response.data.message
+              );
+            } else {
+              console.error("Error adding hotel to database:", error);
+            }
+          }
+        })
+      );
 
+      setShowSuccessNotification(true);
+      setTimeout(hideNotifications, 2000);
+    } catch (error) {
+      console.error("Error adding selected hotels to database:", error);
+      setShowErrorNotification(true);
+      setTimeout(hideNotifications, 2000);
+    }
+  };
+  const handleCityChange = (e) => {
+    setCity(e.target.value);
+  };
+  const handleRadiusChange = () => {
+    fetchData();
+  };
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+  // Calculate the index of the last hotel on the current page
+  const indexOfLastHotel = currentPage * hotelsPerPage;
+  // Calculate the index of the first hotel on the current page
+  const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+  // Get the hotels for the current page
+  const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
 
+  // Change page
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
-
-
-
-
-
+  ///////////////////////////////////////////////////////////////////////////////////////////////
 
   const add = async (e) => {
     e.preventDefault();
@@ -453,27 +449,156 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
       };
 
       try {
-        await addTournament(imageData);
-        const latestTournamentId = await getLatestTournamentId();
-        const numTeams = selectedTeams.length;
-        if (Tournament.tournamentType === "League") {
-          for (let i = 0; i < numTeams; i++) {
-            for (let j = i + 1; j < numTeams; j++) {
-              const idTeam1 = selectedTeams[i];
-              const idTeam2 = selectedTeams[j];
-              const matchData = {
-                win: "",
-                loss: "",
-                matchDate: new Date(),
-                scoreTeam1: "",
-                scoreTeam2: "",
-                fixture: "",
-                idTeam1,
-                idTeam2,
-                idTournament: latestTournamentId.latestTournamentId,
-              };
-              await addMatch(matchData);
+        if (
+          Tournament.tournamentType === "League" ||
+          Tournament.tournamentType === "Knockout"
+        ) {
+          await addTournament(imageData);
+        } else {
+          const numberGroups = Math.ceil(Tournament.nbTeamPartipate / 4);
+          const teamsByPot = { ...selectTeamPots };
+          const teamsGroupStage = {};
+
+          Object.keys(teamsByPot).forEach((potNumber) => {
+            teamsByPot[potNumber] = shuffleArray(teamsByPot[potNumber]);
+          });
+
+          for (
+            let groupNumber = 1;
+            groupNumber <= numberGroups;
+            groupNumber++
+          ) {
+            const group = [];
+            Object.keys(teamsByPot).forEach((potNumber) => {
+              if (teamsByPot[potNumber].length > 0) {
+                const team = teamsByPot[potNumber].shift();
+                if (team && team.team && team.team._id) {
+                  group.push({
+                    teamId: team.team._id,
+                    potNumber,
+                    groupNumber,
+                  });
+                }
+                if (group.length === 4) return;
+              }
+            });
+            teamsGroupStage[groupNumber] = group;
+          }
+
+          console.log(teamsGroupStage);
+
+          const addTournamentGroupStage = {
+            name: Tournament.name,
+            description: Tournament.description,
+            location: Tournament.location,
+            startDate: Tournament.startDate,
+            endDate: Tournament.endDate,
+            tournamentType: Tournament.tournamentType,
+            nbTeamPartipate: Tournament.nbTeamPartipate,
+            teamsGroupStage: Object.entries(teamsGroupStage).flatMap(
+              ([groupNumber, teams]) => {
+                return teams.map((team) => ({
+                  teamId: team.teamId,
+                  potNumber: team.potNumber,
+                  groupNumber: groupNumber,
+                }));
+              }
+            ),
+            image: base64Image,
+            filename: Tournament.image,
+            country: Tournament.country,
+            state: Tournament.state,
+            city: Tournament.city,
+            creator: userInfo.userId,
+          };
+
+          await addTournament(addTournamentGroupStage);
+          const latestTournamentId = await getLatestTournamentId();
+          // Iterate over each group
+          for (
+            let groupNumber = 1;
+            groupNumber <= numberGroups;
+            groupNumber++
+          ) {
+            const teams = teamsGroupStage[groupNumber]; // Get teams for the current group
+
+            // Generate matches for each team in the group
+            for (let i = 0; i < teams.length; i++) {
+              const team1 = teams[i].teamId;
+
+              // Loop through the remaining teams in the group to create matches
+              for (let j = i + 1; j < teams.length; j++) {
+                const team2 = teams[j].teamId;
+
+                // Create match data
+                const matchData = {
+                  win: "",
+                  loss: "",
+                  matchDate: new Date(),
+                  scoreTeam1: "",
+                  scoreTeam2: "",
+                  groupNumber, // Assign the group number to the match
+                  idTeam1: team1,
+                  idTeam2: team2,
+                  idTournament: latestTournamentId.latestTournamentId,
+                };
+
+                await addMatch(matchData);
+              }
             }
+          }
+        }
+        const latestTournamentId = await getLatestTournamentId();
+        const RealMatches = [];
+        const numTeams = selectedTeams.length;
+        let idNextMatch = selectedTeams.length / 2;
+        let loopCounter = 0;
+        let j = 1;
+        let index = 0;
+        const totalRounds = numTeams - 1;
+        const matchesPerRound = numTeams / 2;
+
+        if (Tournament.tournamentType === "League") {
+          let teamOrder = selectedTeams.slice();
+          const tournamentStartDate = new Date(Tournament.startDate);
+          const tournamentEndDate = new Date(Tournament.endDate);
+          let currentDate = new Date(tournamentStartDate);
+          // Initialize the match date (start from the tournament start date)
+
+          for (let round = 0; round < totalRounds; round++) {
+            const randomHour = 8 + Math.floor(Math.random() * 12); // Random hour between 8 and 19
+            currentDate.setHours(randomHour, 0, 0, 0);
+            for (let match = 0; match < matchesPerRound; match++) {
+              // Determine the indices for the home and away teams
+              const homeIndex = match;
+              const awayIndex = numTeams - 1 - match;
+
+              // Get the team IDs based on the current order
+              const idTeam1 = teamOrder[homeIndex];
+              const idTeam2 = teamOrder[awayIndex];
+
+              // Create match data only if it's not the same team
+              if (idTeam1 !== idTeam2) {
+                const matchData = {
+                  win: "",
+                  loss: "",
+                  matchDate: new Date(currentDate),
+                  scoreTeam1: "",
+                  scoreTeam2: "",
+                  fixture: round + 1, // Assign the round number as the fixture number
+                  idTeam1,
+                  idTeam2,
+                  idTournament: latestTournamentId.latestTournamentId,
+                };
+
+                await addMatch(matchData);
+                currentDate.setHours(currentDate.getHours() + 3);
+              }
+            }
+            currentDate.setDate(currentDate.getDate() + 1); 
+
+            // Rotate the array of teams for the next round, keeping the first team fixed
+            teamOrder = [teamOrder[0]].concat(teamOrder.slice(2), teamOrder[1]);
           }
         } else if (Tournament.tournamentType === "Knockout") {
           selectedTeams.sort(() => Math.random() - 0.5);
@@ -482,8 +607,10 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
             const idTeam1 = selectedTeams.pop();
             const idTeam2 = selectedTeams.pop();
             const matchData = {
+              id: index + 1,
               win: "",
               loss: "",
+              nextMatchId: j + idNextMatch,
               matchDate: new Date(),
               scoreTeam1: "",
               scoreTeam2: "",
@@ -492,63 +619,37 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
               idTeam2,
               idTournament: latestTournamentId.latestTournamentId,
             };
-            console.log(matchData);
+            loopCounter++;
+            index++;
+            if (loopCounter % 2 === 0) {
+              idNextMatch++;
+            }
+            RealMatches.push(matchData);
             await addMatch(matchData);
           }
-        }
-
-
-        /*let j = 1;
-        for (let i = 0; i < matches.length; i++) {
-          if (Fixtures[j] === numTeams / 2) {
-            j++;
-            teamsParticipate = [];
-          }
-
-          if (
-            !teamsParticipate.includes(matches[i].idTeam1) &&
-            !teamsParticipate.includes(matches[i].idTeam2)
-          ) {
-            Fixtures[j].push(matches[i]);
-            console.log("hjhjhjh");
-            console.log(matches[i].idTeam1);
-            teamsParticipate.push(matches[i].idTeam1);
-            teamsParticipate.push(matches[i].idTeam2);
-            console.log(teamsParticipate);
-          }
-        }*/
-        /*
-        let fix = [];
-        var i = 0;
-        var matchNumbers = selectedTeams.length / 2;
-        while (matches.length > 0) {
-          let j = 0;
-
-          if (matchNumbers >= 0) {
-            if (
-              !teamsParticipate.includes(matches[i].idTeam1) ||
-              !teamsParticipate.includes(matches[i].idTeam2)
-            ) {
-              Fixtures[i + 1].push(matches[i]);
-              console.log(Fixtures);
-              matches.splice(i, 1);
-              console.log(matches);
-              teamsParticipate.push(matches[i].idTeam1);
-              teamsParticipate.push(matches[i].idTeam2);
-              console.log(matches);
-              matchNumbers--;
-            } else {
-              i++;
+          for (let i = 0; i < RealMatches.length - 1; i++) {
+            if (i % 2 === 0) {
+              idNextMatch++;
             }
-          } else {
-            teamsParticipate = [];
-            matchNumbers = selectedTeams.length / 2 ;
-            i = 0;
+
+            if (idNextMatch > RealMatches.length * 2 - 1) {
+              idNextMatch = null;
+            }
+            const emptyMatch = {
+              id: RealMatches.length + i + 1,
+              win: "",
+              loss: "",
+              nextMatchId: idNextMatch,
+              matchDate: new Date(),
+              scoreTeam1: "",
+              scoreTeam2: "",
+              fixture: "",
+              participants: [],
+              idTournament: latestTournamentId.latestTournamentId,
+            };
+            await addMatch(emptyMatch);
           }
-        }*/
-
-        //console.log(Fixtures);
-
+        }
 
         navigate("/tournament/showAll");
         addHotelsToDatabase(hotelData, latestTournamentId.latestTournamentId);
@@ -562,6 +663,101 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
     }
   };
 
+  const TeamItem = ({ team }) => {
+    const [{ isDragging }, drag] = useDrag({
+      type: "TEAM",
+      item: { team: team },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    });
+
+    return (
+      <div
+        ref={drag}
+        style={{ opacity: isDragging ? 0.5 : 1 }}
+        className="team-item flex items-center "
+      >
+        <img
+          alt="Team A logo"
+          className="overflow-hidden border object-cover w-7 h-7 ml-2 mr-2"
+          height="30"
+          src={path + team.image}
+          style={{
+            aspectRatio: "30/30",
+            objectFit: "cover",
+          }}
+          width="30"
+        />
+        {team.name}
+      </div>
+    );
+  };
+
+  const TeamList = ({ teams }) => {
+    const filteredTeams = teams.filter((team) => {
+      return !Object.values(selectTeamPots).some((potTeams) =>
+        potTeams.some((potTeam) => potTeam.team.name === team.name)
+      );
+    });
+
+    return (
+      <div
+        className="team-list-container"
+        style={{
+          maxHeight: "100px",
+          overflowY: "auto",
+        }}
+      >
+        {filteredTeams.map((team, index) => (
+          <TeamItem key={index} team={team} />
+        ))}
+      </div>
+    );
+  };
+  const Pot = ({ potNumber }) => {
+    const [{ isOver }, drop] = useDrop({
+      accept: "TEAM",
+      drop: (item) => {
+        setSelectTeamsPots((prevTeams) => ({
+          ...prevTeams,
+          [potNumber]: [...(prevTeams[potNumber] || []), item],
+        }));
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+      }),
+    });
+
+    return (
+      <div
+        ref={drop}
+        className="border border-gray-300 rounded-lg p-4 flex flex-col items-center"
+      >
+        <h2 className="text-lg font-semibold mb-4">Pot {potNumber}</h2>
+        <div className="team-pair">
+          {/* Render selected teams for this pot */}
+          {selectTeamPots[potNumber] &&
+            selectTeamPots[potNumber].map((team, index) => (
+              <div className="flex items-cente mb-1.5">
+                <img
+                  alt="Team A logo"
+                  className="overflow-hidden border object-cover w-6 h-6 mr-2"
+                  height="30"
+                  src={path + team.team.image}
+                  style={{
+                    aspectRatio: "30/30",
+                    objectFit: "cover",
+                  }}
+                  width="30"
+                />
+                <p key={index}>{team.team.name}</p>
+              </div>
+            ))}
+        </div>
+      </div>
+    );
+  };
   return (
     <>
       <section
@@ -657,12 +853,12 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                           </span>
                         )}
                         <div className="flex w-full mb-4">
-                          <div className="flex flex-col w-full mr-4">
+                          <div className="flex flex-col mr-4 w-full">
                             <select
                               onChange={(e) => handleCountryChange(e)}
                               name="location"
                               defaultValue={Tournament.country}
-                              className={`rounded-md border ${
+                              className={`w-full rounded-md border ${
                                 errors.country
                                   ? "border-red-500"
                                   : "border-body-color border-opacity-10"
@@ -683,12 +879,12 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                               </span>
                             )}
                           </div>
-                          <div className="flex flex-col w-full mr-4">
+                          <div className="flex flex-col mr-4 w-full">
                             <select
                               onChange={(e) => handleStateChange(e)}
                               name="state"
                               defaultValue={Tournament.state}
-                              className={`rounded-md border ${
+                              className={`w-full rounded-md border ${
                                 errors.state
                                   ? "border-red-500"
                                   : "border-body-color border-opacity-10"
@@ -714,7 +910,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                               onChange={(e) => handleCitiesChange(e)}
                               name="citie"
                               defaultValue={Tournament.city}
-                              className={`rounded-md border ${
+                              className={`w-full rounded-md border ${
                                 errors.city
                                   ? "border-red-500"
                                   : "border-body-color border-opacity-10"
@@ -736,6 +932,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                             )}
                           </div>
                         </div>
+
                         <textarea
                           name="description"
                           defaultValue={Tournament.description}
@@ -775,7 +972,6 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                             {errors.image}
                           </span>
                         )}
-                        {/* Add any other fields for Step 1 */}
                       </form>
                     )}
 
@@ -906,34 +1102,55 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                             </div>
                           )}
                         </div>
-
-                        <div>
-                          <label
-                            htmlFor="teams"
-                            className="text-lg font-semibold mb-2"
-                          >
-                            Select Teams: (Optional)
-                          </label>
-                          <Select
-                            isMulti
-                            closeMenuOnSelect={false}
-                            components={animatedComponents}
-                            name="teams" // Change name to "teams"
-                            onChange={handleTeamChange}
-                            defaultValue={selectedTeams}
-                            options={Teams.map((team) => ({
-                              value: team._id,
-                              label: team.name,
-                            }))}
-                            className="basic-multi-select"
-                            classNamePrefix="select"
-                          />
-                        </div>
+                        {!showPots && (
+                          <div>
+                            <label
+                              htmlFor="teams"
+                              className="text-lg font-semibold mb-2"
+                            >
+                              Select Teams:
+                            </label>
+                            <Select
+                              isMulti
+                              closeMenuOnSelect={false}
+                              components={animatedComponents}
+                              name="teams" // Change name to "teams"
+                              onChange={handleTeamChange}
+                              defaultValue={selectedTeams}
+                              options={Teams.map((team) => ({
+                                value: team._id,
+                                label: team.name,
+                              }))}
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                            />
+                          </div>
+                        )}
                         {errors.teams && (
                           <span className="text-red-500">{errors.teams}</span>
                         )}
 
-                        {/* Add any other fields for Step 2 */}
+                        <DndProvider backend={HTML5Backend}>
+                          {showPots && (
+                            <>
+                              <div className="grid grid-cols-4 gap-8 mt-2 mb-5">
+                                {/* Pot 1 */}
+                                <Pot potNumber={1} />
+
+                                {/* Pot 2 */}
+                                <Pot potNumber={2} />
+
+                                {/* Pot 3 */}
+                                <Pot potNumber={3} />
+
+                                {/* Pot 4 */}
+                                <Pot potNumber={4} />
+                              </div>
+
+                              <TeamList teams={Teams} />
+                            </>
+                          )}
+                        </DndProvider>
                       </form>
                     )}
                   </div>
@@ -949,86 +1166,123 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
             {currentStep === 3 && (
               <>
-              <div>
-      <div>
-      <h1 className="text-center pb-8 " >Hotel List</h1>
-      </div>
-<div className="flex  gap-4 ml-10 ">
-  <div className="">
-      <label>
-        Radius (in km):
-        <input
-          type="number"
-          name="radius"
-          value={radius}
-          onChange={handleInputChange}
-          placeholder="Enter Radius"
-        />
-      </label>
-  </div>
-      <div className="pb-5 ">
-      <button onClick={handleRadiusChange} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Change Radius</button>
-      </div>
-</div>
+                {
+                  <div>
+                    <div>
+                      <h1 className="text-center pb-8 ">Hotel List</h1>
+                    </div>
+                    <div className="flex  gap-4 ml-10 ">
+                      <div className="">
+                        <label>
+                          Radius (in km):
+                          <input
+                            type="number"
+                            name="radius"
+                            value={radius}
+                            onChange={handleInputChange}
+                            placeholder="Enter Radius"
+                          />
+                        </label>
+                      </div>
+                      <div className="pb-5 ">
+                        <button
+                          onClick={handleRadiusChange}
+                          type="button"
+                          className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                        >
+                          Change Radius
+                        </button>
+                      </div>
+                    </div>
 
+                    {loading && <p>Loading...</p>}
+                    {error && <p style={{ color: "red" }}>{error}</p>}
 
+                    <div
+                      className={`flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 ${
+                        showErrorNotification ? "block" : "hidden"
+                      }`}
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 me-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                      </svg>
+                      <span className="sr-only">Info</span>
+                      <div>
+                        <span className="font-medium">
+                          Hotel already exists!
+                        </span>{" "}
+                        Change a few things up and try submitting again.
+                      </div>
+                    </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+                    <div
+                      className={`flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400 ${
+                        showSuccessNotification ? "block" : "hidden"
+                      }`}
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 me-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16ZM3 10a7 7 0 1 0 14 0ZM10 12a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1Z" />
+                      </svg>
+                      <span className="sr-only">Success</span>
+                      <div>
+                        <span className="font-medium">Success alert!</span>{" "}
+                        Hotel successfully added.
+                      </div>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4  mx-10">
+                      {currentHotels.map((hotel, index) => (
+                        <div key={index} className="border p-4 rounded-md ">
+                          <label>
+                            <input
+                              className=" mx-2"
+                              type="checkbox"
+                              checked={selectedHotels.includes(hotel.hotelId)}
+                              onChange={() =>
+                                toggleHotelSelection(hotel.hotelId)
+                              }
+                            />
+                            {hotel.name}
+                          </label>
+                          <h3>chainCode:{hotel.chainCode}</h3>
+                          <p> Id: {hotel.hotelId}</p>
+                        </div>
+                      ))}
+                    </div>
 
-      <div className={`flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 ${showErrorNotification ? 'block' : 'hidden'}`} role="alert">
-        <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-        </svg>
-        <span className="sr-only">Info</span>
-        <div>
-          <span className="font-medium">Hotel already exists!</span> Change a few things up and try submitting again.
-        </div>
-      </div>
-
-      <div className={`flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400 ${showSuccessNotification ? 'block' : 'hidden'}`} role="alert">
-        <svg className="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16ZM3 10a7 7 0 1 0 14 0ZM10 12a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1Z"/>
-        </svg>
-        <span className="sr-only">Success</span>
-        <div>
-          <span className="font-medium">Success alert!</span> Hotel successfully added.
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4  mx-10">
-        {currentHotels.map((hotel, index) => (
-           <div key={index} className="border p-4 rounded-md ">
-           <label>
-             <input className=" mx-2"
-               type="checkbox"
-               checked={selectedHotels.includes(hotel.hotelId)}
-               onChange={() => toggleHotelSelection(hotel.hotelId)}
-             />
-             {hotel.name}
-           </label>
-           <h3>chainCode:{hotel.chainCode}</h3>
-           <p> Id: {hotel.hotelId}</p>
-         </div>
-       ))}
-      </div>
-
-      {/* Pagination */}
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: Math.ceil(hotelData.length / hotelsPerPage) }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => handlePageChange(index + 1)}
-            className={`mx-2 px-3 py-2 border ${
-              currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
-            }`}
-          >
-            {index + 1}
-          </button>
-        ))}
-      </div>
-    </div>
+                    <div className="flex justify-center mt-4">
+                      {Array.from({
+                        length: Math.ceil(hotelData.length / hotelsPerPage),
+                      }).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePageChange(index + 1)}
+                          className={`mx-2 px-3 py-2 border ${
+                            currentPage === index + 1
+                              ? "bg-blue-500 text-white"
+                              : "bg-white text-blue-500"
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                }
               </>
               /* Include form fields and validation logic */
             )}
@@ -1097,5 +1351,11 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
     </>
   );
 }
-
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
 export default AddTournament;
