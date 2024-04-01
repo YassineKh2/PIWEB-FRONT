@@ -28,6 +28,7 @@ import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.
 import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
+import UpdatePassword from "./views/FrontOffice/components/User/profile/updatePassword.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
@@ -41,6 +42,8 @@ function RoutesPath() {
                 <Route path="/signupTM" element={<SignupPageTM/>}/>
                 <Route path="/signupTRM" element={<SignupPageTRM/>}/>
                 <Route path="/updateProfile" element={<UpdateProfile/>}/>
+                <Route path="/updatePassword" element={<UpdatePassword/>}/>
+                
                 <Route path="/signup" element={<SignupPage/>}/>
                 <Route path="/about" element={<About/>}/>
                 <Route path="/blog" element={<Blog/>}/>
