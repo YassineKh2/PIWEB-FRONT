@@ -77,6 +77,7 @@ export async function updateUser(userData) {
   }
 }
 
+
 export async function deleteUser(userId) {
   try {
     const response = await axios.delete(`${BASE_URL}/delete/${userId}`);

@@ -172,13 +172,17 @@ const Header = () => {
         Sign Up
       </Link>
       </>
+     
             ) : (
-              <button
+              <>
+              <DropdownUser />
+             {/* <button
                 onClick={deleteToken}
                 className="py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
               >
                 Logout
-              </button>
+            </button>*/}
+              </>
             )}
               
                 <div>

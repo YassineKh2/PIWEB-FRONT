@@ -36,7 +36,6 @@ module.exports = {
         backofficeblack: "#090E34",
         dark: "#1D2144",
         primary: "#4A6CF7",
-        yellow: "#FBB040",
         "body-color": "#959CB1",
         current: "currentColor",
         transparent: "transparent",

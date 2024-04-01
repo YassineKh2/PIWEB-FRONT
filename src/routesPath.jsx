@@ -25,6 +25,7 @@ import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.
 import RequireAuth from "./views/FrontOffice/components/User/requireAuth.jsx"
 import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx"
 import UpdateProfile from "./views/FrontOffice/components/User/profile/updateProfile.jsx"
+import UpdatePassword from "./views/FrontOffice/components/User/profile/updatePassword.jsx"
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";

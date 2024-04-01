@@ -58,36 +58,8 @@ function DisplayAllTournaments() {
   const [MatchesDrawGroupStage, setMatchesDrawGroupStage] = useState([]);
   const [MatchesCopy, setMatchesCopy] = useState([]);
   const [RealMatches, setRealMatches] = useState([]);
-  const [DrawMatchesGroupStage, setDrawMatchesGroupStage] = useState([]);
-  const [userInfo, setUserInfo] = useState();
-  const [user, setUser] = useState();
-  const [tabChange, setTabChange] = useState();
-  const [numberOfGroups, setnumberOfGroups] = useState();
-  const [matchs, setMatchs] = useState(null);
-  const openModalInNewTab = (Allmatch) => {
-    const match = selectedMatch;
-    const state = { match, Tournament };
-    localStorage.setItem("newTabState", JSON.stringify(state));
-    const newTab = window.open(
-      "/tournament/matchStats",
-      "_blank",
-      "width=800,height=600"
-    );
-    setIsPopupOpenFixture(false);
-  };
+  const [refresh, setRefresh] = useState(false);
 
-  const getTournaments = async () => {
-    const res = await getAllTournaments()
-      .then((res) => {
-        setAllTournament((prevState) => [res.tournaments]);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-  useEffect(() => {
-    getTournaments();
-  }, []);
   const getTournamentDetail = async () => {
     try {
       const res = await getTournamentDetails(id);
@@ -730,19 +702,6 @@ function DisplayAllTournaments() {
   const handleMatchClick = (match) => {
     setSelectedMatch(match);
     setIsPopupOpen(true);
-    getAllTournamentMatches();
-  };
-  const handleReservationClick = (matchs) => {
-    localStorage.setItem('selectedMatch', JSON.stringify(matchs));
-navigate('/addReservation');
-
-  };
-  
-
-  const handleMatchClickFixture = (match) => {
-    setSelectedMatch(match);
-    setIsPopupOpenFixture(true);
-    getAllTournamentMatches();
   };
   useEffect(() => {
     socket.on("updateScore", (updatedMatch) => {

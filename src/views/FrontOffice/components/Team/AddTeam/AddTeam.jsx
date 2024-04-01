@@ -1,1029 +1,1361 @@
-import {useForm} from "react-hook-form";
-import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
-import * as yup from "yup";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {useEffect, useRef, useState} from "react";
-import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry} from "../../../../../Services/APis/CountryAPI.js";
-import {DatePickerDemo} from "./DatePicker.jsx";
-import {AiOutlinePicture as Picture} from "react-icons/ai";
-import {motion} from 'framer-motion'
-import SectionTitle from "../../../HomePage/components/Common/SectionTitle.jsx";
-import PricingBox from "./PricingBoxTeam.jsx";
-import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
+import { useEffect, useState } from "react";
+import {
+  addTournament,
+  getLatestTournamentId,
+} from "../../../../../Services/FrontOffice/apiTournament";
 import { useNavigate } from "react-router-dom";
-import { addSponsors } from "../../../../../Services/FrontOffice/apiSponsors.js";
+import {
+  GetCitybyStateAndCountry,
+  GetCountries,
+  GetStateByCountry,
+} from "../../../../../Services/APis/CountryAPI";
+import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
+import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
+import * as yup from "yup";
+import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
+import { AiOutlinePicture as Picture } from "react-icons/ai";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+import { jwtDecode } from "jwt-decode";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
 
-
-
-
-const schema = yup.object().shape({
-
-    name: yup.string().required().min(3),
-    nameAbbreviation: yup.string().max(3).min(3).required(),
-    country: yup.string().required(),
-    state: yup.string().required(),
-    city: yup.string().required(),
-    description: yup.string().required(),
-    nickname: yup.string(),
-    slogan: yup.string(),
-    founder: yup.string().required(),
-    image: yup.string(),
-    foundedIn: yup.date()
+import { HTML5Backend } from "react-dnd-html5-backend";
+const animatedComponents = makeAnimated();
+const firstStepSchema = yup.object().shape({
+  name: yup.string().required("Name is required"),
+  description: yup.string().required("Description is required"),
+  image: yup.string().required("Image is required"),
+  country: yup.string().required("Country is required"),
+  state: yup.string().required("State is required"),
+  city: yup.string().required("City is required"),
 });
-const schemasp=yup.object().shape({
-    name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
-    description: yup.string().required("Description is required"),
-    contact: yup.number().required("Contact is required").typeError("Contact must be a number").test('len', 'Contact must be exactly 8 digits', val => String(val).length === 8),
-    adresse: yup.string().required("Adresse is required")
+const secondStepSchema = yup.object().shape({
+  startDate: yup
+    .date()
+    .required("Start Date is required")
+    .min(new Date(), "Start Date should be in the future"),
+  endDate: yup
+    .date()
+    .required("End Date is required")
+    .min(yup.ref("startDate"), "End Date should be after Start Date"),
+  nbTeamPartipate: yup
+    .mixed()
+    .required("Number of Teams to Participate is required"),
+  tournamentType: yup.string().required("Tournament Type is required"),
+  /* teams: yup
+    .array()
+    .required("Select at least one team")
+    .min(
+      yup.ref("nbTeamPartipate"),
+      "Selected Teams sould be equal to the number of the teams participating"
+    )
+    .max(
+      yup.ref("nbTeamPartipate"),
+      "Selected Teams sould be equal to the number of the teams participating"
+    ),*/
 });
 
+import hotelService from "../../../../../Services/APis/HotelAPI.js";
+import HotelService from "../../../../../Services/FrontOffice/apiHotel.js";
 
 const steps = [
-    {
-        id: 'Step 1',
-        name: 'General Information',
-        fields: ['name', 'nameAbbreviation', 'country', 'state', 'city', 'image']
-    },
-    {
-        id: 'Step 2',
-        name: 'Team Description',
-        fields: ['description', 'slogan', 'nickname', 'foundedIn', 'founder']
-    },
-    {
-        id: 'Step 3',
-        name: 'Players And Coaches',
-        fields: ['']
-    },
-    {
-        id: 'Step 4',
-        name: 'Additional Information',
-        fields: ['']
-    },
-    {id: 'Step 5', name: 'Choosing Your Plan'}
-]
+  {
+    id: "Step 1",
+    name: "General Information",
+    fields: ["name", "nameAbbreviation", "country", "state", "city", "image"],
+  },
+  {
+    id: "Step 2",
+    name: "Tournament Details",
+    fields: ["description", "slogan", "nickname", "foundedIn", "founder"],
+  },
+  {
+    id: "Step 3",
+    name: "Fields",
+    fields: [""],
+  },
+  {
+    id: "Step 4",
+    name: "Hotels",
+    fields: [""],
+  },
+];
+function AddTournament() {
+  const navigate = useNavigate();
+  const [errors, setErrors] = useState({});
+  const [image, setImage] = useState(null);
+  const [Countries, setCountries] = useState([]);
+  const [SelectedCountry, setSelectedCountries] = useState("");
+  const [States, setStates] = useState([]);
+  const [SelectedStates, setSelectedStates] = useState("");
+  const [Cities, setCities] = useState([]);
+  const [SelectedCities, setSelectedCities] = useState("");
+  const [Teams, setTeams] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState([]);
+  const [showComboboxKnokout, setshowComboboxKnokout] = useState(false);
+  const [showLeague, setLeague] = useState(false);
+  const [showPots, setShowPots] = useState(false);
+  const [userInfo, setUserInfo] = useState();
+  const [selectTeamPots, setSelectTeamsPots] = useState({});
 
+  //hotel
 
-export default function AddTeam() {
-    const [Countries, setCountries] = useState([]);
-    const [States, setStates] = useState([]);
-    const [Cites, setCites] = useState([]);
-    const [date, setDate] = useState();
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [radius, setRadius] = useState();
+  const [hotelData, setHotelData] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hotelsPerPage] = useState(10); // Number of hotels to display per page
+  const [selectedHotels, setSelectedHotels] = useState([]);
+  const [addedHotelsId, setaddedHotelsId] = useState([]);
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
-    const [previousStep, setPreviousStep] = useState(0)
-    const [currentStep, setCurrentStep] = useState(0)
-    const delta = currentStep - previousStep
+  const [Tournament, setTournament] = useState({
+    name: "",
+    description: "",
+    startDate: null,
+    endDate: null,
+    location: "",
+    image: "",
+    tournamentType: "",
+    nbTeamPartipate: 0,
+    country: "",
+    state: "",
+    city: "",
+    teams: [],
+  });
+  const [Match, setMatch] = useState({
+    win: "",
+    loss: "",
+    matchDate: new Date(),
+    scoreTeam1: "",
+    scoreTeam2: "",
+    fixture: "",
+    idTeam1: {},
+    idTeam2: {},
+    idTournament: {},
+  });
 
-    const [isMonthly, setIsMonthly] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const formRef = useRef();
-    const navigate = useNavigate();
-    const [logo, setLogo] = useState(null);
-    const [sponsor, setSponsor] = useState({
-      name: "",
-      description: "",
-      logo: "",
-      contact: 0,
-      adresse: ""
-    });
-    const [error, setErrors] = useState({
-        name: "",
-        description: "",
-        contact: 0,
-        adresse: ""
-      });
+  const path = "http://localhost:3000/public/images/teams/";
+  useEffect(() => {
+    const userToken = localStorage.getItem("token");
 
-    useEffect(() => {
-        GetCountries().then((response) => {
-            setCountries(response);
+    if (userToken) {
+      const decodedToken = jwtDecode(userToken);
+      setUserInfo(decodedToken);
+    }
+  }, []);
+  const [previousStep, setPreviousStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const delta = currentStep - previousStep;
+  const next = async () => {
+    try {
+      // Validate based on the current step
+      if (currentStep === 0) {
+        await firstStepSchema.validate(Tournament, { abortEarly: false });
+      } else if (currentStep === 1) {
+        await secondStepSchema.validate(Tournament, { abortEarly: false });
+      }
+
+      // Proceed to the next step
+      if (currentStep < steps.length - 1) {
+        setErrors({}); // Clear previous errors
+        setPreviousStep(currentStep);
+        setCurrentStep((step) => step + 1);
+      }
+    } catch (error) {
+      // Handle validation errors
+      if (error instanceof yup.ValidationError) {
+        const validationErrors = {};
+        error.inner.forEach((err) => {
+          validationErrors[err.path] = err.message;
         });
-    }, []);
-
-
-    const next = async () => {
-        const fields = steps[currentStep].fields
-        const output = await trigger(fields, {shouldFocus: true})
-
-        if (!output) return
-
-        if (currentStep < steps.length - 1) {
-            if (currentStep === steps.length - 2) {
-                // await handleSubmit(processForm)()
-            }
-            if (currentStep == 3 && showForm)
-            {        
-                await addSponsors(sponsor);
-            }
-            setPreviousStep(currentStep)
-            setCurrentStep(step => step + 1)
-
-        }
+        setErrors(validationErrors);
+      } else {
+        // Handle other errors
+        console.error(error);
+      }
     }
-    const handleLogoChange = (e) => {
-        setLogo(e.target.files[0]);
-      };
-    const prev = () => {
-        if (currentStep > 0) {
-            setPreviousStep(currentStep)
-            setCurrentStep(step => step - 1)
-        }
-    }
-    const handleChange = async (e) => {
-        const { name, value } = e.target;
-        setSponsor({ ...sponsor, [name]: value });
-        try {
-            await yup.reach(schemasp, name).validate(value);
-            setErrors({ ...error, [name]: "" });
-        } catch (error) {
-            setErrors({ ...error, [name]: error.message });
-        }
-    };
-    
-  
+  };
 
-    const {
-        register,
-        handleSubmit,
-        formState: {errors, isSubmitting, dirtyFields},
-        setError,
-        watch,
-        trigger
-    } = useForm({
-        resolver: yupResolver(schema)
+  const prev = () => {
+    if (currentStep > 0) {
+      setPreviousStep(currentStep);
+      setCurrentStep((step) => step - 1);
+    }
+  };
+  const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
+
+  const handleTeamChange = (selectedOptions) => {
+    const selectedTeamIds = selectedOptions.map((option) => option.value);
+    setSelectedTeams(selectedTeamIds);
+
+    setTournament({
+      ...Tournament,
+      teams: selectedTeamIds,
     });
-
-    const selectedCountry = watch("country", true);
-    const selectedState = watch("state", true);
-    const image = watch("image", true);
-
-
-    useEffect(() => {
-        if (selectedCountry) {
-            setCites([]);
-            GetStateByCountry(selectedCountry).then((response) => {
-                setStates(response);
-            });
-        }
-    }, [selectedCountry]);
-
-    useEffect(() => {
-        if (selectedState) {
-            GetCitybyStateAndCountry(selectedCountry, selectedState).then((response) => {
-                setCites(response);
-            });
-        }
-    }, [selectedState]);
-
-
-    const onSubmit = async (data) => {
-        try {
-            data.image = image[0];
-            data.imagename = image[0].name;
-            data.foundedIn = date;
-    
-            const nameValue = watch("name");
-
-    
-            const lastteam = { ...data, sponsors: sponsor };
-            console.log("azizz: " + JSON.stringify(lastteam)); 
-
-            await addTeam(lastteam);
-            await addSponsors(sponsor);
-            navigate('/team/all');
-        } catch (error) {
-            setError("root", {
-                message: error.message
-            });
-        }
+  };
+  useEffect(() => {
+    if (Tournament.tournamentType === "Knockout") {
+      setLeague(false);
+      setshowComboboxKnokout(true);
+      setShowPots(false);
+    } else if (Tournament.tournamentType === "League") {
+      setshowComboboxKnokout(false);
+      setShowPots(false);
+      setLeague(true);
     }
-    
-    
-    
+    if (Tournament.tournamentType === "Group Stage") {
+      setLeague(false);
+      setShowPots(true);
+      setshowComboboxKnokout(true);
+    }
+  }, [Tournament.tournamentType]);
+
+  const handlechange = (e) => {
+    setTournament({ ...Tournament, [e.target.name]: e.target.value });
+  };
+  const handleStartDateChange = (date) => {
+    const isoDateString = date.toISOString();
+    const formattedDate = isoDateString.substring(0, 10);
+    setTournament({ ...Tournament, startDate: formattedDate });
+  };
+
+  const handleCountryChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "location") {
+      setSelectedCountries(value);
+    }
+    setTournament({ ...Tournament, country: value });
+  };
+  const handleStateChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedStates(value);
+    setTournament({ ...Tournament, state: value });
+  };
+  const handleCitiesChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedCities(value);
+    setTournament({ ...Tournament, city: value });
+  };
+  useEffect(() => {
+    if (SelectedCountry) {
+      setCities([]);
+      GetStateByCountry(SelectedCountry).then((response) => {
+        setStates(response);
+      });
+    }
+  }, [SelectedCountry]);
+
+  useEffect(() => {
+    if (SelectedStates) {
+      GetCitybyStateAndCountry(SelectedCountry, SelectedStates).then(
+        (response) => {
+          setCities(response);
+        }
+      );
+    }
+  }, [SelectedStates]);
+  const handleEndDateChange = (date) => {
+    const isoDateString = date.toISOString();
+    const formattedDate = isoDateString.substring(0, 10);
+    setTournament({ ...Tournament, endDate: formattedDate });
+  };
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+  useEffect(() => {
+    GetCountries().then((response) => {
+      setCountries(response);
+    });
+  }, []);
+  useEffect(() => {
+    if (image && image.name) {
+      setTournament((prevTournament) => ({
+        ...prevTournament,
+        image: image.name,
+      }));
+    }
+  }, [image]);
+  const getTeams = async () => {
+    const res = getAllTeams()
+      .then((res) => {
+        setTeams(res.teams);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  const getLastTournamentId = async () => {
+    const res = getLatestTournamentId()
+      .then((res) => {
+        return res.latestTournamentId;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+  useEffect(() => {
+    getTeams();
+  }, []);
+
+  /////////hotelll
+  const hideNotifications = () => {
+    setShowErrorNotification(false);
+    setShowSuccessNotification(false);
+  };
+
+  const fetchData = async (city) => {
+    setLoading(true);
+
+    try {
+      const geocodingData = await getGeocodingData(city);
+
+      const response = await hotelService.getHotelsByGeoCode(
+        geocodingData.latitude,
+        geocodingData.longitude,
+        radius
+      );
+
+      if (response) {
+        setHotelData(response.data); // Assuming response directly contains hotel data
+        setError(null);
+      } else {
+        setHotelData([]);
+        setError("Invalid response format. Please try again.");
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+
+      if (error.response) {
+        setError(`API Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        setError("Network Error. Please check your internet connection.");
+      } else {
+        setError("Error fetching hotels. Please try again.");
+      }
+
+      setHotelData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // useEffect hook
+  useEffect(() => {
+    fetchData(SelectedCities);
+  }, [SelectedCities]);
+
+  const toggleHotelSelection = (hotelId) => {
+    //setError(null);
+    //setShowErrorNotification(null);
+    setShowSuccessNotification(null);
+    // Toggle the selection status of the hotel
+    setSelectedHotels((prevSelected) =>
+      prevSelected.includes(hotelId)
+        ? prevSelected.filter((id) => id !== hotelId)
+        : [...prevSelected, hotelId]
+    );
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "radius") {
+      setRadius(value);
+    }
+  };
+
+  const addHotelsToDatabase = async (hotels, tournamentId) => {
+    try {
+      const hotelsToAdd = hotels.filter((hotel) =>
+        selectedHotels.includes(hotel.hotelId)
+      );
+
+      if (hotelsToAdd.length === 0) {
+        console.log("No hotels selected to add.");
+        return;
+      }
+
+      await Promise.all(
+        hotelsToAdd.map(async (hotel) => {
+          try {
+            hotel.idTournament = tournamentId;
+            const addHotelResponse = await HotelService.addHotel([hotel]);
+            console.log("Hotel added to database:", addHotelResponse);
+          } catch (error) {
+            if (error.response && error.response.status === 400) {
+              console.error(
+                "Hotel already exists:",
+                error.response.data.message
+              );
+            } else {
+              console.error("Error adding hotel to database:", error);
+            }
+          }
+        })
+      );
+
+      setShowSuccessNotification(true);
+      setTimeout(hideNotifications, 2000);
+    } catch (error) {
+      console.error("Error adding selected hotels to database:", error);
+      setShowErrorNotification(true);
+      setTimeout(hideNotifications, 2000);
+    }
+  };
+  const handleCityChange = (e) => {
+    setCity(e.target.value);
+  };
+  const handleRadiusChange = () => {
+    fetchData();
+  };
+
+  // Calculate the index of the last hotel on the current page
+  const indexOfLastHotel = currentPage * hotelsPerPage;
+  // Calculate the index of the first hotel on the current page
+  const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+  // Get the hotels for the current page
+  const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
+
+  // Change page
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  const add = async (e) => {
+    e.preventDefault();
+
+    const fileReader = new FileReader();
+
+    fileReader.onloadend = async function () {
+      const base64Image = fileReader.result.split(",")[1];
+      const imageData = {
+        name: Tournament.name,
+        description: Tournament.description,
+        location: Tournament.location,
+        startDate: Tournament.startDate,
+        endDate: Tournament.endDate,
+        tournamentType: Tournament.tournamentType,
+        nbTeamPartipate: Tournament.nbTeamPartipate,
+        teams: selectedTeams,
+        image: base64Image,
+        filename: Tournament.image,
+        country: Tournament.country,
+        state: Tournament.state,
+        city: Tournament.city,
+        creator: userInfo.userId,
+      };
+
+      try {
+        if (
+          Tournament.tournamentType === "League" ||
+          Tournament.tournamentType === "Knockout"
+        ) {
+          await addTournament(imageData);
+        } else {
+          const numberGroups = Math.ceil(Tournament.nbTeamPartipate / 4);
+          const teamsByPot = { ...selectTeamPots };
+          const teamsGroupStage = {};
+
+          Object.keys(teamsByPot).forEach((potNumber) => {
+            teamsByPot[potNumber] = shuffleArray(teamsByPot[potNumber]);
+          });
+
+          for (
+            let groupNumber = 1;
+            groupNumber <= numberGroups;
+            groupNumber++
+          ) {
+            const group = [];
+            Object.keys(teamsByPot).forEach((potNumber) => {
+              if (teamsByPot[potNumber].length > 0) {
+                const team = teamsByPot[potNumber].shift();
+                if (team && team.team && team.team._id) {
+                  group.push({
+                    teamId: team.team._id,
+                    potNumber,
+                    groupNumber,
+                  });
+                }
+                if (group.length === 4) return;
+              }
+            });
+            teamsGroupStage[groupNumber] = group;
+          }
+
+          console.log(teamsGroupStage);
+
+          const addTournamentGroupStage = {
+            name: Tournament.name,
+            description: Tournament.description,
+            location: Tournament.location,
+            startDate: Tournament.startDate,
+            endDate: Tournament.endDate,
+            tournamentType: Tournament.tournamentType,
+            nbTeamPartipate: Tournament.nbTeamPartipate,
+            teamsGroupStage: Object.entries(teamsGroupStage).flatMap(
+              ([groupNumber, teams]) => {
+                return teams.map((team) => ({
+                  teamId: team.teamId,
+                  potNumber: team.potNumber,
+                  groupNumber: groupNumber,
+                }));
+              }
+            ),
+            image: base64Image,
+            filename: Tournament.image,
+            country: Tournament.country,
+            state: Tournament.state,
+            city: Tournament.city,
+            creator: userInfo.userId,
+          };
+
+          await addTournament(addTournamentGroupStage);
+          const latestTournamentId = await getLatestTournamentId();
+          // Iterate over each group
+          for (
+            let groupNumber = 1;
+            groupNumber <= numberGroups;
+            groupNumber++
+          ) {
+            const teams = teamsGroupStage[groupNumber]; // Get teams for the current group
+
+            // Generate matches for each team in the group
+            for (let i = 0; i < teams.length; i++) {
+              const team1 = teams[i].teamId;
+
+              // Loop through the remaining teams in the group to create matches
+              for (let j = i + 1; j < teams.length; j++) {
+                const team2 = teams[j].teamId;
+
+                // Create match data
+                const matchData = {
+                  win: "",
+                  loss: "",
+                  matchDate: new Date(),
+                  scoreTeam1: "",
+                  scoreTeam2: "",
+                  groupNumber, // Assign the group number to the match
+                  idTeam1: team1,
+                  idTeam2: team2,
+                  idTournament: latestTournamentId.latestTournamentId,
+                };
+
+                await addMatch(matchData);
+              }
+            }
+          }
+        }
+        const latestTournamentId = await getLatestTournamentId();
+        const RealMatches = [];
+        const numTeams = selectedTeams.length;
+        let idNextMatch = selectedTeams.length / 2;
+        let loopCounter = 0;
+        let j = 1;
+        let index = 0;
+        const totalRounds = numTeams - 1;
+        const matchesPerRound = numTeams / 2;
+
+        if (Tournament.tournamentType === "League") {
+          let teamOrder = selectedTeams.slice();
+          const tournamentStartDate = new Date(Tournament.startDate);
+          const tournamentEndDate = new Date(Tournament.endDate);
+          let currentDate = new Date(tournamentStartDate);
+          // Initialize the match date (start from the tournament start date)
+
+          for (let round = 0; round < totalRounds; round++) {
+            const randomHour = 8 + Math.floor(Math.random() * 12); // Random hour between 8 and 19
+            currentDate.setHours(randomHour, 0, 0, 0);
+            for (let match = 0; match < matchesPerRound; match++) {
+              // Determine the indices for the home and away teams
+              const homeIndex = match;
+              const awayIndex = numTeams - 1 - match;
+
+              // Get the team IDs based on the current order
+              const idTeam1 = teamOrder[homeIndex];
+              const idTeam2 = teamOrder[awayIndex];
+
+              // Create match data only if it's not the same team
+              if (idTeam1 !== idTeam2) {
+                const matchData = {
+                  win: "",
+                  loss: "",
+                  matchDate: new Date(currentDate),
+                  scoreTeam1: "",
+                  scoreTeam2: "",
+                  fixture: round + 1, // Assign the round number as the fixture number
+                  idTeam1,
+                  idTeam2,
+                  idTournament: latestTournamentId.latestTournamentId,
+                };
+
+                await addMatch(matchData);
+                currentDate.setHours(currentDate.getHours() + 3);
+              }
+            }
+            currentDate.setDate(currentDate.getDate() + 1); 
+
+            // Rotate the array of teams for the next round, keeping the first team fixed
+            teamOrder = [teamOrder[0]].concat(teamOrder.slice(2), teamOrder[1]);
+          }
+        } else if (Tournament.tournamentType === "Knockout") {
+          selectedTeams.sort(() => Math.random() - 0.5);
+
+          while (selectedTeams.length >= 2) {
+            const idTeam1 = selectedTeams.pop();
+            const idTeam2 = selectedTeams.pop();
+            const matchData = {
+              id: index + 1,
+              win: "",
+              loss: "",
+              nextMatchId: j + idNextMatch,
+              matchDate: new Date(),
+              scoreTeam1: "",
+              scoreTeam2: "",
+              fixture: "",
+              idTeam1,
+              idTeam2,
+              idTournament: latestTournamentId.latestTournamentId,
+            };
+            loopCounter++;
+            index++;
+            if (loopCounter % 2 === 0) {
+              idNextMatch++;
+            }
+            RealMatches.push(matchData);
+            await addMatch(matchData);
+          }
+          for (let i = 0; i < RealMatches.length - 1; i++) {
+            if (i % 2 === 0) {
+              idNextMatch++;
+            }
+
+            if (idNextMatch > RealMatches.length * 2 - 1) {
+              idNextMatch = null;
+            }
+            const emptyMatch = {
+              id: RealMatches.length + i + 1,
+              win: "",
+              loss: "",
+              nextMatchId: idNextMatch,
+              matchDate: new Date(),
+              scoreTeam1: "",
+              scoreTeam2: "",
+              fixture: "",
+              participants: [],
+              idTournament: latestTournamentId.latestTournamentId,
+            };
+            await addMatch(emptyMatch);
+          }
+        }
+
+        navigate("/tournament/showAll");
+        addHotelsToDatabase(hotelData, latestTournamentId.latestTournamentId);
+      } catch (error) {
+        console.log(error.response.data.message);
+      }
+    };
+
+    if (image) {
+      fileReader.readAsDataURL(image);
+    }
+  };
+
+  const TeamItem = ({ team }) => {
+    const [{ isDragging }, drag] = useDrag({
+      type: "TEAM",
+      item: { team: team },
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    });
 
     return (
-        <>
-            <section id="contact" className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28">
-                <form onSubmit={handleSubmit(onSubmit)} ref={formRef}>
-                    <div className="container">
-                        <nav aria-label='Progress' className="mb-10">
-                            <ol role='list' className='space-y-4 md:flex md:space-x-8 md:space-y-0'>
-                                {steps.map((step, index) => (
-                                    <li key={step.name} className='md:flex-1'>
-                                        {currentStep > index ? (
-                                            <div
-                                                className='group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
-                  <span className='text-sm font-medium text-sky-600 transition-colors '>
-                    {step.id}
-                  </span>
-                                                <span className='text-sm font-medium'>{step.name}</span>
-                                            </div>
-                                        ) : currentStep === index ? (
-                                            <div
-                                                className='flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'
-                                                aria-current='step'
-                                            >
-                  <span className='text-sm font-medium text-sky-600'>
-                    {step.id}
-                  </span>
-                                                <span className='text-sm font-medium'>{step.name}</span>
-                                            </div>
-                                        ) : (
-                                            <div
-                                                className='group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4'>
-                  <span className='text-sm font-medium text-gray-500 transition-colors'>
-                    {step.id}
-                  </span>
-                                                <span className='text-sm font-medium'>{step.name}</span>
-                                            </div>
-                                        )}
-                                    </li>
-                                ))}
-                            </ol>
-                        </nav>
-                        {currentStep !== 4 && (
-                            <div className="-mx-4 flex justify-center flex-wrap">
+      <div
+        ref={drag}
+        style={{ opacity: isDragging ? 0.5 : 1 }}
+        className="team-item flex items-center "
+      >
+        <img
+          alt="Team A logo"
+          className="overflow-hidden border object-cover w-7 h-7 ml-2 mr-2"
+          height="30"
+          src={path + team.image}
+          style={{
+            aspectRatio: "30/30",
+            objectFit: "cover",
+          }}
+          width="30"
+        />
+        {team.name}
+      </div>
+    );
+  };
 
-                                <div className="w-full px-4 lg:w-7/12 xl:w-8/12">
+  const TeamList = ({ teams }) => {
+    const filteredTeams = teams.filter((team) => {
+      return !Object.values(selectTeamPots).some((potTeams) =>
+        potTeams.some((potTeam) => potTeam.team.name === team.name)
+      );
+    });
 
-                                    <div
-                                        className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
-                                        data-wow-delay=".15s
-              "
-                                    >
+    return (
+      <div
+        className="team-list-container"
+        style={{
+          maxHeight: "100px",
+          overflowY: "auto",
+        }}
+      >
+        {filteredTeams.map((team, index) => (
+          <TeamItem key={index} team={team} />
+        ))}
+      </div>
+    );
+  };
+  const Pot = ({ potNumber }) => {
+    const [{ isOver }, drop] = useDrop({
+      accept: "TEAM",
+      drop: (item) => {
+        setSelectTeamsPots((prevTeams) => ({
+          ...prevTeams,
+          [potNumber]: [...(prevTeams[potNumber] || []), item],
+        }));
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+      }),
+    });
 
-                                        <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
-                                            Register your Team
-                                        </h2>
-                                        <p className="mb-12 text-base font-medium text-body-color" id="formP">
-                                            {currentStep === 0 && "Start your journey with us by registering your team."}
-                                            {currentStep === 1 && "Enter your team's description details here."}
-                                            {currentStep === 2 && "Add your players and coaches here."}
-                                            {currentStep === 3 && "Add your sponsors and other details here."}
-                                        </p>
-
-                                        {currentStep === 0 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: 'easeInOut'}}
-                                            >
-                                                <div
-                                                    className="rounded-full bg-amber-50 p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
-                                                    <input {...register("image")} type="file" name="image"
-                                                           accept="image/*"
-                                                           id="image"
-                                                           className="hidden"/>
-                                                    <label htmlFor={"image"}
-                                                           className="flex items-baseline justify-center"><Picture
-                                                        className="text-black-2"></Picture></label>
-                                                </div>
-
-                                                <div className="-mx-4 flex flex-wrap">
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="name"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Team Name
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("name")}
-                                                                    type="text"
-                                                                    name="name"
-                                                                    placeholder="Team Name"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-
-                                                                {errors.name &&
-                                                                    <p className="text-danger mb-2">{errors.name.message}</p>}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Team Abbreviation
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("nameAbbreviation")}
-                                                                    type="text"
-                                                                    name="nameAbbreviation"
-                                                                    placeholder="Team Abbreviation"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-                                                                {errors.nameAbbreviation &&
-                                                                    <p className="text-danger">{errors.nameAbbreviation.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Country
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <select
-                                                                    {...register("country")}
-                                                                    name="country"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                >
-                                                                    <option disabled selected>
-                                                                        Select your Country
-                                                                    </option>
-                                                                    {Countries.map((country, index) => (
-                                                                        <option key={index} value={country.iso2}>
-                                                                            {country.name}
-                                                                        </option>
-
-                                                                    ))}
-                                                                </select>
-                                                                {errors.city &&
-                                                                    <p className="text-danger">{errors.city.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                State
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <select
-                                                                    {...register("state")}
-                                                                    name="state"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                >
-                                                                    <option disabled selected>
-                                                                        Select your State
-                                                                    </option>
-                                                                    {States.map((state, index) => (
-                                                                        <option key={index} value={state.iso2}>
-                                                                            {state.name}
-                                                                        </option>
-
-                                                                    ))}
-                                                                </select>
-                                                                {errors.city &&
-                                                                    <p className="text-danger">{errors.city.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="email"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                City
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <select
-                                                                    {...register("city")}
-                                                                    name="city"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                >
-                                                                    <option disabled selected>
-                                                                        Select your City
-                                                                    </option>
-                                                                    {Cites.map((city, index) => (
-                                                                        <option key={index} value={city.iso2}>
-                                                                            {city.name}
-                                                                        </option>
-
-                                                                    ))}
-                                                                </select>
-                                                                {errors.city &&
-                                                                    <p className="text-danger">{errors.city.message}</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                        {currentStep === 1 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: 'easeInOut'}}
-                                            >
-
-                                                <div className="-mx-4 flex flex-wrap">
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="date"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Founded In
-                                                            </label>
-                                                            <div className="flex flex-col ">
-                                                                <DatePickerDemo date={date} setDate={setDate}/>
-                                                                {!date &&
-                                                                    <p className="text-danger">You must insert a
-                                                                        date</p>}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="name"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Nickname
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("nickname")}
-                                                                    type="text"
-                                                                    name="nickname"
-                                                                    placeholder="Team's Nickname"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-
-                                                                {errors.nickname &&
-                                                                    <p className="text-danger mb-2">{errors.nickname.message}</p>}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div className="w-full px-4">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="description"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Description
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                            <textarea
-                                                                {...register("description")}
-                                                                name="description"
-                                                                placeholder="Team's Description"
-                                                                className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                            >
-                                                            </textarea>
-                                                                {errors.description &&
-                                                                    <p className="text-danger mb-2">{errors.description.message}</p>}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="name"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Founder
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("founder")}
-                                                                    type="text"
-                                                                    name="founder"
-                                                                    placeholder="Team's Founder"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-
-                                                                {errors.founder &&
-                                                                    <p className="text-danger mb-2">{errors.founder.message}</p>}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div className="w-full px-4 md:w-1/2">
-                                                        <div className="mb-8">
-                                                            <label
-                                                                htmlFor="name"
-                                                                className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                            >
-                                                                Slogan
-                                                            </label>
-                                                            <div className="flex flex-col">
-                                                                <input
-                                                                    {...register("slogan")}
-                                                                    type="text"
-                                                                    name="slogan"
-                                                                    placeholder="Team's Slogan"
-                                                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                />
-
-                                                                {errors.slogan &&
-                                                                    <p className="text-danger mb-2">{errors.slogan.message}</p>}
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-
-
-                                                </div>
-
-                                            </motion.div>
-                                        )}
-                                        {currentStep === 2 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: 'easeInOut'}}
-                                            >
-                                                Players And Coaches goes here
-                                            </motion.div>
-                                        )}
-
-{currentStep === 3 && (
-    <motion.div
-        initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-        animate={{x: 0, opacity: 1}}
-        transition={{duration: 0.3, ease: 'easeInOut'}}
-    >
-        <div className="flex items-center">
-        <p className="mr-4 font-bold text-blue-800">Do you have a sponsor to add ?</p>
-    <div className="flex">
-        <input type="radio" id="yes" name="sponsorOption" value="yes" onClick={() => setShowForm(true)} />
-        <label htmlFor="yes" className="mr-2">Yes</label>
-        <input type="radio" id="no" name="sponsorOption" value="no" onClick={() => setShowForm(false)} />
-        <label htmlFor="no" className="mr-4">No</label>
-    </div>
-</div>
-
-
-{showForm && (
-            <div className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11" data-wow-delay=".2s">
-                <div className="flex justify-center items-center mt-16">
-                    <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
-                        <form>
-                            <div className="mb-4">
-                                <label htmlFor="name" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Name:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    value={sponsor.name}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.name && <div className="text-red-500">{error.name}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="description" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Description:
-                                </label>
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    value={sponsor.description}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.description && <div className="text-red-500">{error.description}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Logo:
-                                </label>
-                                <input
-                                    type="file"
-                                    name={sponsor.logo}
-                                    accept="image/*"
-                                    onChange={(e) => handleLogoChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.logo && <div className="text-red-500">{error.logo}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="contact" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Contact:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="contact"
-                                    name="contact"
-                                    value={sponsor.contact}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.contact && <div className="text-red-500">{error.contact}</div>}
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                                    Adresse:
-                                </label>
-                                <input
-                                    type="text"
-                                    id="adresse"
-                                    name="adresse"
-                                    value={sponsor.adresse}
-                                    onChange={(e) => handleChange(e)}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                />
-                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
-                            </div>
-                        </form>
-                   
-                </div>
-            </div>
+    return (
+      <div
+        ref={drop}
+        className="border border-gray-300 rounded-lg p-4 flex flex-col items-center"
+      >
+        <h2 className="text-lg font-semibold mb-4">Pot {potNumber}</h2>
+        <div className="team-pair">
+          {/* Render selected teams for this pot */}
+          {selectTeamPots[potNumber] &&
+            selectTeamPots[potNumber].map((team, index) => (
+              <div className="flex items-cente mb-1.5">
+                <img
+                  alt="Team A logo"
+                  className="overflow-hidden border object-cover w-6 h-6 mr-2"
+                  height="30"
+                  src={path + team.team.image}
+                  style={{
+                    aspectRatio: "30/30",
+                    objectFit: "cover",
+                  }}
+                  width="30"
+                />
+                <p key={index}>{team.team.name}</p>
+              </div>
+            ))}
         </div>
-         )}
-    </motion.div>
-)}
-
-
-
-
-
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-
-                    {currentStep === 4 && (
-                        <motion.div
-                            initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
-                            animate={{x: 0, opacity: 1}}
-                            transition={{duration: 0.3, ease: 'easeInOut'}}
-                        >
-                            <section id="pricing" className="relative z-10 py-16 md:py-20 lg:py-28">
-                                <div className="container">
-                                    <SectionTitle
-                                        title="Simple and Affordable Pricing"
-                                        paragraph="There are many variations of passages of Lorem Ipsum available but the majority have suffered alteration in some form."
-                                        center
-                                        width="665px"
-                                    />
-
-                                    <div className="w-full">
-                                        <div
-                                            className="wow fadeInUp mb-8 flex justify-center md:mb-12 lg:mb-16"
-                                            data-wow-delay=".1s"
-                                        >
-            <span
-                onClick={() => setIsMonthly(true)}
-                className={`${
-                    isMonthly
-                        ? "pointer-events-none text-primary"
-                        : "text-dark dark:text-white"
-                } mr-4 cursor-pointer text-base font-semibold`}
-            >
-              Monthly
-            </span>
-                                            <div
-                                                onClick={() => setIsMonthly(!isMonthly)}
-                                                className="flex cursor-pointer items-center"
-                                            >
-                                                <div className="relative">
-                                                    <div
-                                                        className="h-5 w-14 rounded-full bg-[#1D2144] shadow-inner"></div>
-                                                    <div
-                                                        className={`${
-                                                            isMonthly ? "" : "translate-x-full"
-                                                        } shadow-switch-1 absolute left-0 top-[-4px] flex h-7 w-7 items-center justify-center rounded-full bg-primary transition`}
-                                                    >
-                                                                        <span
-                                                                            className="active h-4 w-4 rounded-full bg-white"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <span
-                                                onClick={() => setIsMonthly(false)}
-                                                className={`${
-                                                    isMonthly
-                                                        ? "text-dark dark:text-white"
-                                                        : "pointer-events-none text-primary"
-                                                } ml-4 cursor-pointer text-base font-semibold`}
-                                            >
-              Yearly
-            </span>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
-                                        <PricingBox
-                                            packageName="Free"
-                                            price="0"
-                                            duration={isMonthly ? "mo" : "yr"}
-                                            subtitle="Enjoy essential features with our free plan."
-                                            type="free"
-                                            isSubmitting={isSubmitting}
-                                            formRef={formRef}
-                                        >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Limited Team Management" status="active" />
-                                            <OfferList text="Basic Match Scheduling" status="active" />
-                                            <OfferList text="Access to Basic Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="inactive" />
-                                            <OfferList text="Historical Data" status="inactive" />
-                                            <OfferList text="Match Replays" status="inactive" />
-                                        </PricingBox>
-
-                                        <PricingBox
-                                            packageName="Basic"
-                                            price={isMonthly ? "99" : "999"}
-                                            duration={isMonthly ? "mo" : "yr"}
-                                            subtitle="Unlock more features with our Basic plan."
-                                            type="basic"
-                                            isSubmitting={isSubmitting}
-                                            formRef={formRef}
-                                        >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Full Team Management" status="active" />
-                                            <OfferList text="Full Match Scheduling" status="active" />
-                                            <OfferList text="Full Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="active" />
-                                            <OfferList text="Historical Data" status="inactive" />
-                                            <OfferList text="Match Replays" status="inactive" />
-                                        </PricingBox>
-
-                                        <PricingBox
-                                            packageName="Plus"
-                                            price={isMonthly ? "199" : "2199"}
-                                            duration={isMonthly ? "mo" : "yr"}
-                                            subtitle="Experience the ultimate with our Plus plan."
-                                            type="plus"
-                                            isSubmitting={isSubmitting}
-                                            formRef={formRef}
-                                        >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Full Team Management" status="active" />
-                                            <OfferList text="Full Match Scheduling" status="active" />
-                                            <OfferList text="Full Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="active" />
-                                            <OfferList text="Historical Data And Match Replays" status="active" />
-                                            <OfferList text="Dedicated Support Line " status="active" />
-                                        </PricingBox>
-                                    </div>
-                                </div>
-
-                                <div className="absolute left-0 bottom-0 z-[-1]">
-                                    <svg
-                                        width="239"
-                                        height="601"
-                                        viewBox="0 0 239 601"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <rect
-                                            opacity="0.3"
-                                            x="-184.451"
-                                            y="600.973"
-                                            width="196"
-                                            height="541.607"
-                                            rx="2"
-                                            transform="rotate(-128.7 -184.451 600.973)"
-                                            fill="url(#paint0_linear_93:235)"
-                                        />
-                                        <rect
-                                            opacity="0.3"
-                                            x="-188.201"
-                                            y="385.272"
-                                            width="59.7544"
-                                            height="541.607"
-                                            rx="2"
-                                            transform="rotate(-128.7 -188.201 385.272)"
-                                            fill="url(#paint1_linear_93:235)"
-                                        />
-                                        <defs>
-                                            <linearGradient
-                                                id="paint0_linear_93:235"
-                                                x1="-90.1184"
-                                                y1="420.414"
-                                                x2="-90.1184"
-                                                y2="1131.65"
-                                                gradientUnits="userSpaceOnUse"
-                                            >
-                                                <stop stopColor="#4A6CF7"/>
-                                                <stop offset="1" stopColor="#4A6CF7" stopOpacity="0"/>
-                                            </linearGradient>
-                                            <linearGradient
-                                                id="paint1_linear_93:235"
-                                                x1="-159.441"
-                                                y1="204.714"
-                                                x2="-159.441"
-                                                y2="915.952"
-                                                gradientUnits="userSpaceOnUse"
-                                            >
-                                                <stop stopColor="#4A6CF7"/>
-                                                <stop offset="1" stopColor="#4A6CF7" stopOpacity="0"/>
-                                            </linearGradient>
-                                        </defs>
-                                    </svg>
-                                </div>
-                            </section>
-
-                        </motion.div>
+      </div>
+    );
+  };
+  return (
+    <>
+      <section
+        id="contact"
+        className="overflow-hidden mt-4 py-16 md:py-20 lg:py-28"
+      >
+        <form onSubmit={add} noValidate>
+          <div className="container">
+            <nav aria-label="Progress" className="mb-10">
+              <ol
+                role="list"
+                className="space-y-4 md:flex md:space-x-8 md:space-y-0"
+              >
+                {steps.map((step, index) => (
+                  <li key={step.name} className="md:flex-1">
+                    {currentStep > index ? (
+                      <div className="group flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4">
+                        <span className="text-sm font-medium text-sky-600 transition-colors ">
+                          {step.id}
+                        </span>
+                        <span className="text-sm font-medium">{step.name}</span>
+                      </div>
+                    ) : currentStep === index ? (
+                      <div
+                        className="flex w-full flex-col border-l-4 border-sky-600 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4"
+                        aria-current="step"
+                      >
+                        <span className="text-sm font-medium text-sky-600">
+                          {step.id}
+                        </span>
+                        <span className="text-sm font-medium">{step.name}</span>
+                      </div>
+                    ) : (
+                      <div className="group flex w-full flex-col border-l-4 border-gray-200 py-2 pl-4 transition-colors md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4">
+                        <span className="text-sm font-medium text-gray-500 transition-colors">
+                          {step.id}
+                        </span>
+                        <span className="text-sm font-medium">{step.name}</span>
+                      </div>
                     )}
-                    <div className='flex justify-around'>
-                        <button
-                            type='button'
-                            onClick={prev}
-                            disabled={currentStep === 0}
-                            className='rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50'
-                        >
-                            <svg
-                                xmlns='http://www.w3.org/2000/svg'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                strokeWidth='1.5'
-                                stroke='currentColor'
-                                className='h-6 w-6'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    d='M15.75 19.5L8.25 12l7.5-7.5'
-                                />
-                            </svg>
-                        </button>
-                        <button
-                            type='button'
-                            onClick={next}
-                            disabled={currentStep === steps.length - 1}
-                            className='rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50'
-                        >
-                            <svg
-                                xmlns='http://www.w3.org/2000/svg'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                strokeWidth='1.5'
-                                stroke='currentColor'
-                                className='h-6 w-6'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    d='M8.25 4.5l7.5 7.5-7.5 7.5'
-                                />
-                            </svg>
-                        </button>
-                    </div>
-                    {errors.root && (
-                        <div className="flex mb-4">
-                            {errors.root.message}
-                        </div>
-                    )}
-                </form>
-            </section>
+                  </li>
+                ))}
+              </ol>
+            </nav>
 
-            <div className="absolute top-0 left-0 z-[-1]">
-                <svg
-                    width="370"
-                    height="596"
-                    viewBox="0 0 370 596"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <mask
-                        id="mask0_88:141"
-                        style={{maskType: "alpha"}}
-                        maskUnits="userSpaceOnUse"
-                        x="0"
-                        y="0"
-                        width="370"
-                        height="596"
+            {/* Render form fields based on the current step */}
+            {currentStep !== 3 && (
+              <div className="-mx-4 flex justify-center flex-wrap">
+                <div className="w-full px-4 lg:w-7/12 xl:w-8/12">
+                  <div
+                    className="wow fadeInUp mb-12 rounded-md bg-primary/[3%] py-11 px-8 dark:bg-dark sm:p-[55px] lg:mb-5 lg:px-8 xl:p-[55px]"
+                    data-wow-delay=".15s"
+                  >
+                    <h2 className="mb-3 text-2xl font-bold text-black dark:text-white sm:text-3xl lg:text-2xl xl:text-3xl">
+                      Create Your Tournament
+                    </h2>
+                    <p
+                      className="mb-12 text-base font-medium text-body-color"
+                      id="formP"
                     >
-                        <rect width="370" height="596" rx="2" fill="#1D2144"/>
-                    </mask>
-                    <g mask="url(#mask0_88:141)">
-                        <path
-                            opacity="0.15"
-                            d="M15.4076 50.9571L54.1541 99.0711L71.4489 35.1605L15.4076 50.9571Z"
-                            fill="url(#paint0_linear_88:141)"
-                        />
-                        <path
-                            opacity="0.15"
-                            d="M20.7137 501.422L44.6431 474.241L6 470.624L20.7137 501.422Z"
-                            fill="url(#paint1_linear_88:141)"
-                        />
-                        <path
-                            opacity="0.1"
-                            d="M331.676 198.309C344.398 204.636 359.168 194.704 358.107 180.536C357.12 167.363 342.941 159.531 331.265 165.71C318.077 172.69 318.317 191.664 331.676 198.309Z"
-                            fill="url(#paint2_linear_88:141)"
-                        />
-                        <g opacity="0.3">
-                            <path
-                                d="M209 89.9999C216 77.3332 235.7 50.7999 258.5 45.9999C287 39.9999 303 41.9999 314 30.4999C325 18.9999 334 -3.50014 357 -3.50014C380 -3.50014 395 4.99986 408.5 -8.50014C422 -22.0001 418.5 -46.0001 452 -37.5001C478.8 -30.7001 515.167 -45 530 -53"
-                                stroke="url(#paint3_linear_88:141)"
-                            />
-                            <path
-                                d="M251 64.9999C258 52.3332 277.7 25.7999 300.5 20.9999C329 14.9999 345 16.9999 356 5.49986C367 -6.00014 376 -28.5001 399 -28.5001C422 -28.5001 437 -20.0001 450.5 -33.5001C464 -47.0001 460.5 -71.0001 494 -62.5001C520.8 -55.7001 557.167 -70 572 -78"
-                                stroke="url(#paint4_linear_88:141)"
-                            />
-                            <path
-                                d="M212 73.9999C219 61.3332 238.7 34.7999 261.5 29.9999C290 23.9999 306 25.9999 317 14.4999C328 2.99986 337 -19.5001 360 -19.5001C383 -19.5001 398 -11.0001 411.5 -24.5001C425 -38.0001 421.5 -62.0001 455 -53.5001C481.8 -46.7001 518.167 -61 533 -69"
-                                stroke="url(#paint5_linear_88:141)"
-                            />
-                            <path
-                                d="M249 40.9999C256 28.3332 275.7 1.79986 298.5 -3.00014C327 -9.00014 343 -7.00014 354 -18.5001C365 -30.0001 374 -52.5001 397 -52.5001C420 -52.5001 435 -44.0001 448.5 -57.5001C462 -71.0001 458.5 -95.0001 492 -86.5001C518.8 -79.7001 555.167 -94 570 -102"
-                                stroke="url(#paint6_linear_88:141)"
-                            />
-                        </g>
-                    </g>
-                    <defs>
-                        <linearGradient
-                            id="paint0_linear_88:141"
-                            x1="13.4497"
-                            y1="63.5059"
-                            x2="81.144"
-                            y2="41.5072"
-                            gradientUnits="userSpaceOnUse"
+                      {currentStep === 0 &&
+                        "Start your journey with us by registering your tournament information."}
+                      {currentStep === 1 &&
+                        "Enter your tournament's description details here."}
+                      {currentStep === 2 && "Add your fields here."}
+                      {currentStep === 3 && "Add your hotels here."}
+                    </p>
+                    {currentStep === 0 && (
+                      <form
+                        role="form"
+                        encType="multipart/form-data"
+                        noValidate
+                      >
+                        <div
+                          className={`flex w-full  ${
+                            errors.name
+                              ? "border border-red-500"
+                              : "border-body-color border-opacity-10"
+                          } ${errors.name ? "" : "mb-4"}`}
                         >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint1_linear_88:141"
-                            x1="28.1579"
-                            y1="501.301"
-                            x2="8.69936"
-                            y2="464.391"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint2_linear_88:141"
-                            x1="338"
-                            y1="167"
-                            x2="349.488"
-                            y2="200.004"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint3_linear_88:141"
-                            x1="369.5"
-                            y1="-53"
-                            x2="369.5"
-                            y2="89.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint4_linear_88:141"
-                            x1="411.5"
-                            y1="-78"
-                            x2="411.5"
-                            y2="64.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint5_linear_88:141"
-                            x1="372.5"
-                            y1="-69"
-                            x2="372.5"
-                            y2="73.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint6_linear_88:141"
-                            x1="409.5"
-                            y1="-102"
-                            x2="409.5"
-                            y2="40.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
+                          <input
+                            type="text"
+                            name="name"
+                            placeholder="Tournament Name"
+                            onChange={(e) => handlechange(e)}
+                            defaultValue={Tournament.name}
+                            className="py-3 px-6 w-full rounded-md text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                          />
+                        </div>
+                        {errors.name && (
+                          <span className="text-xs text-red-500 mt-1">
+                            {errors.name}
+                          </span>
+                        )}
+                        <div className="flex w-full mb-4">
+                          <div className="flex flex-col mr-4 w-full">
+                            <select
+                              onChange={(e) => handleCountryChange(e)}
+                              name="location"
+                              defaultValue={Tournament.country}
+                              className={`w-full rounded-md border ${
+                                errors.country
+                                  ? "border-red-500"
+                                  : "border-body-color border-opacity-10"
+                              } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                            >
+                              <option disabled selected>
+                                Select Country
+                              </option>
+                              {Countries.map((country, index) => (
+                                <option key={index} value={country.iso2}>
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.country && (
+                              <span className="text-xs text-red-500 mt-1">
+                                {errors.country}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col mr-4 w-full">
+                            <select
+                              onChange={(e) => handleStateChange(e)}
+                              name="state"
+                              defaultValue={Tournament.state}
+                              className={`w-full rounded-md border ${
+                                errors.state
+                                  ? "border-red-500"
+                                  : "border-body-color border-opacity-10"
+                              } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                            >
+                              <option disabled selected>
+                                Select State
+                              </option>
+                              {States.map((country, index) => (
+                                <option key={index} value={country.iso2}>
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.state && (
+                              <span className="text-xs text-red-500 mt-1">
+                                {errors.state}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col w-full">
+                            <select
+                              onChange={(e) => handleCitiesChange(e)}
+                              name="citie"
+                              defaultValue={Tournament.city}
+                              className={`w-full rounded-md border ${
+                                errors.city
+                                  ? "border-red-500"
+                                  : "border-body-color border-opacity-10"
+                              } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                            >
+                              <option disabled selected>
+                                Select City
+                              </option>
+                              {Cities.map((country, index) => (
+                                <option key={index} value={country.iso2}>
+                                  {country.name}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.city && (
+                              <span className="text-xs text-red-500 mt-1">
+                                {errors.city}
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-                    </defs>
+                        <textarea
+                          name="description"
+                          defaultValue={Tournament.description}
+                          placeholder="Tournament Description"
+                          onChange={(e) => handlechange(e)}
+                          className={` w-full flex-grow rounded-md border ${
+                            errors.description
+                              ? "border-red-500"
+                              : "border-body-color border-opacity-10"
+                          } ${
+                            errors.description ? "" : "mb-4"
+                          } py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50`}
+                        />
+                        {errors.description && (
+                          <span className="text-xs text-red-500 mt-1">
+                            {errors.description}
+                          </span>
+                        )}
+                        <div className="rounded-full bg-[#EBEBE5] p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
+                          <input
+                            onChange={(e) => handleImageChange(e)}
+                            type="file"
+                            name="image"
+                            accept="image/*"
+                            id="image"
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor={"image"}
+                            className="flex items-baseline justify-center"
+                          >
+                            <Picture className="text-black-2"></Picture>
+                          </label>
+                        </div>
+                        {errors.image && (
+                          <span className="text-xs text-red-500 mt-1">
+                            {errors.image}
+                          </span>
+                        )}
+                      </form>
+                    )}
+
+                    {currentStep === 1 && (
+                      <form role="form" encType="multipart/form-data">
+                        {/* Step 2 fields */}
+                        <div className="flex mb-4">
+                          <input
+                            type="date"
+                            name="startDate"
+                            defaultValue={Tournament.startDate || ""}
+                            onChange={(e) =>
+                              handleStartDateChange(new Date(e.target.value))
+                            }
+                            className="mr-2 w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                          />
+                          {errors.startDate && (
+                            <span className="text-red-500">
+                              {errors.startDate}
+                            </span>
+                          )}
+                          <input
+                            type="date"
+                            name="endDate"
+                            defaultValue={Tournament.endDate}
+                            onChange={(e) =>
+                              handleEndDateChange(new Date(e.target.value))
+                            }
+                            className="w-1/2 rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50 mb-4" // Added mb-4 for margin-bottom
+                          />
+                          {errors.endDate && (
+                            <span className="text-red-500">
+                              {errors.endDate}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mb-4 w-full flex flex-wrap items-center">
+                          <div className="mr-2">
+                            <label
+                              htmlFor="tournamentType"
+                              className="text-base font-medium text-body-color"
+                            >
+                              Tournament Type
+                            </label>
+                            <select
+                              id="tournamentType"
+                              name="tournamentType"
+                              onChange={(e) => handlechange(e)}
+                              defaultValue={Tournament.tournamentType}
+                              className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                            >
+                              <option value="" disabled>
+                                Select Tournament Type
+                              </option>
+                              {tournamentTypeOptions.map((type) => (
+                                <option key={type} value={type}>
+                                  {type}
+                                </option>
+                              ))}
+                            </select>
+                            {errors.tournamentType && (
+                              <span className="text-red-500">
+                                {errors.tournamentType}
+                              </span>
+                            )}
+                          </div>
+
+                          {showComboboxKnokout && (
+                            <div className="mr-2">
+                              {/* Render combobox specific to knockout tournament */}
+                              <label
+                                htmlFor="teamCount"
+                                className="text-base font-medium text-body-color"
+                              >
+                                Number of Teams
+                              </label>
+                              <select
+                                id="teamCount"
+                                name="nbTeamPartipate"
+                                defaultValue={Tournament.nbTeamPartipate}
+                                onChange={(e) => handlechange(e)}
+                                className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                              >
+                                {[...Array(7).keys()].map(
+                                  (index) =>
+                                    index >= 2 && ( // Exclude 0 and 1 from the options
+                                      <option
+                                        key={index}
+                                        value={Math.pow(2, index)}
+                                      >
+                                        {Math.pow(2, index)}
+                                      </option>
+                                    )
+                                )}
+                              </select>
+                            </div>
+                          )}
+
+                          {showLeague && (
+                            <div className="mr-2">
+                              {/* Render number input specific to league tournament */}
+                              <label
+                                htmlFor="teamCount"
+                                className="text-base font-medium text-body-color"
+                              >
+                                Number of Teams
+                              </label>
+                              <div className="flex items-center">
+                                <input
+                                  type="number"
+                                  id="teamCount"
+                                  name="nbTeamPartipate"
+                                  min={"4"}
+                                  step={"2"}
+                                  defaultValue={Tournament.nbTeamPartipate}
+                                  onChange={(e) => handlechange(e)}
+                                  onKeyDown={(e) => e.preventDefault()}
+                                  placeholder="Enter number of teams"
+                                  className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
+                                />
+                              </div>
+                              {errors.nbTeamPartipate && (
+                                <span className="text-red-500">
+                                  {errors.nbTeamPartipate}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {!showPots && (
+                          <div>
+                            <label
+                              htmlFor="teams"
+                              className="text-lg font-semibold mb-2"
+                            >
+                              Select Teams:
+                            </label>
+                            <Select
+                              isMulti
+                              closeMenuOnSelect={false}
+                              components={animatedComponents}
+                              name="teams" // Change name to "teams"
+                              onChange={handleTeamChange}
+                              defaultValue={selectedTeams}
+                              options={Teams.map((team) => ({
+                                value: team._id,
+                                label: team.name,
+                              }))}
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                            />
+                          </div>
+                        )}
+                        {errors.teams && (
+                          <span className="text-red-500">{errors.teams}</span>
+                        )}
+
+                        <DndProvider backend={HTML5Backend}>
+                          {showPots && (
+                            <>
+                              <div className="grid grid-cols-4 gap-8 mt-2 mb-5">
+                                {/* Pot 1 */}
+                                <Pot potNumber={1} />
+
+                                {/* Pot 2 */}
+                                <Pot potNumber={2} />
+
+                                {/* Pot 3 */}
+                                <Pot potNumber={3} />
+
+                                {/* Pot 4 */}
+                                <Pot potNumber={4} />
+                              </div>
+
+                              <TeamList teams={Teams} />
+                            </>
+                          )}
+                        </DndProvider>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <p>hello2</p>
+              /* Step 3 fields and UI */
+              /* Include form fields and validation logic */
+            )}
+
+            {currentStep === 3 && (
+              <>
+                {
+                  <div>
+                    <div>
+                      <h1 className="text-center pb-8 ">Hotel List</h1>
+                    </div>
+                    <div className="flex  gap-4 ml-10 ">
+                      <div className="">
+                        <label>
+                          Radius (in km):
+                          <input
+                            type="number"
+                            name="radius"
+                            value={radius}
+                            onChange={handleInputChange}
+                            placeholder="Enter Radius"
+                          />
+                        </label>
+                      </div>
+                      <div className="pb-5 ">
+                        <button
+                          onClick={handleRadiusChange}
+                          type="button"
+                          className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                        >
+                          Change Radius
+                        </button>
+                      </div>
+                    </div>
+
+                    {loading && <p>Loading...</p>}
+                    {error && <p style={{ color: "red" }}>{error}</p>}
+
+                    <div
+                      className={`flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 ${
+                        showErrorNotification ? "block" : "hidden"
+                      }`}
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 me-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                      </svg>
+                      <span className="sr-only">Info</span>
+                      <div>
+                        <span className="font-medium">
+                          Hotel already exists!
+                        </span>{" "}
+                        Change a few things up and try submitting again.
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400 ${
+                        showSuccessNotification ? "block" : "hidden"
+                      }`}
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 me-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16ZM3 10a7 7 0 1 0 14 0ZM10 12a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1Z" />
+                      </svg>
+                      <span className="sr-only">Success</span>
+                      <div>
+                        <span className="font-medium">Success alert!</span>{" "}
+                        Hotel successfully added.
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4  mx-10">
+                      {currentHotels.map((hotel, index) => (
+                        <div key={index} className="border p-4 rounded-md ">
+                          <label>
+                            <input
+                              className=" mx-2"
+                              type="checkbox"
+                              checked={selectedHotels.includes(hotel.hotelId)}
+                              onChange={() =>
+                                toggleHotelSelection(hotel.hotelId)
+                              }
+                            />
+                            {hotel.name}
+                          </label>
+                          <h3>chainCode:{hotel.chainCode}</h3>
+                          <p> Id: {hotel.hotelId}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-center mt-4">
+                      {Array.from({
+                        length: Math.ceil(hotelData.length / hotelsPerPage),
+                      }).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePageChange(index + 1)}
+                          className={`mx-2 px-3 py-2 border ${
+                            currentPage === index + 1
+                              ? "bg-blue-500 text-white"
+                              : "bg-white text-blue-500"
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                }
+              </>
+              /* Include form fields and validation logic */
+            )}
+
+            {/* Navigation buttons */}
+            <div className="flex justify-around">
+              <button
+                type="button"
+                onClick={prev}
+                disabled={currentStep === 0}
+                className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="h-6 w-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 19.5L8.25 12l7.5-7.5"
+                  />
                 </svg>
+              </button>
+
+              {currentStep !== steps.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={next}
+                  disabled={currentStep === steps.length - 1}
+                  className="rounded bg-white px-2 py-1 text-sm font-semibold text-sky-900 shadow-sm ring-1 ring-inset ring-sky-300 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="h-6 w-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <div className="flex justify-center">
+                  {/* Center the submit button */}
+                  <button
+                    type="submit"
+                    className="flex justify-center duration-80 mb-4 w-50 cursor-pointer rounded-md border border-transparent bg-primary py-3 px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
+                  >
+                    Submit
+                  </button>
+                </div>
+              )}
             </div>
-        </>
-    )
-
-
+          </div>
+        </form>
+      </section>
+    </>
+  );
 }
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+export default AddTournament;
