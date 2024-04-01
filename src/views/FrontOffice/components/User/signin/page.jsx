@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import { signin }  from "../../../../../Services/apiUser"; // Import the signin function
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { signin,getUserByEmail } from "../../../../../Services/apiUser"; // Import the signin function
+import { Link, useNavigate } from "react-router-dom";
+import * as Yup from 'yup';
 import Swal from 'sweetalert2';
+import { GoogleLogin } from '@react-oauth/google';
+import { googleAuth }  from "../../../../../Services/apiUser";
 
+const SigninSchema = Yup.object().shape({
+  email: Yup.string().email('Invalid email address').required('Email is required'),
+  password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
+});
 
 
   
@@ -11,12 +18,23 @@ function SigninPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState("");
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'email') setEmail(value);
+    if (name === 'password') setPassword(value);
+    // Supprime l'erreur spécifique pour le champ qui vient d'être modifié
+    const newErrors = { ...errors };
+    delete newErrors[name];
+    setErrors(newErrors);
+  };
 
-  const handleSignin = async (e) => {
+  /*const handleSignin = async (e) => {
     e.preventDefault();
     try {
+      await schema.validate(User, { abortEarly: false });
+      setErrors({}); // Réinitialiser les erreurs
       const userData = { email, password };
       const response = await signin(userData);
 
@@ -80,8 +98,97 @@ function SigninPage() {
 
       // Logger l'erreur pour le débogage
       console.error("Sign-in error:", errorMessage);
-    }
+    }*/
+
+    const handleSignin = async (e) => {
+      e.preventDefault();
+      const userData = { email, password };
   
+      try {
+        // Valide les champs du formulaire en utilisant le schéma Yup
+        await SigninSchema.validate(userData, { abortEarly: false });
+        setErrors({}); // Réinitialiser les erreurs si la validation est réussie
+  
+        // Vérifie si l'utilisateur existe avant de tenter la connexion
+        const userExists = await getUserByEmail(email);
+        if (!userExists) {
+          // Ici, plutôt que de lancer une erreur, on pourrait directement définir le message d'erreur
+          setErrors({ email: "Email does not exist" });
+          return; // Stoppe l'exécution de la fonction ici
+        }
+  
+        // Tentative de connexion
+        const response = await signin(userData);
+        if (response.token) {
+          localStorage.setItem("token", response.token);
+          if (response.user.role === "A") {
+            navigate("/backoffice", { replace: true });
+            window.location.reload();
+          } else {
+            navigate("/");
+            
+          }
+        } else {
+          throw new Error("Token not found");
+        }
+      } catch (error) {
+        // Handle Yup validation errors
+        if (error instanceof Yup.ValidationError) {
+          const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
+          setErrors(newErrors);
+        } else if (error && error.error) {
+          // Handle API errors based on the error message from backend
+          Swal.fire({
+            icon: 'error',
+            title: 'Sorry',
+            text: error.error,
+          });
+        } else {
+          // Handle other kinds of errors (network error, etc.)
+          Swal.fire({
+            icon: 'error',
+            title: 'Sorry',
+            text: 'An unexpected error occurred.',
+          });
+        }
+        console.error("Sign-in error:", error.message || error);
+      }
+    };
+
+
+    const handleGoogleSignIn = async (response) => {
+      try {
+        console.log('Réponse complète de Google :', response);
+        const { credential } = response;
+        if (!credential) {
+          console.error('Token non trouvé dans la réponse de Google.');
+          return;
+        }
+        console.log('Token reçu de Google :', credential);
+    
+        // Extrait le token de la propriété "credential"
+        const token = credential; 
+        console.log(token)// Assurez-vous que la propriété contient bien le token
+    
+        // Appel de la fonction googleAuth avec le token
+        const authResponse = await googleAuth(token);
+    
+        if (authResponse && authResponse.user.role === "C") {
+          console.log("Redirection vers /profile");
+          navigate('/profile');
+        }
+        // Enregistrement du token dans le local storage
+       // localStorage.setItem('token', authResponse.token);
+    
+        console.log('Authentification Google réussie, réponse du backend :', authResponse);
+        
+        // Effectuez des actions supplémentaires, comme la redirection ou la mise à jour de l'état du composant
+      } catch (error) {
+        console.error('Échec de l\'authentification Google :', error);
+        console.error('Détails de l\'erreur retournée par googleAuth :', error.response?.data);
+      }
+    };
+    
 
 
   return (
@@ -97,42 +204,46 @@ function SigninPage() {
                 <p className="mb-11 text-center text-base font-medium text-body-color">
                   Login to your account for a faster checkout.
                 </p>
-                <button className="mb-6 flex w-full items-center justify-center rounded-md bg-white p-3 text-base font-medium text-body-color shadow-one hover:text-primary dark:bg-[#242B51] dark:text-body-color dark:shadow-signUp dark:hover:text-white">
-                  <span className="mr-3">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_95:967)">
-                        <path
-                          d="M20.0001 10.2216C20.0122 9.53416 19.9397 8.84776 19.7844 8.17725H10.2042V11.8883H15.8277C15.7211 12.539 15.4814 13.1618 15.1229 13.7194C14.7644 14.2769 14.2946 14.7577 13.7416 15.1327L13.722 15.257L16.7512 17.5567L16.961 17.5772C18.8883 15.8328 19.9997 13.266 19.9997 10.2216"
-                          fill="#4285F4"
-                        />
-                        <path
-                          d="M10.2042 20.0001C12.9592 20.0001 15.2721 19.1111 16.9616 17.5778L13.7416 15.1332C12.88 15.7223 11.7235 16.1334 10.2042 16.1334C8.91385 16.126 7.65863 15.7206 6.61663 14.9747C5.57464 14.2287 4.79879 13.1802 4.39915 11.9778L4.27957 11.9878L1.12973 14.3766L1.08856 14.4888C1.93689 16.1457 3.23879 17.5387 4.84869 18.512C6.45859 19.4852 8.31301 20.0005 10.2046 20.0001"
-                          fill="#34A853"
-                        />
-                        <path
-                          d="M4.39911 11.9777C4.17592 11.3411 4.06075 10.673 4.05819 9.99996C4.0623 9.32799 4.17322 8.66075 4.38696 8.02225L4.38127 7.88968L1.19282 5.4624L1.08852 5.51101C0.372885 6.90343 0.00012207 8.4408 0.00012207 9.99987C0.00012207 11.5589 0.372885 13.0963 1.08852 14.4887L4.39911 11.9777Z"
-                          fill="#FBBC05"
-                        />
-                        <path
-                          d="M10.2042 3.86663C11.6663 3.84438 13.0804 4.37803 14.1498 5.35558L17.0296 2.59996C15.1826 0.901848 12.7366 -0.0298855 10.2042 -3.6784e-05C8.3126 -0.000477834 6.45819 0.514732 4.8483 1.48798C3.2384 2.46124 1.93649 3.85416 1.08813 5.51101L4.38775 8.02225C4.79132 6.82005 5.56974 5.77231 6.61327 5.02675C7.6568 4.28118 8.91279 3.87541 10.2042 3.86663Z"
-                          fill="#EB4335"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_95:967">
-                          <rect width="20" height="20" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </span>
-                  Sign in with Google
-                </button>
+                <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <GoogleLogin
+        onSuccess={handleGoogleSignIn}
+        onFailure={() => {
+          console.log('Login Failed');
+        }}
+        buttonText=""
+        render={renderProps => (
+          <button onClick={renderProps.onClick} disabled={renderProps.disabled} style={{
+            backgroundColor: 'white',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '10px',
+            borderRadius: '2px',
+            boxShadow: '0 3px 4px 0 rgba(0,0,0,.25)',
+            border: 'none',
+            cursor: 'pointer',
+            outline: 'none',
+          }}>
+            <div style={{
+              marginRight: '10px',
+              backgroundColor: 'white',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: '2px',
+            }}>
+              <img src="your-google-icon.svg" alt="Google sign-in" style={{ width: '18px', height: '18px' }} />
+            </div>
+            Sign in with Google
+          </button>
+        )}
+      />
+    </div>
+    <br></br>
                 <div className="mb-8 flex items-center justify-center">
                   <span className="hidden h-[1px] w-full max-w-[70px] bg-body-color sm:block"></span>
                   <p className="w-full px-5 text-center text-base font-medium text-body-color">
@@ -155,7 +266,11 @@ function SigninPage() {
                       className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      
                     />
+                     {errors.email && (
+          <p className="text-red-500 text-sm mt-2">{errors.email}</p>
+        )}
                   </div>
                   <div className="mb-8">
                     <label
@@ -172,49 +287,20 @@ function SigninPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
+                     {errors.password&& (
+          <p className="text-red-500 text-sm mt-2">{errors.password}</p>
+        )}
                   </div>
                   <div className="mb-8 flex flex-col justify-between sm:flex-row sm:items-center">
-                    <div className="mb-4 sm:mb-0">
-                      <label
-                        htmlFor="checkboxLabel"
-                        className="flex cursor-pointer select-none items-center text-sm font-medium text-body-color"
-                      >
-                        <div className="relative">
-                          <input
-                            type="checkbox"
-                            id="checkboxLabel"
-                            className="sr-only"
-                          />
-                          <div className="box mr-4 flex h-5 w-5 items-center justify-center rounded border border-body-color border-opacity-20 dark:border-white dark:border-opacity-10">
-                            <span className="opacity-0">
-                              <svg
-                                width="11"
-                                height="8"
-                                viewBox="0 0 11 8"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M10.0915 0.951972L10.0867 0.946075L10.0813 0.940568C9.90076 0.753564 9.61034 0.753146 9.42927 0.939309L4.16201 6.22962L1.58507 3.63469C1.40401 3.44841 1.11351 3.44879 0.932892 3.63584C0.755703 3.81933 0.755703 4.10875 0.932892 4.29224L0.932878 4.29225L0.934851 4.29424L3.58046 6.95832C3.73676 7.11955 3.94983 7.2 4.1473 7.2C4.36196 7.2 4.55963 7.11773 4.71406 6.9584L10.0468 1.60234C10.2436 1.4199 10.2421 1.1339 10.0915 0.951972ZM4.2327 6.30081L4.2317 6.2998C4.23206 6.30015 4.23237 6.30049 4.23269 6.30082L4.2327 6.30081Z"
-                                  fill="#3056D3"
-                                  stroke="#3056D3"
-                                  strokeWidth="0.4"
-                                />
-                              </svg>
-                            </span>
-                          </div>
-                        </div>
-                        Keep me signed in
-                      </label>
-                    </div>
-                    <div>
-                      <a
-                        href="#0"
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        Forgot Password?
-                      </a>
-                    </div>
+                    
+                  <div>
+  <Link
+    to="/forgotPassword"
+    className="text-sm font-medium text-primary hover:underline"
+  >
+    Forgot Password?
+  </Link>
+</div>
                   </div>
                   <div className="mb-6">
                     <button

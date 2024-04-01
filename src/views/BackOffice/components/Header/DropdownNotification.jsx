@@ -1,29 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getWaitList ,getUserWaiting} from '../../../../Services/apiUser';
+import { faEye } from "@fortawesome/free-solid-svg-icons";
 
 const DropdownNotification = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [waitlistUsers, setWaitlistUsers] = useState([]); // Ensure this is an array
   const [notifying, setNotifying] = useState(true);
-
+  const navigate = useNavigate();
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
   useEffect(() => {
     const clickHandler = ({ target }) => {
-      if (!dropdown.current) return;
-      if (
-        !dropdownOpen ||
-        dropdown.current.contains(target) ||
-        trigger.current.contains(target)
-      )
+      if (!dropdown.current || dropdown.current.contains(target) || trigger.current.contains(target)) {
         return;
+      }
       setDropdownOpen(false);
     };
     document.addEventListener('click', clickHandler);
     return () => document.removeEventListener('click', clickHandler);
   });
 
-  // close if the esc key is pressed
   useEffect(() => {
     const keyHandler = ({ keyCode }) => {
       if (!dropdownOpen || keyCode !== 27) return;
@@ -33,6 +31,54 @@ const DropdownNotification = () => {
     return () => document.removeEventListener('keydown', keyHandler);
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getWaitList();
+        // Ensure that you're setting the array, not the object
+        if (response && Array.isArray(response.waitlist)) {
+          setWaitlistUsers(response.waitlist);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des utilisateurs de la liste d\'attente :', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
+
+  // Define the function to fetch the waitlist
+  const fetchWaitlist = useCallback(async () => {
+    try {
+      const response = await getWaitList();
+      if (response && response.waitlist) {
+        setWaitlistUsers(response.waitlist);
+      }
+    } catch (error) {
+      console.error('Error fetching waitlist:', error);
+    }
+  }, []);
+
+  // Polling the waitlist
+  useEffect(() => {
+    fetchWaitlist();
+    const intervalId = setInterval(fetchWaitlist, 1000); // Poll every 5 seconds
+    return () => clearInterval(intervalId); // Clear interval on component unmount
+  }, [fetchWaitlist]);
+
+  // Handle the consult click
+  const handleConsultClick = async (userId) => {
+    try {
+      const data = await getUserWaiting(userId);
+      navigate('/backoffice/users/user-details', { state: { user: data.user } });
+      // After navigating you might want to refresh the list
+      await fetchWaitlist();
+    } catch (error) {
+      console.error("Error retrieving user details:", error);
+    }
+  };
   return (
     <li className="relative">
       <Link
@@ -51,7 +97,7 @@ const DropdownNotification = () => {
         >
           <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
         </span>
-
+  
         <svg
           className="fill-current duration-300 ease-in-out"
           width="18"
@@ -66,7 +112,7 @@ const DropdownNotification = () => {
           />
         </svg>
       </Link>
-
+  
       <div
         ref={dropdown}
         onFocus={() => setDropdownOpen(true)}
@@ -76,77 +122,35 @@ const DropdownNotification = () => {
         }`}
       >
         <div className="px-4.5 py-3">
-          <h5 className="text-sm font-medium text-bodydark2">Notification</h5>
+          <h5 className="text-sm font-medium text-bodydark2">Users pending</h5>
         </div>
 
         <ul className="flex h-auto flex-col overflow-y-auto">
-          <li>
-            <Link
-              className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-              to="#"
-            >
-              <p className="text-sm">
-                <span className="text-black dark:text-white">
-                  Edit your information in a swipe
-                </span>{' '}
-                Sint occaecat cupidatat non proident, sunt in culpa qui officia
-                deserunt mollit anim.
-              </p>
-
-              <p className="text-xs">12 May, 2025</p>
-            </Link>
-          </li>
-          <li>
-            <Link
-              className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-              to="#"
-            >
-              <p className="text-sm">
-                <span className="text-black dark:text-white">
-                  It is a long established fact
-                </span>{' '}
-                that a reader will be distracted by the readable.
-              </p>
-
-              <p className="text-xs">24 Feb, 2025</p>
-            </Link>
-          </li>
-          <li>
-            <Link
-              className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-              to="#"
-            >
-              <p className="text-sm">
-                <span className="text-black dark:text-white">
-                  There are many variations
-                </span>{' '}
-                of passages of Lorem Ipsum available, but the majority have
-                suffered
-              </p>
-
-              <p className="text-xs">04 Jan, 2025</p>
-            </Link>
-          </li>
-          <li>
-            <Link
-              className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
-              to="#"
-            >
-              <p className="text-sm">
-                <span className="text-black dark:text-white">
-                  There are many variations
-                </span>{' '}
-                of passages of Lorem Ipsum available, but the majority have
-                suffered
-              </p>
-
-              <p className="text-xs">01 Dec, 2024</p>
-            </Link>
-          </li>
-        </ul>
+  {waitlistUsers.map((user, index) => (
+    <li key={index}>
+      <Link
+        className="flex flex-col gap-2.5 border-t border-stroke px-4.5 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4"
+        to="#"
+      >
+        <div className="flex justify-between items-center"> {/* Ajout d'une div pour aligner le nom et le bouton */}
+          <p className="text-sm text-black dark:text-white">
+            {user.firstName} {user.lastName}
+          </p>
+          <button
+            onClick={() => handleConsultClick(user._id)}
+            className="text-sm bg-primary hover:bg-primary-dark text-white py-1 px-3 rounded-md"
+          >
+            Consult
+          </button>
+        </div>
+      </Link>
+    </li>
+  ))}
+</ul>
       </div>
     </li>
   );
+  
 };
 
 export default DropdownNotification;
