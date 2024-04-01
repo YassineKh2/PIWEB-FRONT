@@ -1281,8 +1281,4 @@ function formatDateTime(dateTimeString) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-<<<<<<< HEAD
 export default StatsSelectedMatch;
-=======
-export default StatsSelectedMatch;
->>>>>>> main
