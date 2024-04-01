@@ -54,21 +54,39 @@ function AffTicket() {
 
     const handlePayment = async () => {
         try {
-            // Charge the Stripe.js library
-            const stripe = await loadStripe('pk_test_51OuG1RHMTmfPbZ2rJc8v3BKFGgsr01wD723Z1diicQ1qCFZ4NybLceC75F1XuqRaOmwCnkuYrm8KWWOmAUB1M7uM00KaXkEGCZ'); 
+            // Charger Stripe avec votre clé publique
+            const stripe = await loadStripe("pk_test_51OuG1RHMTmfPbZ2rJc8v3BKFGgsr01wD723Z1diicQ1qCFZ4NybLceC75F1XuqRaOmwCnkuYrm8KWWOmAUB1M7uM00KaXkEGCZ");
 
-            // Create a payment session with Stripe
-            const response = await axios.post('/create-checkout-session', {
-                amount: 100,
-      
+            // Envoyer une requête POST à votre backend pour créer une session de paiement
+            const response = await fetch("http://localhost:3000/payment/create-checkout-session", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                },
+                body: JSON.stringify({
+                    amount: '20', // Montant à payer
+                }),
             });
 
-            // Redirect to Stripe checkout page
-            await stripe.redirectToCheckout({ sessionId: response.data.sessionId });
+            // Récupérer la session de paiement retournée par le backend
+            const session = await response.json();
+
+            // Rediriger l'utilisateur vers la page de paiement Stripe avec l'ID de session
+            const result = await stripe.redirectToCheckout({
+                sessionId: session.sessionId,
+            });
+
+            // Gérer les erreurs éventuelles
+            if (result.error) {
+                console.error(result.error.message);
+            } else {
+                console.log("Redirection réussie");
+            }
         } catch (error) {
-            console.error('Error processing payment:', error);
+            console.error('Erreur lors du paiement:', error);
         }
     };
+
 
     // Classnames for buttons
     const modifierButtonClass = classnames(

@@ -1,23 +1,13 @@
 import { Button, Card, CardContent } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import { updateMatchScore } from "../../../../../Services/FrontOffice/apiMatch";
+import {
+  getEmptyMatche,
+  updateMatchScore,
+} from "../../../../../Services/FrontOffice/apiMatch";
 import { io } from "socket.io-client";
 
-function PopupContent({ match, onClose, socket }) {
-  const [Match, setMatch] = useState({
-    _id: match._id,
-    win: match.win,
-    loss: match.loss,
-    matchDate: match.matchDate,
-    scoreTeam1: match.scoreTeam1,
-    scoreTeam2: match.scoreTeam2,
-    fixture: match.fixture,
-    idTeam1: match.idTeam1,
-    idTeam2: match.idTeam2,
-    idTournament: match.idTournament,
-  });
-
+function PopupContent({ match, onClose, socket, Tournament }) {
   const [editedTeam1Score, setEditedTeam1Score] = useState(
     match.scoreTeam1 === "" ? "?" : match.scoreTeam1
   );
@@ -41,11 +31,51 @@ function PopupContent({ match, onClose, socket }) {
       scoreTeam1: editedTeam1Score,
       scoreTeam2: editedTeam2Score,
     };
+
     try {
       // Emit the updateScore event to the server
-      socket.emit("updateScore", updatedMatch);
-      // Continue with your existing code
+      if (
+        Tournament.tournamentType === "Knockout" ||
+        match.knockoutStageAfterGroup === "Draw"
+      ) {
+        if (match.nextMatchId !== null) {
+          const emptyMatch = await getEmptyMatche(
+            match.nextMatchId,
+            match.tournament._id
+          );
+
+          let updatedEmptyMatch = [];
+          if (updatedMatch.scoreTeam1 > updatedMatch.scoreTeam2) {
+            if (!emptyMatch.matchs.hasOwnProperty("idTeam1")) {
+              updatedEmptyMatch = {
+                ...emptyMatch.matchs,
+                idTeam1: updatedMatch.team1._id,
+              };
+            } else {
+              updatedEmptyMatch = {
+                ...emptyMatch.matchs,
+                idTeam2: updatedMatch.team1._id,
+              };
+            }
+          } else if (updatedMatch.scoreTeam1 < updatedMatch.scoreTeam2) {
+            if (!emptyMatch.matchs.hasOwnProperty("idTeam2")) {
+              updatedEmptyMatch = {
+                ...emptyMatch.matchs,
+                idTeam2: updatedMatch.team2._id,
+              };
+            } else {
+              updatedEmptyMatch = {
+                ...emptyMatch.matchs,
+                idTeam1: updatedMatch.team2._id,
+              };
+            }
+          }
+          await updateMatchScore(updatedEmptyMatch);
+        }
+      }
       await updateMatchScore(updatedMatch);
+
+      socket.emit("updateScore", updatedMatch);
       console.log("Update successful");
     } catch (error) {
       console.error("Error updating match:", error);

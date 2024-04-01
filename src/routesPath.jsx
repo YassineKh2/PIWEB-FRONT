@@ -28,6 +28,7 @@ import UpdateProfile from "./views/FrontOffice/components/User/profile/updatePro
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
+import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -84,6 +85,14 @@ function RoutesPath() {
               </>
             }
         />
+          <Route
+                    path="hotels/*"
+                    element={
+                        <>
+                            <RoutingHotels/>
+                        </>
+                    }
+                />
         <Route path="/" element={<Home />} />
 
         <Route element={<RequireAuth allowedRoles={['A']}/>}>
