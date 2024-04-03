@@ -18,7 +18,7 @@ services:
     restart: always
     container_name: react-app
     ports:
-      - "5000:5000" # Expose the React development server port
+      - "5173:5173" # Expose the React development server port
     #depends_on:
      # - db
 #volumes:

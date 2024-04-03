@@ -595,7 +595,7 @@ function AddTournament() {
                 currentDate.setHours(currentDate.getHours() + 3);
               }
             }
-            currentDate.setDate(currentDate.getDate() + 1); 
+            currentDate.setDate(currentDate.getDate() + 1);
 
             // Rotate the array of teams for the next round, keeping the first team fixed
             teamOrder = [teamOrder[0]].concat(teamOrder.slice(2), teamOrder[1]);
@@ -611,7 +611,7 @@ function AddTournament() {
               win: "",
               loss: "",
               nextMatchId: j + idNextMatch,
-              matchDate: new Date(),
+              matchDate: Tournament.startDate,
               scoreTeam1: "",
               scoreTeam2: "",
               fixture: "",
@@ -627,20 +627,25 @@ function AddTournament() {
             RealMatches.push(matchData);
             await addMatch(matchData);
           }
+          let matchDate = new Date(Tournament.startDate);
+          console.log(matchDate)
           for (let i = 0; i < RealMatches.length - 1; i++) {
             if (i % 2 === 0) {
               idNextMatch++;
+              matchDate = randomDate(matchDate, new Date(Tournament.endDate));
             }
 
             if (idNextMatch > RealMatches.length * 2 - 1) {
               idNextMatch = null;
+              matchDate = Tournament.endDate;
             }
+
             const emptyMatch = {
               id: RealMatches.length + i + 1,
               win: "",
               loss: "",
               nextMatchId: idNextMatch,
-              matchDate: new Date(),
+              matchDate: matchDate,
               scoreTeam1: "",
               scoreTeam2: "",
               fixture: "",
@@ -662,7 +667,11 @@ function AddTournament() {
       fileReader.readAsDataURL(image);
     }
   };
-
+  const randomDate = (start, end) => {
+    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+  };
+  
+  
   const TeamItem = ({ team }) => {
     const [{ isDragging }, drag] = useDrag({
       type: "TEAM",
