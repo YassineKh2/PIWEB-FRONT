@@ -257,7 +257,7 @@ export default function TeamProfile() {
                                     onChange={(e) => {
                                         setTeam({...Team, country: e.target.value})
                                     }}
-                                    className="w-full  dark:bg-neutral-700 dark:text-gray-100 rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
+                                    className="w-full  dark:bg-neutral-700 dark:text-gray-100 rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:shadow-signUp">
                                     {Countries.map((country, index) => (
                                         <option key={index} value={country.iso2}>
                                             {country.name}
