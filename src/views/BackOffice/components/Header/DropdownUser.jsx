@@ -143,7 +143,7 @@ const DropdownUser = () => {
           </li>
           <li>
             <Link
-              to="#"
+              to="backoffice/profile/update"
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <svg
@@ -164,7 +164,7 @@ const DropdownUser = () => {
           </li>
           <li>
             <Link
-              to="/pages/settings"
+              to="/backoffice/profile/update"
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <svg
