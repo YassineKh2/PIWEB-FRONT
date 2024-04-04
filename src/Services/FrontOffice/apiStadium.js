@@ -80,5 +80,20 @@ export async function deleteStadium(id) {
     throw error;
   }
 }
-
-export default {addStadium,getAllStadiums,getStadiumDetail,addStadiumsToTournament,checkStadiumAvailability,updateStadium,deleteStadium};
+export async function getStadiumsByTournamentId(tournamentId) {
+  try {
+    const response = await axios.get(`${apiURL}/getStadiumsByTournamentId/${tournamentId}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+export default {addStadium,
+  getAllStadiums,
+  getStadiumDetail,
+  addStadiumsToTournament,
+  checkStadiumAvailability,
+  updateStadium,
+  deleteStadium,
+  getStadiumsByTournamentId};

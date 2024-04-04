@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import DisplayStadiums from "../../Stadiums/DisplayingStadiumsTournaments/DisplayStadiums";
+
 import {
   getAllTournaments,
   getTournamentDetails,
@@ -60,6 +62,8 @@ function DisplayAllTournaments() {
   const [user, setUser] = useState();
   const [tabChange, setTabChange] = useState();
   const [numberOfGroups, setnumberOfGroups] = useState();
+
+  const [tournamentId, setTournamentId] = useState(""); 
   const getTournaments = async () => {
     const res = await getAllTournaments()
       .then((res) => {
@@ -854,8 +858,22 @@ function DisplayAllTournaments() {
       startIndex,
       startIndex + itemsPerPage
     );
+
+    const handleButtonClick = () => {
+      // Assuming you have a way to fetch the tournament ID, set it here
+      const fetchedTournamentId = id;
+      setTournamentId(fetchedTournamentId);
+    };
+  
     return (
       <div>
+        <div>
+      {/* Button to fetch tournament ID and render DisplayStadiums component */}
+      <button onClick={handleButtonClick}>View Stadiums</button>
+      
+      {/* Render DisplayStadiums component only if tournamentId is set */}
+      {tournamentId && <DisplayStadiums tournamentId={tournamentId} />}
+    </div>
         <div className="flex flex-wrap justify-center">
           {displayedMatches.map((match, index) => (
             <Card

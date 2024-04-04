@@ -362,15 +362,32 @@ useEffect(()=>{
 
 const fetchStadiumAvailability = async (stadiumId, startDate, endDate) => {
   try {
-    console.log("Checking stadium availability:", stadiumId, startDate, endDate); // Add this line
+    console.log("Checking stadium availability:", stadiumId, startDate, endDate);
+
+    // Check if today's date falls within the maintenance period of the stadium
+    const today = new Date();
+    if (stadiums && stadiums.maintenancePeriod) {
+      const maintenanceStartDate = new Date(stadiums.maintenancePeriod.startDate);
+      const maintenanceEndDate = new Date(stadiums.maintenancePeriod.endDate);
+
+      if (today >= maintenanceStartDate && today <= maintenanceEndDate) {
+        console.log('Stadium is under maintenance.');
+        return false; // Stadium is under maintenance, so it is considered unavailable
+      }
+    }
+
+    // Check if there are any tournaments within the specified dates using checkStadiumAvailability
     const response = await stadiumService.checkStadiumAvailability(stadiumId, startDate, endDate);
-    console.log("Stadium availability response:", response); // Add this line
+    console.log("Stadium availability response:", response);
     return response.available;
+
   } catch (error) {
     console.error('Error fetching stadium availability:', error);
-    return false; // Assuming false indicates the stadium is not available
+    return false;
   }
 };
+
+
 useEffect(() => {
   const updateStadiumAvailability = async () => {
     const updatedStadiums = await Promise.all(filteredStadiums.map(async (stadium) => {

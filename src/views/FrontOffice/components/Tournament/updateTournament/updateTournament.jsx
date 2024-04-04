@@ -8,7 +8,12 @@ import {
   GetStateByCountry,
 } from "../../../../../Services/APis/CountryAPI";
 import { AiOutlinePicture as Picture } from "react-icons/ai";
+
+
 import stadiumService from "../../../../../Services/FrontOffice/apiStadium";
+import hotelService from "../../../../../Services/APis/HotelAPI.js";
+import HotelService from "../../../../../Services/FrontOffice/apiHotel.js";
+import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
 
 const steps = [
   {
@@ -50,6 +55,30 @@ function UpdateTournament() {
   const [SelectedCities, setSelectedCities] = useState("");
   const [Teams, setTeams] = useState([]);
   const [selectedTeams, setSelectedTeams] = useState([]);
+
+
+  const [stadiums, setStadiums] = useState([]);
+  const [selectedStadiums, setSelectedStadiums] = useState([]);
+  const [existingStadiumIds, setExistingStadiumIds] = useState([]);
+  const [filteredStadiums, setFilteredStadiums] = useState([]);
+
+  //hotel//
+
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [radius, setRadius] = useState();
+  const [hotelData, setHotelData] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hotelsPerPage] = useState(10); // Number of hotels to display per page
+  const [selectedHotels, setSelectedHotels] = useState([]);
+  const [addedHotelsId, setaddedHotelsId] = useState([]);
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [previousCity, setPreviousCity] = useState(state.tournament.city); // Initialize with the initially selected city
+
+
   const [Tournament, setTournament] = useState({
     _id: state.tournament._id,
     name: state.tournament.name,
@@ -63,14 +92,9 @@ function UpdateTournament() {
     country: state.tournament.country,
     state: state.tournament.state,
     city: state.tournament.city,
-    stadiums:state.tournament.stadiums
-
+    stadiums: state.tournament.stadiums || []
   });
 
-  const [stadiums, setStadiums] = useState([]);
-  const [selectedStadiums, setSelectedStadiums] = useState([]);
-  const [existingStadiums, setExistingStadiums] = useState([]);
-  const [filteredStadiums, setFilteredStadiums] = useState([]);
 
 
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
@@ -121,9 +145,14 @@ function UpdateTournament() {
   };
   const handleCitiesChange = (e) => {
     const { name, value } = e.target;
+    
     setSelectedCities(value);
     setTournament({ ...Tournament, city: value });
+  
+    console.log('New City:', value);
+    console.log('Previous City:', previousCity);
   };
+  
   useEffect(() => {
     if (SelectedCountry) {
       setCities([]);
@@ -162,37 +191,38 @@ function UpdateTournament() {
 useEffect(() => {
   const fetchStadiumsAndSetExisting = async () => {
     try {
+      // Fetch all stadiums
       const allStadiumsResponse = await stadiumService.getAllStadiums();
-      const allStadiums = allStadiumsResponse.Stadiums; // Access the array of stadiums
+      const allStadiums = allStadiumsResponse.Stadiums;
       console.log("All stadiums data:", allStadiums);
-      
-      // Extract stadium IDs from state.tournament.stadiums
-      const existingStadiumIds = state.tournament.stadiums.map(stadium => stadium);
+      console.log("tournament._id:", state.tournament._id);
+
+      // Fetch existing stadium IDs based on the tournament ID
+      const existingStadiumIdsResponse = await stadiumService.getStadiumsByTournamentId(state.tournament._id);
+      const existingStadiumIds = existingStadiumIdsResponse.map(stadium => stadium._id);
       console.log("Existing stadium IDs:", existingStadiumIds);
 
       if (Array.isArray(allStadiums)) {
-        // Mark existing stadiums as selected and available
         const updatedStadiums = allStadiums.map(stadium => ({
           ...stadium,
-          selected: existingStadiumIds.includes(stadium._id), // Set selected status based on existing stadium IDs
+          selected: existingStadiumIds.includes(stadium._id),
           available: existingStadiumIds.includes(stadium._id)
         }));
+        console.log("Updated stadiums:", updatedStadiums);
         setStadiums(updatedStadiums);
       } else {
         console.error("Error fetching stadiums: All stadiums data is not an array");
         setStadiums([]);
       }
-      
-      // Set existing stadium IDs
-      setExistingStadiums(existingStadiumIds);
+
+      setExistingStadiumIds(existingStadiumIds);
     } catch (error) {
       console.error("Error fetching stadiums:", error);
     }
   };
 
   fetchStadiumsAndSetExisting();
-}, [state.tournament.stadiums]);
-
+}, [state.tournament._id]);
 
 const handleStadiumSelect = (e, stadiumId) => {
   if (e.target.checked) {
@@ -202,89 +232,266 @@ const handleStadiumSelect = (e, stadiumId) => {
   }
 };
 
+
 useEffect(() => {
   if (Array.isArray(stadiums) && stadiums.length > 0 && state.tournament.city) {
     const filtered = stadiums.filter(stadium => 
       stadium.address && stadium.address.city === state.tournament.city
     );
+    console.log("Filtered stadiums:", filtered);
     setFilteredStadiums(filtered);
   }
 }, [stadiums, state.tournament.city]);
 
 useEffect(() => {
   const updateStadiumAvailability = async () => {
-    const updatedStadiums = await Promise.all(filteredStadiums.map(async (stadium) => {
-      // Check if the stadium is already selected for the tournament
-      const isSelectedForTournament = state.tournament.stadiums.some(tournamentStadium => tournamentStadium._id === stadium._id);
+    try {
+      // Filter stadiums based on the tournament city
+      const filtered = stadiums.filter(stadium => 
+        stadium.address && stadium.address.city === state.tournament.city
+      );
+
+      const updatedStadiums = await Promise.all(filtered.map(async (stadium) => {
+        const isSelectedForTournament = state.tournament.stadiums.some(tournamentStadium => tournamentStadium._id === stadium._id);
+        console.log("Is selected for tournament:", isSelectedForTournament);
+        
+        if (isSelectedForTournament) {
+          return { ...stadium, available: true };
+        } else {
+          const available = await fetchStadiumAvailability(stadium._id, state.tournament.startDate, state.tournament.endDate);
+          console.log(`Stadium ${stadium.name} availability:`, available);
+          return { ...stadium, available: available };
+        }
+        
+      }));
       
-      // If the stadium is selected for the tournament, mark it as available
-      if (isSelectedForTournament) {
-        return { ...stadium, available: true };
-      } else {
-        // Otherwise, fetch the availability from the server
-        const available = await fetchStadiumAvailability(stadium._id, state.tournament.startDate, state.tournament.endDate);
-        return { ...stadium, available };
-      }
-    }));
-    setFilteredStadiums(updatedStadiums);
+      console.log("Updated stadiums with availability:", updatedStadiums);
+      setFilteredStadiums(updatedStadiums);
+    } catch (error) {
+      console.error('Error updating stadium availability:', error);
+    }
   };
 
   updateStadiumAvailability();
-}, [state.tournament.startDate, state.tournament.endDate]);
+}, [stadiums, state.tournament.startDate, state.tournament.endDate, state.tournament.stadiums]);
 
-
-// Function to fetch stadium availability
 const fetchStadiumAvailability = async (stadiumId, startDate, endDate) => {
   try {
+    // Check the availability directly without considering maintenance periods
     const response = await stadiumService.checkStadiumAvailability(stadiumId, startDate, endDate);
-    return response.available;
+    console.log('Response from checkStadiumAvailability:', response);
+
+    if (response && response.available !== undefined) {
+      return response.available;
+    } else {
+      console.error('Invalid response format:', response);
+      return false;
+    }
   } catch (error) {
     console.error('Error fetching stadium availability:', error);
-    return false; // Assuming false indicates the stadium is not available
+    return false;
   }
 };
+
+
+
 
 const isSelected = (stadiumId) => {
   return selectedStadiums.includes(stadiumId);
 };
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////Hotel/////////////////////////////////////////////////////////////
+const hideNotifications = () => {
+  setShowErrorNotification(false);
+  setShowSuccessNotification(false);
+};
 
-  const update = async (e) => {
-    e.preventDefault();
-    const fileReader = new FileReader();
-    fileReader.onloadend = function () {
-      const base64Image = fileReader.result.split(",")[1]; // Extract base64 encoded image data
-      const imageData = {
-        _id: state.tournament._id,
-        name: Tournament.name,
-        description: Tournament.description,
-        location: Tournament.location,
-        startDate: Tournament.startDate,
-        endDate: Tournament.endDate,
-        tournamentType: Tournament.tournamentType,
-        nbTeamPartipate: Tournament.nbTeamPartipate,
-        teams: selectedTeams,
-        country: Tournament.country,
-        state: Tournament.state,
-        city: Tournament.city,
-        stadiums: selectedStadiums,
-      };
 
-      const res = updateTournament(imageData)
-        .then(() => {
-          console.log("update passe");
-          navigate("/tournament/showAll");
-        })
-        .catch((error) => {
-          console.log(error.response.data.message);
-        });
-    };
 
-    if (image) {
-      fileReader.readAsDataURL(image);
+
+const fetchData = async (city) => {
+  setLoading(true);
+
+  try {
+    let targetCity = city || Tournament.city; // Use selected city if provided, otherwise use tournament's city
+
+    const geocodingData = await getGeocodingData(targetCity);
+    const response = await hotelService.getHotelsByGeoCode(
+      geocodingData.latitude,
+      geocodingData.longitude,
+      radius
+    );
+
+    if (response) {
+      setHotelData(response.data);
+      setError(null);
+    } else {
+      setHotelData([]);
+      setError("Invalid response format. Please try again.");
+    }
+  } catch (error) {
+    console.error("API Error:", error);
+    if (error.response) {
+      setError(`API Error: ${error.response.data.message}`);
+    } else if (error.request) {
+      setError("Network Error. Please check your internet connection.");
+    } else {
+      setError("Error fetching hotels. Please try again.");
+    }
+    setHotelData([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  // useEffect hook
+  useEffect(() => {
+    fetchData(SelectedCities);
+  }, [SelectedCities]);
+
+  const toggleHotelSelection = (hotelId) => {
+    //setError(null);
+    //setShowErrorNotification(null);
+    setShowSuccessNotification(null);
+    // Toggle the selection status of the hotel
+    setSelectedHotels((prevSelected) =>
+      prevSelected.includes(hotelId)
+        ? prevSelected.filter((id) => id !== hotelId)
+        : [...prevSelected, hotelId]
+    );
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "radius") {
+      setRadius(value);
     }
   };
+
+  const addHotelsToDatabase = async (hotels, tournamentId) => {
+    try {
+      // Check if the city has changed from the previous one and if the previous city exists
+      if (previousCity !== undefined && previousCity !== Tournament.city) {
+        // Delete previously saved hotels associated with the tournament ID and the previous city
+        await HotelService.deleteHotelsByTournamentAndCity(tournamentId, previousCity);
+      }
+  
+      // Filter selected hotels to add
+      const hotelsToAdd = hotels.filter((hotel) =>
+        selectedHotels.includes(hotel.hotelId)
+      );
+  
+      if (hotelsToAdd.length === 0) {
+        console.log("No hotels selected to add.");
+        return;
+      }
+  
+      // Add selected hotels to the database
+      await Promise.all(
+        hotelsToAdd.map(async (hotel) => {
+          try {
+            hotel.idTournament = tournamentId;
+            const addHotelResponse = await HotelService.addHotel([hotel]);
+            console.log("Hotel added to database:", addHotelResponse);
+          } catch (error) {
+            if (error.response && error.response.status === 400) {
+              console.error(
+                "Hotel already exists:",
+                error.response.data.message
+              );
+            } else {
+              console.error("Error adding hotel to database:", error);
+            }
+          }
+        })
+      );
+  
+      // Update the previous city with the current city
+      setPreviousCity(Tournament.city);
+  
+      setShowSuccessNotification(true);
+      setTimeout(hideNotifications, 2000);
+    } catch (error) {
+      console.error("Error adding selected hotels to database:", error);
+      setShowErrorNotification(true);
+      setTimeout(hideNotifications, 2000);
+    }
+  };
+  const handleCityChange = (e) => {
+    setCity(e.target.value);
+  };
+  const handleRadiusChange = () => {
+    fetchData();
+  };
+
+  // Calculate the index of the last hotel on the current page
+  const indexOfLastHotel = currentPage * hotelsPerPage;
+  // Calculate the index of the first hotel on the current page
+  const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+  // Get the hotels for the current page
+  const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
+
+  
+// Change page
+const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+const update = async (e) => {
+  e.preventDefault();
+  console.log("Update button clicked.");
+
+  const fileReader = new FileReader();
+  fileReader.onloadend = function () {
+    console.log("FileReader onloadend called.");
+    const base64Image = fileReader.result.split(",")[1];
+    console.log("Base64 image:", base64Image);
+
+    const imageData = {
+      _id: state.tournament._id,
+      name: Tournament.name,
+      description: Tournament.description,
+      location: Tournament.location,
+      startDate: Tournament.startDate,
+      endDate: Tournament.endDate,
+      tournamentType: Tournament.tournamentType,
+      nbTeamPartipate: Tournament.nbTeamPartipate,
+      teams: selectedTeams,
+      country: Tournament.country,
+      state: Tournament.state,
+      city: Tournament.city,
+      stadiums: selectedStadiums,
+    };
+
+    console.log("Image data:", imageData);
+
+    addHotelsToDatabase(hotelData, state.tournament._id);
+    console.log("Hotels added to database.");
+
+    const res = updateTournament(imageData)
+      .then(() => {
+        console.log("Tournament updated successfully.");
+        navigate("/tournament/showAll");
+      })
+      .catch((error) => {
+        console.log("Error updating tournament:", error.response.data.message);
+      });
+  };
+
+  if (image) {
+    fileReader.readAsDataURL(image);
+  }
+};
+
+
   const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const delta = currentStep - previousStep;
@@ -587,7 +794,7 @@ const isSelected = (stadiumId) => {
                 id={stadium._id}
                 value={stadium._id}
                 onChange={(e) => handleStadiumSelect(e, stadium._id)}
-                checked={isSelected(stadium._id)}
+                checked={existingStadiumIds.includes(stadium._id)} // Check if stadium ID is in existingStadiumIds
                 disabled={!stadium.available}
               />
               {!stadium.available && (
@@ -643,9 +850,127 @@ const isSelected = (stadiumId) => {
 
 
 
-            {currentStep === 3 && (
-              <p>hello</p>
-              /* Step 4 fields and UI */
+
+{currentStep === 3 && (
+              <>
+                {
+                  <div>
+                    <div>
+                      <h1 className="text-center pb-8 ">Hotel List</h1>
+                    </div>
+                    <div className="flex  gap-4 ml-10 ">
+                      <div className="">
+                        <label>
+                          Radius (in km):
+                          <input
+                            type="number"
+                            name="radius"
+                            value={radius}
+                            onChange={handleInputChange}
+                            placeholder="Enter Radius"
+                          />
+                        </label>
+                      </div>
+                      <div className="pb-5 ">
+                        <button
+                          onClick={handleRadiusChange}
+                          type="button"
+                          className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                        >
+                          Change Radius
+                        </button>
+                      </div>
+                    </div>
+
+                    {loading && <p>Loading...</p>}
+                    {error && <p style={{ color: "red" }}>{error}</p>}
+
+                    <div
+                      className={`flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 ${
+                        showErrorNotification ? "block" : "hidden"
+                      }`}
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 me-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                      </svg>
+                      <span className="sr-only">Info</span>
+                      <div>
+                        <span className="font-medium">
+                          Hotel already exists!
+                        </span>{" "}
+                        Change a few things up and try submitting again.
+                      </div>
+                    </div>
+
+                    <div
+                      className={`flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-green-800 dark:text-green-400 ${
+                        showSuccessNotification ? "block" : "hidden"
+                      }`}
+                      role="alert"
+                    >
+                      <svg
+                        className="flex-shrink-0 inline w-4 h-4 me-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16ZM3 10a7 7 0 1 0 14 0ZM10 12a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v5a1 1 0 0 1-1 1Z" />
+                      </svg>
+                      <span className="sr-only">Success</span>
+                      <div>
+                        <span className="font-medium">Success alert!</span>{" "}
+                        Hotel successfully added.
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4  mx-10">
+                      {currentHotels.map((hotel, index) => (
+                        <div key={index} className="border p-4 rounded-md ">
+                          <label>
+                            <input
+                              className=" mx-2"
+                              type="checkbox"
+                              checked={selectedHotels.includes(hotel.hotelId)}
+                              onChange={() =>
+                                toggleHotelSelection(hotel.hotelId)
+                              }
+                            />
+                            {hotel.name}
+                          </label>
+                          <h3>chainCode:{hotel.chainCode}</h3>
+                          <p> Id: {hotel.hotelId}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-center mt-4">
+                      {Array.from({
+                        length: Math.ceil(hotelData.length / hotelsPerPage),
+                      }).map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePageChange(index + 1)}
+                          className={`mx-2 px-3 py-2 border ${
+                            currentPage === index + 1
+                              ? "bg-blue-500 text-white"
+                              : "bg-white text-blue-500"
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                }
+              </>
               /* Include form fields and validation logic */
             )}
 
