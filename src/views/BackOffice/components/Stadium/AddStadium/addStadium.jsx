@@ -55,29 +55,35 @@ const AddStadium = () => {
   ]);
 
   const handleDateSelect = (ranges) => {
-    const today = new Date();
     const { startDate, endDate } = ranges.selection;
   
+    if (!startDate || !endDate) {
+      // If either startDate or endDate is null, set status to 'available'
+      setStatus('available');
+      return;
+    }
+  
+    // Convert today's date to the same format as startDate and endDate
+    const today = new Date();
+    const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
     endDate.setHours(23, 59, 59, 999);
-
+  
     console.log('Selected Dates:', ranges.selection);
     setSelectedDates([ranges.selection]);
     setMaintenancePeriod({
       startDate: startDate,
       endDate: endDate
     });
-    
-    // Convert today's date to the same format as startDate and endDate
-    const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   
     // Check if today's date is within the maintenance period
-    if (formattedToday >= new Date(startDate) && formattedToday <= new Date(endDate)) {
+    if (formattedToday >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()) &&
+        formattedToday <= new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())) {
       setStatus('unavailable');
     } else {
       setStatus('available');
     }
   };
-  
   
 
 
@@ -102,6 +108,7 @@ const AddStadium = () => {
         }
       );
     }
+    console.log(Cities)
   }, [SelectedState]);
 
   const handleChange = (e) => {
@@ -109,46 +116,72 @@ const AddStadium = () => {
     setStadium({ ...stadium, [name]: value });
   };
 
-  const handleCountryChange = (e) => {
-    const { value } = e.target;
-    setSelectedCountry(value);
-    setStadium({ ...stadium, country: value });
-    setSelectedState('');
-    setSelectedCity('');
-  };
-
   const handleStateChange = (e) => {
     const { value } = e.target;
     setSelectedState(value);
-    setStadium({ ...stadium, state: value });
-    setSelectedCity('');
+  
+    // Update the stadium address with the selected state
+    setStadium(prevStadium => ({
+      ...prevStadium,
+      state: value
+    }));
+  };
+  
+  const handleCountryChange = (e) => {
+    const { value } = e.target;
+    setSelectedCountry(value);
+  
+    // Update the stadium address with the selected country
+    setStadium(prevStadium => ({
+      ...prevStadium,
+      country: value
+    }));
   };
 
   const handleCityChange = (e) => {
     const { value } = e.target;
     setSelectedCity(value);
-    setStadium({ ...stadium, city: value });
+  
+    // Update the stadium address with the selected city
+    setStadium(prevStadium => ({
+      ...prevStadium,
+      city: value
+    }));
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      
-const startDate = new Date(selectedDates[0].startDate.getTime() - selectedDates[0].startDate.getTimezoneOffset() * 60000).toISOString();
-const endDate = new Date(selectedDates[0].endDate.getTime() - selectedDates[0].endDate.getTimezoneOffset() * 60000).toISOString();
+      let maintenancePeriod = null; // Initialize maintenance period as null
 
-  
-      console.log('Start Date:', startDate);
-      console.log('End Date:', endDate);
+      // Check if showScheduale is true (maintenance period is enabled)
+      if (showScheduale) {
+        // Extract start and end dates from selectedDates state
+        const startDate = selectedDates[0].startDate.toISOString();
+        const endDate = selectedDates[0].endDate.toISOString();
+        
+        // Set maintenancePeriod object with start and end dates
+        maintenancePeriod = {
+          startDate,
+          endDate
+        };
+      }
+
+      // Determine which address to use based on whether the map was used or not
+    const finalAddress = showMap ? address : {
+      country: SelectedCountry,
+      state: SelectedState,
+      city: SelectedCity
+      // Add other address fields as needed
+    };
+
       // Add address fields from the address state to the stadium object
       const addedStadium = await StadiumService.addStadium({
         ...stadium,
-        address: address,
+        address: finalAddress,
         status:status,
-        maintenancePeriod: {
-          startDate: startDate,
-          endDate: endDate
-        }
+        maintenancePeriod: maintenancePeriod,
       });
   
       alert('Stadium added successfully');
@@ -158,7 +191,6 @@ const endDate = new Date(selectedDates[0].endDate.getTime() - selectedDates[0].e
       setStadium({
         name: '',
         ownership: '',
-        address: '',
         capacity: 0,
         maintenancePeriod: {
           startDate: '',
@@ -166,6 +198,13 @@ const endDate = new Date(selectedDates[0].endDate.getTime() - selectedDates[0].e
         },
         bookingSchedule: '',
       });
+
+      if (!showMap) {
+        // Clear selected country, state, and city if dropdowns were used
+        setSelectedCountry('');
+        setSelectedState('');
+        setSelectedCity('');
+      }
       setAddress({}); // Clear the address state
       setSelectedDates([ // Clear the selected dates state
         {

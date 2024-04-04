@@ -31,5 +31,54 @@ export async function getStadiumDetail(id) {
     throw error;
   }
 }
+export async function addStadiumsToTournament(tournamentId, stadiumIds) {
+  try {
+    const response = await axios.post(`${apiURL}/addStadiumsToTournament`, {
+      tournamentId,
+      stadiumIds
+    });
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+export async function checkStadiumAvailability(stadiumId, startDate, endDate) {
+  try {
+    const response = await axios.post(`${apiURL}/checkStadiumAvailability`, {
+      stadiumId,
+      startDate, // Ensure startDate and endDate are sent directly
+      endDate,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error checking stadium availability:', error);
+    throw error;
+  }
+}
 
-export default {addStadium,getAllStadiums,getStadiumDetail};
+export async function updateStadium(id, stadiumData) {
+  try {
+    const response = await axios.put(
+      `${apiURL}/updateStadium/${id}`,
+      stadiumData
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+
+export async function deleteStadium(id) {
+  try {
+    const response = await axios.delete(`${apiURL}/delete/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export default {addStadium,getAllStadiums,getStadiumDetail,addStadiumsToTournament,checkStadiumAvailability,updateStadium,deleteStadium};

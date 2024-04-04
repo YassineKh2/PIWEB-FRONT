@@ -8,6 +8,8 @@ import {
   GetStateByCountry,
 } from "../../../../../Services/APis/CountryAPI";
 import { AiOutlinePicture as Picture } from "react-icons/ai";
+import stadiumService from "../../../../../Services/FrontOffice/apiStadium";
+
 const steps = [
   {
     id: "Step 1",
@@ -61,7 +63,15 @@ function UpdateTournament() {
     country: state.tournament.country,
     state: state.tournament.state,
     city: state.tournament.city,
+    stadiums:state.tournament.stadiums
+
   });
+
+  const [stadiums, setStadiums] = useState([]);
+  const [selectedStadiums, setSelectedStadiums] = useState([]);
+  const [existingStadiums, setExistingStadiums] = useState([]);
+  const [filteredStadiums, setFilteredStadiums] = useState([]);
+
 
   const tournamentTypeOptions = ["League", "Knockout", "Group Stage"];
   const handlechange = (e) => {
@@ -148,6 +158,97 @@ function UpdateTournament() {
   useEffect(() => {
     getTeams();
   }, []);
+/////////////////////////////////////////////////////////////////stadiums/////////////////////////////////////////////////////////
+useEffect(() => {
+  const fetchStadiumsAndSetExisting = async () => {
+    try {
+      const allStadiumsResponse = await stadiumService.getAllStadiums();
+      const allStadiums = allStadiumsResponse.Stadiums; // Access the array of stadiums
+      console.log("All stadiums data:", allStadiums);
+      
+      // Extract stadium IDs from state.tournament.stadiums
+      const existingStadiumIds = state.tournament.stadiums.map(stadium => stadium);
+      console.log("Existing stadium IDs:", existingStadiumIds);
+
+      if (Array.isArray(allStadiums)) {
+        // Mark existing stadiums as selected and available
+        const updatedStadiums = allStadiums.map(stadium => ({
+          ...stadium,
+          selected: existingStadiumIds.includes(stadium._id), // Set selected status based on existing stadium IDs
+          available: existingStadiumIds.includes(stadium._id)
+        }));
+        setStadiums(updatedStadiums);
+      } else {
+        console.error("Error fetching stadiums: All stadiums data is not an array");
+        setStadiums([]);
+      }
+      
+      // Set existing stadium IDs
+      setExistingStadiums(existingStadiumIds);
+    } catch (error) {
+      console.error("Error fetching stadiums:", error);
+    }
+  };
+
+  fetchStadiumsAndSetExisting();
+}, [state.tournament.stadiums]);
+
+
+const handleStadiumSelect = (e, stadiumId) => {
+  if (e.target.checked) {
+    setSelectedStadiums([...selectedStadiums, stadiumId]);
+  } else {
+    setSelectedStadiums(selectedStadiums.filter(id => id !== stadiumId));
+  }
+};
+
+useEffect(() => {
+  if (Array.isArray(stadiums) && stadiums.length > 0 && state.tournament.city) {
+    const filtered = stadiums.filter(stadium => 
+      stadium.address && stadium.address.city === state.tournament.city
+    );
+    setFilteredStadiums(filtered);
+  }
+}, [stadiums, state.tournament.city]);
+
+useEffect(() => {
+  const updateStadiumAvailability = async () => {
+    const updatedStadiums = await Promise.all(filteredStadiums.map(async (stadium) => {
+      // Check if the stadium is already selected for the tournament
+      const isSelectedForTournament = state.tournament.stadiums.some(tournamentStadium => tournamentStadium._id === stadium._id);
+      
+      // If the stadium is selected for the tournament, mark it as available
+      if (isSelectedForTournament) {
+        return { ...stadium, available: true };
+      } else {
+        // Otherwise, fetch the availability from the server
+        const available = await fetchStadiumAvailability(stadium._id, state.tournament.startDate, state.tournament.endDate);
+        return { ...stadium, available };
+      }
+    }));
+    setFilteredStadiums(updatedStadiums);
+  };
+
+  updateStadiumAvailability();
+}, [state.tournament.startDate, state.tournament.endDate]);
+
+
+// Function to fetch stadium availability
+const fetchStadiumAvailability = async (stadiumId, startDate, endDate) => {
+  try {
+    const response = await stadiumService.checkStadiumAvailability(stadiumId, startDate, endDate);
+    return response.available;
+  } catch (error) {
+    console.error('Error fetching stadium availability:', error);
+    return false; // Assuming false indicates the stadium is not available
+  }
+};
+
+const isSelected = (stadiumId) => {
+  return selectedStadiums.includes(stadiumId);
+};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
   const update = async (e) => {
     e.preventDefault();
@@ -167,6 +268,7 @@ function UpdateTournament() {
         country: Tournament.country,
         state: Tournament.state,
         city: Tournament.city,
+        stadiums: selectedStadiums,
       };
 
       const res = updateTournament(imageData)
@@ -469,12 +571,77 @@ function UpdateTournament() {
                 </div>
               </div>
             )}
+{currentStep === 2 && (
+  <>
+    <div className="mt-6 mb-12 ml-10 mr-10 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
+      {filteredStadiums.length === 0 ? (
+        <div className="mt-6 mb-12 ml-10 mr-10">
+          <p className="text-xl text-center text-gray-500">There are no stadiums available in this city.</p>
+        </div>
+      ) : (
+        filteredStadiums.map((stadium) => (
+          <div key={stadium._id} className="w-full">
+            <div className="wow fadeInUp relative overflow-hidden rounded-md bg-white shadow-one dark:bg-dark">
+              <input
+                type="checkbox"
+                id={stadium._id}
+                value={stadium._id}
+                onChange={(e) => handleStadiumSelect(e, stadium._id)}
+                checked={isSelected(stadium._id)}
+                disabled={!stadium.available}
+              />
+              {!stadium.available && (
+                <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center text-white font-semibold text-xl">
+                  Unavailable
+                </div>
+              )}
+              <label htmlFor={stadium._id} className="absolute top-6 right-6 z-20 inline-flex items-center justify-center rounded-full bg-primary py-2 px-4 text-sm font-semibold capitalize text-white">
+                {stadium.name}
+              </label>
+              <a href="/" className="relative block h-[220px] w-full">
+                <img
+                  src="https://via.placeholder.com/350" // Replace with actual image source
+                  alt="Stadium"
+                  style={{
+                    maxHeight: "100%",
+                    width: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              </a>
+              <div className="p-6 sm:p-8 md:py-8 md:px-6 lg:p-8 xl:py-8 xl:px-5 2xl:p-8">
+                <h3>
+                  <a
+                    href="/"
+                    className="mb-4 block text-xl font-bold text-black hover:text-primary dark:text-white dark:hover:text-primary sm:text-2xl"
+                  >
+                    {stadium.name}
+                  </a>
+                </h3>
+                <p className="border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
+                  <span className="text-dark dark:text-black">Location:</span>&nbsp;{stadium.address && stadium.address.city}, {stadium.address && stadium.address.state}, {stadium.address && stadium.address.country}&nbsp;&nbsp;&nbsp;
+                  <span className="text-dark dark:text-black">Description:</span>&nbsp;{stadium.description}
+                </p>
+                <p className="mt-4 mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
+                  <span className="text-dark dark:text-black">Capacity:</span>&nbsp;{stadium.capacity}
+                </p>
+                <p className="mt-4 mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
+                  <span className="text-dark dark:text-black">Status:</span>&nbsp;{stadium.status}
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center md:justify-start">
+                {/* Add buttons or additional actions here */}
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </>
+)}
 
-            {currentStep === 2 && (
-              <p>hello2</p>
-              /* Step 3 fields and UI */
-              /* Include form fields and validation logic */
-            )}
+
+
 
             {currentStep === 3 && (
               <p>hello</p>

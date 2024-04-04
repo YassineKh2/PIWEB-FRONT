@@ -58,6 +58,8 @@ const secondStepSchema = yup.object().shape({
 import hotelService from "../../../../../Services/APis/HotelAPI.js";
 import HotelService from "../../../../../Services/FrontOffice/apiHotel.js";
 
+import stadiumService from "../../../../../Services/FrontOffice/apiStadium";
+
 const steps = [
   {
     id: "Step 1",
@@ -114,6 +116,11 @@ function AddTournament() {
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
   //stadium//
+  const [stadiums, setStadiums] = useState([]);
+  const [selectedStadiums, setSelectedStadiums] = useState([]);
+  const [filteredStadiums, setFilteredStadiums] = useState([]);
+
+
   const [Tournament, setTournament] = useState({
     name: "",
     description: "",
@@ -127,6 +134,7 @@ function AddTournament() {
     state: "",
     city: "",
     teams: [],
+    stadiums:[]
   });
   const [Match, setMatch] = useState({
     win: "",
@@ -306,9 +314,74 @@ function AddTournament() {
 
 
 /////////////////////////////////////////////////////////////Stadiums/////////////////////////////////////////////////////////////
+useEffect(() => {
+  const fetchStadiums = async () => {
+    try {
+      const data = await stadiumService.getAllStadiums();
+      console.log(data); // Check the structure here
+      setStadiums(data.Stadiums); // Adjust according to actual data structure
+    } catch (error) {
+      console.error("Error fetching stadiums:", error);
+    }
+  };
+
+  fetchStadiums();
+}, []);
+ // Filter stadiums by the selected city
+ useEffect(() => {
+  if (Tournament.city && Array.isArray(stadiums)) {
+    const filtered = stadiums.filter(stadium => stadium.address && stadium.address.city === Tournament.city);
+    setFilteredStadiums(filtered);
+    console.log(Tournament.city)
+
+    console.log(filteredStadiums)
+  }
+}, [Tournament.city, stadiums]);
+
+const handleStadiumSelect = (e, stadium) => {
+  const stadiumId = stadium._id;
+  if (e.target.checked) {
+    // Add stadium to selected stadiums list
+    setSelectedStadiums([...selectedStadiums, stadiumId]);
+  } else {
+    // Remove stadium from selected stadiums list
+    setSelectedStadiums(selectedStadiums.filter(id => id !== stadiumId));
+  }
+};
+
+// Function to check if a stadium is selected
+const isSelected = (stadiumId) => {
+  return selectedStadiums.includes(stadiumId);
+};
+
+useEffect(()=>{
+  console.log("Selected stadiums:", selectedStadiums);
+
+},[selectedStadiums])
 
 
+const fetchStadiumAvailability = async (stadiumId, startDate, endDate) => {
+  try {
+    console.log("Checking stadium availability:", stadiumId, startDate, endDate); // Add this line
+    const response = await stadiumService.checkStadiumAvailability(stadiumId, startDate, endDate);
+    console.log("Stadium availability response:", response); // Add this line
+    return response.available;
+  } catch (error) {
+    console.error('Error fetching stadium availability:', error);
+    return false; // Assuming false indicates the stadium is not available
+  }
+};
+useEffect(() => {
+  const updateStadiumAvailability = async () => {
+    const updatedStadiums = await Promise.all(filteredStadiums.map(async (stadium) => {
+      const available = await fetchStadiumAvailability(stadium._id, Tournament.startDate, Tournament.endDate);
+      return { ...stadium, available };
+    }));
+    setFilteredStadiums(updatedStadiums);
+  };
 
+  updateStadiumAvailability();
+}, [ Tournament.startDate, Tournament.endDate]);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -469,6 +542,8 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
         state: Tournament.state,
         city: Tournament.city,
         creator: userInfo.userId,
+        stadiums: selectedStadiums, // Add selected stadiums here
+
       };
 
       try {
@@ -668,6 +743,17 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
         navigate("/tournament/showAll");
         addHotelsToDatabase(hotelData, latestTournamentId.latestTournamentId);
+        console.log("Selected stadiums:", selectedStadiums);
+
+        for (const stadiumId of selectedStadiums) {
+          try {
+              await stadiumService.addStadiumsToTournament(latestTournamentId.latestTournamentId, stadiumId);
+          } catch (stadiumError) {
+              console.error(`Error adding stadium ${stadiumId} to tournament:`, stadiumError);
+              // Handle the error for this specific stadium, such as displaying a message to the user
+          }
+      }
+    
       } catch (error) {
         console.log(error.response.data.message);
       }
@@ -1174,9 +1260,68 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
             )}
 
             {currentStep === 2 && (
-              <p>hello2</p>
-              /* Step 3 fields and UI */
-              /* Include form fields and validation logic */
+           <>{
+            <div className="mt-6 mb-12 ml-10 mr-10 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
+  {filteredStadiums.map((stadium) => (
+    <div key={stadium._id} className="w-full">
+      <div className="wow fadeInUp relative overflow-hidden rounded-md bg-white shadow-one dark:bg-dark">
+      <input
+        type="checkbox"
+        id={stadium._id}
+        value={stadium._id}
+        onChange={(e) => handleStadiumSelect(e, stadium)}
+        checked={isSelected(stadium._id)}
+        disabled={!stadium.available}
+      />
+      {!stadium.available && (
+        <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center text-white font-semibold text-xl">
+          Unavailable
+        </div>
+      )}
+        <label htmlFor={stadium._id} className="absolute top-6 right-6 z-20 inline-flex items-center justify-center rounded-full bg-primary py-2 px-4 text-sm font-semibold capitalize text-white">
+          {stadium.name}
+        </label>
+        <a href="/" className="relative block h-[220px] w-full">
+          <img
+            src="https://via.placeholder.com/350" // Replace with actual image source
+            alt="Stadium"
+            style={{
+              maxHeight: "100%",
+              width: "100%",
+              objectFit: "cover",
+            }}
+          />
+        </a>
+        <div className="p-6 sm:p-8 md:py-8 md:px-6 lg:p-8 xl:py-8 xl:px-5 2xl:p-8">
+          <h3>
+            <a
+              href="/"
+              className="mb-4 block text-xl font-bold text-black hover:text-primary dark:text-white dark:hover:text-primary sm:text-2xl"
+            >
+              {stadium.name}
+            </a>
+          </h3>
+          <p className="border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
+            <span className="text-dark dark:text-black">Location:</span>&nbsp;{stadium.address && stadium.address.city}, {stadium.address && stadium.address.state}, {stadium.address && stadium.address.country}&nbsp;&nbsp;&nbsp;
+            <span className="text-dark dark:text-black">Description:</span>&nbsp;{stadium.description}
+          </p>
+          <p className="mt-4 mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
+            <span className="text-dark dark:text-black">Capacity:</span>&nbsp;{stadium.capacity}
+          </p>
+          <p className="mt-4 mb-6 border-b border-body-color border-opacity-10 pb-6 text-base font-medium text-body-color dark:border-white dark:border-opacity-10">
+            <span className="text-dark dark:text-black">Status:</span>&nbsp;{stadium.status}
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center md:justify-start">
+          {/* Add buttons or additional actions here */}
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+
+           }
+           </>
             )}
 
             {currentStep === 3 && (
