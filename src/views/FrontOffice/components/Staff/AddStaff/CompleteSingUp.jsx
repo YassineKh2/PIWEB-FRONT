@@ -6,7 +6,7 @@ import * as yup from "yup";
 import {motion} from "framer-motion";
 import {useDropzone} from "react-dropzone";
 import {FaArrowAltCircleLeft as Back} from "react-icons/fa";
-import {finishplayerprofile, getUserData} from "../../../../../Services/apiUser.js";
+import {finishplayerprofile, finishstaffprofile, getUserData} from "../../../../../Services/apiUser.js";
 import {jwtDecode} from "jwt-decode";
 
 
@@ -132,9 +132,11 @@ export default function CompleteSingUp() {
         reset
     } = useForm({
         resolver: yupResolver(schema),
-        defaultValues: {
+        values: {
             firstName: user.firstName,
             email: user.email,
+            lastName : user.lastName,
+            position: user.position
         }
     });
 
@@ -147,7 +149,7 @@ export default function CompleteSingUp() {
             data.image = image[0];
             data.imagename = image[0].name;
             data._id = user._id;
-            await finishplayerprofile(data);
+            await finishstaffprofile(data);
             navigate('/')
         } catch (error) {
             console.log(error.message)
@@ -410,22 +412,19 @@ export default function CompleteSingUp() {
                                                 <select {...register("position")}
                                                         name="position"
                                                         className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
-                                                    <option defaultValue value="AM">Attacking Midfielder</option>
-                                                    <option value="CB">Center Back</option>
-                                                    <option value="CF">Center Forward</option>
-                                                    <option value="CM">Central Midfielder</option>
-                                                    <option value="D">Defender</option>
-                                                    <option value="DM">Defensive Midfielder</option>
-                                                    <option value="FB">Full Back</option>
-                                                    <option value="F">Forward</option>
-                                                    <option value="GK">Goalkeeper</option>
-                                                    <option value="LM">Left Midfielder</option>
-                                                    <option value="M">Midfielder</option>
-                                                    <option value="RM">Right Midfielder</option>
-                                                    <option value="S">Striker</option>
-                                                    <option value="SS">Second Striker</option>
-                                                    <option value="WB">Wing Back</option>
-                                                    <option value="W">Winger</option>
+                                                    <option value="manager">Manager</option>
+                                                    <option value="assistant_manager">Assistant Manager</option>
+                                                    <option value="coach">Coach</option>
+                                                    <option value="goalkeeping_coach">Goalkeeping Coach</option>
+                                                    <option value="fitness_coach">Fitness Coach</option>
+                                                    <option value="analyst">Analyst</option>
+                                                    <option value="scout">Scout</option>
+                                                    <option value="physiotherapist">Physiotherapist</option>
+                                                    <option value="doctor">Team Doctor</option>
+                                                    <option value="nutritionist">Nutritionist</option>
+                                                    <option value="psychologist">Sports Psychologist</option>
+                                                    <option value="media_officer">Media Officer</option>
+                                                    <option value="kit_manager">Kit Manager</option>
                                                 </select>
 
                                                 {errors.position &&

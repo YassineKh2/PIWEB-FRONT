@@ -9,6 +9,7 @@ import RoutingTournaments from "./views/FrontOffice/components/Tournament/Routin
 import SignupPageTRM from "./views/FrontOffice/components/User/signup/page1.jsx"
 import SignupPageTM from "./views/FrontOffice/components/User/signup/page2.jsx"
 import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
+import ForgotPassword from "./views/FrontOffice/components/User/signin/forgotPassword.jsx"
 function PublicRoutes() {
   return (
     <div>
@@ -18,6 +19,7 @@ function PublicRoutes() {
         <Route path="/signupu" element ={<SignupPage/>} />
         <Route path="/signupTM" element={<SignupPageTM/>} />
         <Route path="/signupTRM" element ={<SignupPageTRM/>} />
+        <Route path="/forgotPassword" element={<ForgotPassword/>}/>
         <Route path="/about" element={<About />} />
         <Route path="/blog" element={<Blog />} />
         <Route

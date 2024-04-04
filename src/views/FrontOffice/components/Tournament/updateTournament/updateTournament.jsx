@@ -237,88 +237,79 @@ function UpdateTournament() {
     e.preventDefault();
     await deleteAllMAtches();
     setSelectedTeams(Tournament.teams);
-    let imageData = {}
+    let imageData = {};
     if (Tournament.tournamentType === "Group Stage") {
-
       const numberGroups = Math.ceil(Tournament.nbTeamPartipate / 4);
-          const teamsByPot = { ...selectTeamPots };
-          const teamsGroupStage = {};
+      const teamsByPot = { ...selectTeamPots };
+      const teamsGroupStage = {};
 
-          Object.keys(teamsByPot).forEach((potNumber) => {
-            teamsByPot[potNumber] = shuffleArray(teamsByPot[potNumber]);
-          });
+      Object.keys(teamsByPot).forEach((potNumber) => {
+        teamsByPot[potNumber] = shuffleArray(teamsByPot[potNumber]);
+      });
 
-          for (
-            let groupNumber = 1;
-            groupNumber <= numberGroups;
-            groupNumber++
-          ) {
-            const group = [];
-            Object.keys(teamsByPot).forEach((potNumber) => {
-              if (teamsByPot[potNumber].length > 0) {
-                const team = teamsByPot[potNumber].shift();
-                if (team && team.team && team.team._id) {
-                  group.push({
-                    teamId: team.team._id,
-                    potNumber,
-                    groupNumber,
-                  });
-                }
-                if (group.length === 4) return;
-              }
-            });
-            teamsGroupStage[groupNumber] = group;
-          }
-          imageData = {
-            _id: state.tournament._id,
-            name: Tournament.name,
-            description: Tournament.description,
-            location: Tournament.location,
-            startDate: Tournament.startDate,
-            endDate: Tournament.endDate,
-            tournamentType: Tournament.tournamentType,
-            nbTeamPartipate: Tournament.nbTeamPartipate,
-            teamsGroupStage: Object.entries(teamsGroupStage).flatMap(
-              ([groupNumber, teams]) => {
-                return teams.map((team) => ({
-                  teamId: team.teamId,
-                  potNumber: team.potNumber,
-                  groupNumber: groupNumber,
-                }));
-              }
-            ),
-            country: Tournament.country,
-            state: Tournament.state,
-            city: Tournament.city,
-          };
-          for (
-            let groupNumber = 1;
-            groupNumber <= numberGroups;
-            groupNumber++
-          ) {
-            const teams = teamsGroupStage[groupNumber]; 
-            for (let i = 0; i < teams.length; i++) {
-              const team1 = teams[i].teamId;
-              for (let j = i + 1; j < teams.length; j++) {
-                const team2 = teams[j].teamId;
-
-                // Create match data
-                const matchData = {
-                  win: "",
-                  loss: "",
-                  matchDate: new Date(),
-                  scoreTeam1: "",
-                  scoreTeam2: "",
-                  groupNumber, // Assign the group number to the match
-                  idTeam1: team1,
-                  idTeam2: team2,
-                  idTournament: Tournament._id,
-                };
-
-                await addMatch(matchData);
-              }
+      for (let groupNumber = 1; groupNumber <= numberGroups; groupNumber++) {
+        const group = [];
+        Object.keys(teamsByPot).forEach((potNumber) => {
+          if (teamsByPot[potNumber].length > 0) {
+            const team = teamsByPot[potNumber].shift();
+            if (team && team.team && team.team._id) {
+              group.push({
+                teamId: team.team._id,
+                potNumber,
+                groupNumber,
+              });
             }
+            if (group.length === 4) return;
           }
+        });
+        teamsGroupStage[groupNumber] = group;
+      }
+      imageData = {
+        _id: state.tournament._id,
+        name: Tournament.name,
+        description: Tournament.description,
+        location: Tournament.location,
+        startDate: Tournament.startDate,
+        endDate: Tournament.endDate,
+        tournamentType: Tournament.tournamentType,
+        nbTeamPartipate: Tournament.nbTeamPartipate,
+        teamsGroupStage: Object.entries(teamsGroupStage).flatMap(
+          ([groupNumber, teams]) => {
+            return teams.map((team) => ({
+              teamId: team.teamId,
+              potNumber: team.potNumber,
+              groupNumber: groupNumber,
+            }));
+          }
+        ),
+        country: Tournament.country,
+        state: Tournament.state,
+        city: Tournament.city,
+      };
+      for (let groupNumber = 1; groupNumber <= numberGroups; groupNumber++) {
+        const teams = teamsGroupStage[groupNumber];
+        for (let i = 0; i < teams.length; i++) {
+          const team1 = teams[i].teamId;
+          for (let j = i + 1; j < teams.length; j++) {
+            const team2 = teams[j].teamId;
+
+            // Create match data
+            const matchData = {
+              win: "",
+              loss: "",
+              matchDate: new Date(),
+              scoreTeam1: "",
+              scoreTeam2: "",
+              groupNumber, // Assign the group number to the match
+              idTeam1: team1,
+              idTeam2: team2,
+              idTournament: Tournament._id,
+            };
+
+            await addMatch(matchData);
+          }
+        }
+      }
     } else {
       imageData = {
         _id: state.tournament._id,
@@ -335,7 +326,6 @@ function UpdateTournament() {
         city: Tournament.city,
       };
     }
-     
 
     if (Tournament.tournamentType === "League") {
       const numTeams = selectedTeams.length;
@@ -692,7 +682,7 @@ function UpdateTournament() {
                             <select
                               onChange={(e) => handleCountryChange(e)}
                               name="location"
-                              defaultValue={Tournament.country}
+                              value={Tournament.country}
                               className={`rounded-md border ${
                                 errors.country
                                   ? "border-red-500"
@@ -718,7 +708,7 @@ function UpdateTournament() {
                             <select
                               onChange={(e) => handleStateChange(e)}
                               name="state"
-                              defaultValue={Tournament.state}
+                              value={Tournament.state}
                               className={`rounded-md border ${
                                 errors.state
                                   ? "border-red-500"
@@ -744,7 +734,7 @@ function UpdateTournament() {
                             <select
                               onChange={(e) => handleCitiesChange(e)}
                               name="citie"
-                              defaultValue={Tournament.city}
+                              value={Tournament.city}
                               className={`rounded-md border ${
                                 errors.city
                                   ? "border-red-500"
@@ -925,24 +915,24 @@ function UpdateTournament() {
                               Select Teams:
                             </label>
                             <Select
-                            isMulti
-                            closeMenuOnSelect={false}
-                            components={animatedComponents}
-                            name="teams" // Change name to "teams"
-                            onChange={handleTeamChange}
-                            defaultValue={Tournament.teams.map((teamId) => ({
-                              value: teamId,
-                              label:
-                                Teams.find((team) => team._id === teamId)
-                                  ?.name || "Unknown Team",
-                            }))}
-                            options={Teams.map((team) => ({
-                              value: team._id,
-                              label: team.name,
-                            }))}
-                            className="basic-multi-select"
-                            classNamePrefix="select"
-                          />
+                              isMulti
+                              closeMenuOnSelect={false}
+                              components={animatedComponents}
+                              name="teams" // Change name to "teams"
+                              onChange={handleTeamChange}
+                              defaultValue={Tournament.teams.map((teamId) => ({
+                                value: teamId,
+                                label:
+                                  Teams.find((team) => team._id === teamId)
+                                    ?.name || "Unknown Team",
+                              }))}
+                              options={Teams.map((team) => ({
+                                value: team._id,
+                                label: team.name,
+                              }))}
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                            />
                           </div>
                         )}
                         {errors.teams && (

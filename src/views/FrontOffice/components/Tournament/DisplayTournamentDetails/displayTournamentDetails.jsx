@@ -748,6 +748,13 @@ function DisplayAllTournaments() {
     setIsPopupOpen(true);
     getAllTournamentMatches();
   };
+  const handleReservationClick = (matchs) => {
+    localStorage.setItem('selectedMatch', JSON.stringify(matchs));
+navigate('/addReservation');
+
+  };
+  
+
   const handleMatchClickFixture = (match) => {
     setSelectedMatch(match);
     setIsPopupOpenFixture(true);
@@ -1043,6 +1050,7 @@ function DisplayAllTournaments() {
               </Card>
             ))}
         </div>
+       
         <div className="flex justify-center mb-5">
           {/* Previous Button */}
           <a

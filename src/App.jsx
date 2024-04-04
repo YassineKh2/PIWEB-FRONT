@@ -9,7 +9,7 @@ import RoutingBackOffice from "./views/BackOffice/RoutingBackOffice.jsx";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import PublicRoutes from "./publicRoutes";
-
+import SyGenie from "./views/FrontOffice/components/AI/SyGenie";
 function App() {
   const location = useLocation();
   const [shouldDisplayHeader, setShouldDisplayHeader] = useState(0);
@@ -33,7 +33,11 @@ function App() {
   }, []);
 
   return (
+    
     <>
+       <div className="fixed bottom-10 left-10">
+  <SyGenie />
+</div>
       {shouldDisplayHeader === 0 && (
         <Providers>
           <Header />
@@ -41,6 +45,7 @@ function App() {
           <Footer />
         </Providers>
       )}
+      
       {shouldDisplayHeader === 1 && (
         <Providers>
           <Header />

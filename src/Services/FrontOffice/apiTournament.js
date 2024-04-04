@@ -62,4 +62,3 @@ export async function getTournamentsByUser(idUser) {
   }
 }
 export default {getTournamentDetails};
-
