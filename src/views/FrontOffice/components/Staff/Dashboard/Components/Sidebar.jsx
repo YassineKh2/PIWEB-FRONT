@@ -1,4 +1,4 @@
-import {TbTournament} from "react-icons/tb";
+import {TbSoccerField as Field, TbTournament} from "react-icons/tb";
 import {IoIosFootball as Football} from "react-icons/io";
 import {Link} from "react-router-dom";
 import {ImProfile as Profile} from "react-icons/im";
@@ -16,6 +16,11 @@ import {getUserData} from "../../../../../../Services/apiUser.js";
 
 export default function Sidebar() {
     const [ShowAccountSettings, setShowAccountSettings] = useState(false)
+    const [Permissions, setPermissions] = useState({
+        add: false,
+        kick: false,
+        editlineup: false,
+    })
     const [notifications, setNotifications] = useState(0)
 
     useEffect(() => {
@@ -27,6 +32,11 @@ export default function Sidebar() {
             const decodedToken = jwtDecode(userToken);
             getUserData(decodedToken.userId).then((response) => {
                setNotifications(response.user.teamInvitations.length)
+               setPermissions({
+                   add: response.user.hasAccessTo.add,
+                   kick: response.user.hasAccessTo.kick,
+                   editlineup: response.user.hasAccessTo.editlineup
+               })
             })
         } catch (e) {
             console.log(e.message)
@@ -78,6 +88,27 @@ export default function Sidebar() {
                                     <span className="flex-1 ms-3 whitespace-nowrap">Stats</span>
                                 </Link>
                             </li>
+                            {Permissions.editlineup &&
+                            <li>
+                                <Link to="lineups"
+                                      className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+
+                                    <Field size={23} className="text-gray-500"/>
+                                    <span className="flex-1 ms-3 whitespace-nowrap">LineUps</span>
+                                </Link>
+                            </li>
+                            }
+                            {
+                                ( Permissions.add || Permissions.kick ) &&
+                                <li>
+                                    <Link to="teammembers"
+                                          className="hover:text-gray-900 flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                                        <Team size={20} className="text-gray-500 hover:text-gray-900"/>
+                                        <span
+                                            className="flex-1 ms-3 whitespace-nowrap">Team Members</span>
+                                    </Link>
+                                </li>
+                            }
                             <li>
                                 <Link to="matches"
                                       className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
@@ -106,14 +137,16 @@ export default function Sidebar() {
                                             <li>
                                                 <Link to="credentials"
                                                       className="hover:text-gray-900 flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                                                    <Credentials size={20} className="text-gray-500 hover:text-gray-900"/>
+                                                    <Credentials size={20}
+                                                                 className="text-gray-500 hover:text-gray-900"/>
                                                     <span className="flex-1 ms-3 whitespace-nowrap">Credentials</span>
                                                 </Link>
                                             </li>
                                             <li>
                                                 <Link to="preferences"
                                                       className="hover:text-gray-900 flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
-                                                    <Preferences size={20} className="text-gray-500 hover:text-gray-900"/>
+                                                    <Preferences size={20}
+                                                                 className="text-gray-500 hover:text-gray-900"/>
                                                     <span className="flex-1 ms-3 whitespace-nowrap">Preferences</span>
                                                 </Link>
                                             </li>
@@ -121,7 +154,8 @@ export default function Sidebar() {
                                                 <Link to="profile"
                                                       className="hover:text-gray-900 flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
                                                     <Team size={20} className="text-gray-500 hover:text-gray-900"/>
-                                                    <span className="flex-1 ms-3 whitespace-nowrap">Team And Profile</span>
+                                                    <span
+                                                        className="flex-1 ms-3 whitespace-nowrap">Team And Profile</span>
                                                 </Link>
                                             </li>
                                         </ul>
@@ -142,8 +176,8 @@ export default function Sidebar() {
                                     </svg>
                                     <span className="flex-1 ms-3 whitespace-nowrap">Invitations</span>
                                     {notifications > 0 &&
-                                    <span
-                                        className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">{notifications}</span>
+                                        <span
+                                            className="inline-flex items-center justify-center w-3 h-3 p-3 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">{notifications}</span>
                                     }
                                 </Link>
                             </li>
