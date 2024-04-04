@@ -1,36 +1,37 @@
 import { Route, Routes } from "react-router-dom";
-import DisplayUser from "./DisplayUser/displayUser.jsx";
-import AddAdmin from "./AddUser/addUser.jsx";
-import PageTitle from "../PageTitle.jsx";
-import DisplayUserData from "./DisplayUserData/displayUserData.jsx"
-export default function RoutingUsersBack() {
+import Profile from "./Profile.jsx";
+import UpdateProfile from "./updateProfileAdmin.jsx";
+import PageTitle from "../components/PageTitle.jsx";
+import  UpdatePassword from "./updateAdminPassword.jsx";
+export default function RoutingProfile() {
     return(
         <Routes>
           
          
             <Route
                 path="/"
-                element={<DisplayUser />}
+                element={<Profile />}
             />
             <Route
-                path="/addAdmin"
+                path="/update"
                 element={
                     <>
                         <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
-                        <AddAdmin/>
+                        <UpdateProfile/>
+                    </>
+                }
+            />
+            <Route
+                path="/updatePasswordAdmin"
+                element={
+                    <>
+                        <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
+                        <UpdatePassword/>
                     </>
                 }
             />
 
-<Route
-                path="/user-details"
-                element={
-                    <>
-                        <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
-                        <DisplayUserData/>
-                    </>
-                }
-            />
+
         </Routes>
     )
     

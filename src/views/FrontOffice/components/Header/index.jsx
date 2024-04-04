@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
 import {Link, useNavigate} from "react-router-dom";
-
+import DropdownUser from "../../../BackOffice/components/Header/DowndropUserFront.jsx"
 
 const Header = () => {
   // Navbar toggle
@@ -170,13 +170,17 @@ const Header = () => {
         Sign Up
       </Link>
       </>
+     
             ) : (
-              <button
+              <>
+              <DropdownUser />
+             {/* <button
                 onClick={deleteToken}
                 className="py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
               >
                 Logout
-              </button>
+            </button>*/}
+              </>
             )}
               
                 <div>
