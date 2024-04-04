@@ -20,6 +20,7 @@ import {
   getMatchStatsForTournament,
   updateMatchStats,
 } from "../../../../../Services/FrontOffice/apiMatchState";
+import { getTeamDetails, updateTeam } from "../../../../../Services/FrontOffice/apiTeam";
 function StatsSelectedMatch() {
   const socket = useMemo(() => io.connect("http://localhost:3000/"), []);
   const path = "http://localhost:3000/public/images/teams/";
@@ -301,6 +302,21 @@ function StatsSelectedMatch() {
         }
       }
       await updateMatchScore(updatedMatch);
+      const team1 = await getTeamDetails(updatedMatch.team1._id);
+      const team2 = await getTeamDetails(updatedMatch.team2._id);
+      if(updatedMatch.scoreTeam1 > updatedMatch.scoreTeam2) {
+        team1.team.wins++
+        team2.team.losses++
+      } else if(updatedMatch.scoreTeam1 < updatedMatch.scoreTeam2) {
+        team1.team.losses++
+        team2.team.wins++
+      } else if(updatedMatch.scoreTeam1 === updatedMatch.scoreTeam2)  {
+        team1.team.draws++
+        team2.team.draws++
+      }
+     
+      await updateTeam(team1.team);
+      await updateTeam(team2.team);
       localStorage.setItem("newTabState", JSON.stringify({ match: updatedMatch, Tournament }));
       setEdit(false);
       socket.emit("updateScore", updatedMatch);

@@ -1,11 +1,7 @@
-import { Button, Card, CardContent } from "@mui/material";
+
 import React, { useEffect, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import {
-  getEmptyMatche,
-  updateMatchScore,
-} from "../../../../../Services/FrontOffice/apiMatch";
-import { io } from "socket.io-client";
+
 import {
   addPlayerStatsForTournament,
   getMatchGoalsForTournament,

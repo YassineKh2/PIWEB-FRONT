@@ -9,7 +9,11 @@ import {
   GetCountries,
   GetStateByCountry,
 } from "../../../../../Services/APis/CountryAPI";
-import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
+import {
+  getAllTeams,
+  getTeamDetails,
+  updateTeam,
+} from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
 import * as yup from "yup";
 import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
@@ -559,6 +563,21 @@ function AddTournament() {
         const matchesPerRound = numTeams / 2;
 
         if (Tournament.tournamentType === "League") {
+          selectedTeams.forEach(async (team) => {
+            try {
+              const teamData = await getTeamDetails(team);
+
+              teamData.team.tournaments.push(
+                latestTournamentId.latestTournamentId
+              );
+              teamData.team.tournamentInvitations.push({
+                tournament: latestTournamentId.latestTournamentId,
+              });
+              await updateTeam(teamData.team);
+            } catch (error) {
+              console.error(`Error updating team ${team.id}: ${error.message}`);
+            }
+          });
           let teamOrder = selectedTeams.slice();
           const tournamentStartDate = new Date(Tournament.startDate);
           const tournamentEndDate = new Date(Tournament.endDate);
@@ -601,6 +620,21 @@ function AddTournament() {
             teamOrder = [teamOrder[0]].concat(teamOrder.slice(2), teamOrder[1]);
           }
         } else if (Tournament.tournamentType === "Knockout") {
+          selectedTeams.forEach(async (team) => {
+            try {
+              const teamData = await getTeamDetails(team);
+
+              teamData.team.tournaments.push(
+                latestTournamentId.latestTournamentId
+              );
+              teamData.team.tournamentInvitations.push({
+                tournament: latestTournamentId.latestTournamentId,
+              });
+              await updateTeam(teamData.team);
+            } catch (error) {
+              console.error(`Error updating team ${team.id}: ${error.message}`);
+            }
+          });
           selectedTeams.sort(() => Math.random() - 0.5);
 
           while (selectedTeams.length >= 2) {
@@ -628,7 +662,7 @@ function AddTournament() {
             await addMatch(matchData);
           }
           let matchDate = new Date(Tournament.startDate);
-          console.log(matchDate)
+          console.log(matchDate);
           for (let i = 0; i < RealMatches.length - 1; i++) {
             if (i % 2 === 0) {
               idNextMatch++;
@@ -668,10 +702,11 @@ function AddTournament() {
     }
   };
   const randomDate = (start, end) => {
-    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+    return new Date(
+      start.getTime() + Math.random() * (end.getTime() - start.getTime())
+    );
   };
-  
-  
+
   const TeamItem = ({ team }) => {
     const [{ isDragging }, drag] = useDrag({
       type: "TEAM",

@@ -9,8 +9,6 @@ import {
   getTournamentMatchesDraw,
 } from "../../../../../Services/FrontOffice/apiMatch";
 import { useNavigate, useParams } from "react-router-dom";
-import ReactDOM from "react-dom";
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -31,12 +29,10 @@ import {
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
 import { Card, CardContent } from "@mui/material";
 
-import Popupcontent from "./popup";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
 import { IoIosFootball } from "react-icons/io";
 import { getUserData } from "../../../../../Services/apiUser";
-import StatsSelectedMatch from "./statsSelectedMatch";
 import { getStatsForTournamentwithInfo } from "../../../../../Services/FrontOffice/apiGoalStats";
 import { FiPlus } from "react-icons/fi";
 function DisplayAllTournaments() {
