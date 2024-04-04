@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
 import {Link, useNavigate} from "react-router-dom";
-import DropdownUser from "../../../BackOffice/components/Header/DowndropUserFront.jsx"
+import SyGenie from "../AI/SyGenie.jsx";
+import DropdownUser from "../../../BackOffice/components/Header/DowndropUserFront.jsx";
 
 const Header = () => {
   // Navbar toggle
@@ -153,6 +154,8 @@ const Header = () => {
                       </li>
                     ))}
                   </ul>
+
+
                 </nav>
               </div>
               <div className="flex items-center justify-end pr-16 lg:pr-0">
@@ -190,7 +193,9 @@ const Header = () => {
             </div>
           </div>
         </div>
+        
       </header>
+   
     </>
   );
 };

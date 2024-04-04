@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { addReservation } from "../../../../Services/FrontOffice/apiReservation";
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
@@ -6,26 +6,39 @@ import QRCode from 'qrcode.react';
 
 function AddReservation() {
   const navigate = useNavigate();
+  const [selectedMatch, setSelectedMatch] = useState(null);
   const [reservation, setReservation] = useState({
     date: new Date().toISOString().split('T')[0], 
     nbplace: "",
+    matchId: null ,
+    team1:null,
+    team2:null
   });
   const [qrCodeValue, setQrCodeValue] = useState("");
+  
+  useEffect(() => {
+    const selectedMatch = JSON.parse(localStorage.getItem('selectedMatch'));
+    if (selectedMatch) {
+      setSelectedMatch(selectedMatch);
+      setReservation(prevReservation => ({
+        ...prevReservation,
+        matchId: selectedMatch._id ,
+        team1:selectedMatch.team1?.name,
+team2:selectedMatch.team2?.name      }));
+    }
+  }, [selectedMatch]); // Run effect when selectedMatch changes
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Prevent entering a negative number of seats
     if (name === "nbplace" && value < 0) {
       return;
     }
-
     setReservation({ ...reservation, [name]: value });
   };
 
   const add = async (e) => {
     e.preventDefault();
     try {
-      // Check if nbplace is provided
       if (!reservation.nbplace) {
         Swal.fire({
           title: 'Error!',
@@ -38,7 +51,7 @@ function AddReservation() {
       
       const res = await addReservation(reservation);
       const qrCodeData = {
-        reservationId: res._id, // Assuming this is how you identify a reservation
+        reservationId: res._id,
         nbplace: reservation.nbplace,
         // Add any other relevant data here
       };
@@ -46,8 +59,6 @@ function AddReservation() {
       setQrCodeValue(qrCodeString);
       console.log("Successful addition");
     
-      
-      // Display confirmation popup
       Swal.fire({
         title: 'Thank You!',
         text: 'Please finalize the payment.',
@@ -68,6 +79,7 @@ function AddReservation() {
             Reservation
           </h3>
           <form>
+    
             <div className="mb-4">
               <label htmlFor="date" className="text-body-color block mb-1 font-serif">Date:</label>
               <input
@@ -80,6 +92,7 @@ function AddReservation() {
                 disabled 
               />
             </div>
+            
             <div className="mb-4">
               <label htmlFor="nbplace" className="text-body-color block mb-1 font-serif">Seat Number:</label>
               <input
@@ -99,7 +112,6 @@ function AddReservation() {
                 value="Confirm"
                 onClick={(e) => {
                   e.preventDefault();
-                  // Display confirmation popup with SweetAlert
                   Swal.fire({
                     title: 'Do you really want to confirm this reservation?',
                     text: 'Once confirmed, you must pay.',

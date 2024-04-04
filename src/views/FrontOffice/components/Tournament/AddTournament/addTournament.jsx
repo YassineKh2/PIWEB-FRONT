@@ -1336,6 +1336,7 @@ function AddTournament() {
               ) : (
                 <div className="flex justify-center">
                   {/* Center the submit button */}
+                  
                   <button
                     type="submit"
                     className="flex justify-center duration-80 mb-4 w-50 cursor-pointer rounded-md border border-transparent bg-primary py-3 px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"

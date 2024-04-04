@@ -4,7 +4,6 @@ import {deleteTeam, getAllTeams} from "../../../../../Services/FrontOffice/apiTe
 import {FaEye as Eye, FaTrash as Trash} from "react-icons/fa";
 import {Link} from "react-router-dom";
 
-
 const ConsultTeams = () => {
     const [teams, setTeams] = useState([]);
     const [teamsCopy, setteamsCopy] = useState([])

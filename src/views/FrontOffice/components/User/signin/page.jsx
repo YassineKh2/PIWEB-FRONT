@@ -13,93 +13,12 @@ const SigninSchema = Yup.object().shape({
 
 
 
-
 function SigninPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState("");
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'email') setEmail(value);
-    if (name === 'password') setPassword(value);
-    // Supprime l'erreur spécifique pour le champ qui vient d'être modifié
-    const newErrors = { ...errors };
-    delete newErrors[name];
-    setErrors(newErrors);
-  };
-
-  /*const handleSignin = async (e) => {
-    e.preventDefault();
-    try {
-      await schema.validate(User, { abortEarly: false });
-      setErrors({}); // Réinitialiser les erreurs
-      const userData = { email, password };
-      const response = await signin(userData);
-
-
-
-      if (response.token) {
-
-        localStorage.setItem('token', response.token);
-
-
-
-        if (response.user.role === 'A') {
-
-          navigate('/backoffice', { replace: true });
-        } else if (response.user.role !== 'A') {
-          navigate('/profile');
-
-        if (response.user.role === "A") {
-          navigate("/backoffice", { replace: true });
-          window.location.reload();
-        } else if (response.user.role !== "A") {
-          navigate("/profile");
-
-
-          //console.log(localStorage);
-        }
-      } else {
-
-        setErro
-        r("Token not found");
-      } }
-
-
-    } catch (error) {
-      // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
-      const errorMessage = error.response?.data?.error;
-
-      // Afficher l'alerte spécifique si le compte est bloqué
-      if (errorMessage === "Votre compte est bloqué") {
-        Swal.fire({
-          icon: "error",
-          title: "Compte Bloqué",
-          text: "Votre compte est bloqué. Veuillez contacter le support pour plus d'informations.",
-
-
-        });
-      } else {
-        // Gérer d'autres types d'erreurs ici
-        Swal.fire({
-          icon: 'error',
-          title: 'Sorry!',
-          text: errorMessage || 'This Account is banned',
-        });
-      }
-
-
-
-
-      }
-
-
-      // Logger l'erreur pour le débogage
-      console.error("Sign-in error:", errorMessage);
-    }*/
-
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState('');
+ 
     const handleSignin = async (e) => {
       e.preventDefault();
       const userData = { email, password };

@@ -79,22 +79,12 @@ const steps = [
 ]
 
 
-const schemasp = yup.object().shape({
-    name: yup
-        .string()
-        .required("Name is required")
-        .matches(/^[A-Za-z]+$/, "Name must contain only letters"),
-    description: yup.string().required("Description is required"),
-    contact: yup
-        .number()
-        .required("Contact is required")
-        .typeError("Contact must be a number")
-        .test(
-            "len",
-            "Contact must be exactly 8 digits",
-            (val) => String(val).length === 8
-        ),
-    adresse: yup.string().required("Adresse is required"),
+const schemasp=yup.object().shape({
+  name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
+  description: yup.string().required("Description is required"),
+  logo:yup.string(),
+  contact: yup.number().required("Contact is required").typeError("Contact must be a number").test('len', 'Contact must be exactly 8 digits', val => String(val).length === 8),
+  adresse: yup.string().required("Adresse is required")
 });
 
 
@@ -147,20 +137,21 @@ export default function AddTeam() {
     const navigate = useNavigate();
     const [logo, setLogo] = useState(null);
     const [sponsor, setSponsor] = useState({
-
-        name: "",
-        description: "",
-        logo: "",
-        contact: 0,
-        adresse: ""
+      name: "",
+      description: "",
+      logo: "",
+      contact: 0,
+      adresse: ""
     });
-
+    
     const [error, setErrors] = useState({
         name: "",
         description: "",
+        logo:"",
         contact: 0,
         adresse: ""
-    });
+      });
+
 
     useEffect(() => {
         GetCountries().then((response) => {
@@ -1219,183 +1210,108 @@ export default function AddTeam() {
 
                                         {/* SPONSORSS CYRINE */}
                                         {currentStep === 3 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? "50%" : "-50%", opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: "easeInOut"}}
-                                            >
-                                                <div className="flex items-center">
-                                                    <p className="mr-4 font-bold text-blue-800">
-                                                        Do you have a sponsor to add ?
-                                                    </p>
-                                                    <div className="flex">
-                                                        <input
-                                                            type="radio"
-                                                            id="yes"
-                                                            name="sponsorOption"
-                                                            value="yes"
-                                                            onClick={() => setShowForm(true)}
-                                                        />
-                                                        <label htmlFor="yes" className="mr-2">
-                                                            Yes
-                                                        </label>
-                                                        <input
-                                                            type="radio"
-                                                            id="no"
-                                                            name="sponsorOption"
-                                                            value="no"
-                                                            onClick={() => setShowForm(false)}
-                                                        />
-                                                        <label htmlFor="no" className="mr-4">
-                                                            No
-                                                        </label>
-                                                    </div>
-                                                </div>
+    <motion.div
+        initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        transition={{duration: 0.3, ease: 'easeInOut'}}
+    >
+        <div className="flex items-center">
+        <p className="mr-4 font-bold text-blue-800">Do you have a sponsor to add ?</p>
+    <div className="flex">
+        <input type="radio" id="yes" name="sponsorOption" value="yes" onClick={() => setShowForm(true)} />
+        <label htmlFor="yes" className="mr-2">Yes</label>
+        <input type="radio" id="no" name="sponsorOption" value="no" onClick={() => setShowForm(false)} />
+        <label htmlFor="no" className="mr-4">No</label>
+    </div>
+</div>
 
 
-                                                {showForm && (
-                                                    <div
-                                                        className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11"
-                                                        data-wow-delay=".2s"
-                                                    >
-                                                        <div className="flex justify-center items-center mt-16">
-                                                            <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
-                                                                <form>
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="name"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Name:
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="name"
-                                                                            name="name"
-                                                                            value={sponsor.name}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.name && (
-                                                                            <div className="text-red-500">
-                                                                                {error.name}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+{showForm && (
+            <div className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11" data-wow-delay=".2s">
+                <div className="flex justify-center items-center mt-16">
+                    <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
+                        <form>
+                            <div className="mb-4">
+                                <label htmlFor="name" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Name:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={sponsor.name}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.name && <div className="text-red-500">{error.name}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="description"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Description:
-                                                                        </label>
-                                                                        <textarea
-                                                                            id="description"
-                                                                            name="description"
-                                                                            value={sponsor.description}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.description && (
-                                                                            <div className="text-red-500">
-                                                                                {error.description}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="description" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Description:
+                                </label>
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    value={sponsor.description}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.description && <div className="text-red-500">{error.description}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="logo"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Logo:
-                                                                        </label>
-                                                                        <input
-                                                                            type="file"
-                                                                            name="logo"
-                                                                            accept="image/*"
-                                                                            onChange={(e) => handleLogoChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.logo && (
-                                                                            <div className="text-red-500">
-                                                                                {error.logo}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Logo:
+                                </label>
+                                <input
+                                    type="file"
+                                    name={sponsor.logo}
+                                    accept="image/*"
+                                    onChange={(e) => handleLogoChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.logo && <div className="text-red-500">{error.logo}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="logo"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Logo:
-                                                                        </label>
-                                                                        <input
-                                                                            type="file"
-                                                                            name="logo"
-                                                                            accept="image/*"
-                                                                            onChange={(e) => handleLogoChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.logo && (
-                                                                            <div className="text-red-500">
-                                                                                {error.logo}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="contact" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Contact:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="contact"
+                                    name="contact"
+                                    value={sponsor.contact}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.contact && <div className="text-red-500">{error.contact}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="contact"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Contact:
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="contact"
-                                                                            name="contact"
-                                                                            value={sponsor.contact}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.contact && (
-                                                                            <div className="text-red-500">
-                                                                                {error.contact}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Adresse:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="adresse"
+                                    name="adresse"
+                                    value={sponsor.adresse}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
+                            </div>
+                        </form>
+                   
+                </div>
+            </div>
+        </div>
+         )}
+    </motion.div>
+)}
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="address"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Adresse:
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="adresse"
-                                                                            name="adresse"
-                                                                            value={sponsor.adresse}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.adresse && (
-                                                                            <div className="text-red-500">
-                                                                                {error.adresse}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        )}
                                         {/* SPONSORSS CYRINE */}
 
 

@@ -241,23 +241,20 @@ export default function ShowTeam() {
 
                                     let linkStyle = "flex w-[95%] md:w-full flex-col md:flex-row items-center gap-2 p-3 md:gap-10 text-base font-bold text-gray-900 rounded-lg  group hover:shadow dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
                                     if (match.scoreTeam1 === 0 || match.scoreTeam2 === 0)
-                                        linkStyle += " bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600";
-                                    else if (match.team1._id === team._id && match.scoreTeam1 > match.scoreTeam2)
-                                        linkStyle += " bg-[#339900]  hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500";
-                                    else if (match.team2._id === team._id && match.scoreTeam1 < match.scoreTeam2)
-                                        linkStyle += " bg-[#339900] hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500";
+                                        linkStyle += " bg-gray-300 hover:bg-gray-400";
+                                    else if(match.team1._id === team._id && match.scoreTeam1 > match.scoreTeam2)
+                                        linkStyle += " bg-green-500 hover:bg-green-600 ";
                                     else
-                                        linkStyle += " bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-400";
+                                        linkStyle += " bg-red-400 hover:bg-red-500 ";
 
-                                    return (
-                                        <Link to="" key={index} className={linkStyle}>
-                                                <span className="flex-1 md:flex-row ms-3 whitespace-nowrap">{match.team1.name}
-                                                    <text
-                                                        className="">&nbsp;{match.scoreTeam1} - {match.scoreTeam2}{' '}&nbsp;</text>
-                                                    {match.team2.name}</span>
-                                            <p className="text-center text-white bg-cyan-500 rounded-2xl p-2 text-xs">{match.tournament.name}</p>
-                                        </Link>
-                                    )
+                                        return (
+                                            <Link to="" key={index} className={linkStyle}>
+                                                <span className="flex-1 ms-3 whitespace-nowrap">{match.team1.name}
+                                                 <text className="">&nbsp;{match.scoreTeam1} - {match.scoreTeam2}{' '}&nbsp;</text>
+                                                 {match.team2.name}</span>
+                                                <p className="text-center text-white bg-blue-400 rounded-2xl p-2 text-xs">{match.tournament.name}</p>
+                                            </Link>
+                                        )
                                 })}
 
 
