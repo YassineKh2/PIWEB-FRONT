@@ -11,6 +11,10 @@ const DropdownUser = () => {
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
+
+  const baseUrl =  "http://localhost:3000/"; // This will dynamically set the base URL
+  const imageUrl = userData?.image ? `${baseUrl}${userData.image}` : '';
+
   useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -22,6 +26,14 @@ const DropdownUser = () => {
     }
 
     fetchUserProfile();
+  }, []);
+
+  useEffect(() => {
+    const autoLogoutTimeout = setTimeout(() => {
+      deleteToken();
+    }, 58 * 60 * 1000); // Timeout réglé pour 58 minutes
+  
+    return () => clearTimeout(autoLogoutTimeout);
   }, []);
 
   const deleteToken = () => {
@@ -70,10 +82,13 @@ const DropdownUser = () => {
           
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-  <img src={userData?.image|| UserOne} alt="User" />
+        <span className="h-12 w-12 rounded-full overflow-hidden">
+  <img
+    className="h-full w-full object-cover"
+    src={imageUrl || UserOne}
+    alt="User"
+  />
 </span>
-
         <svg
           className="hidden fill-current sm:block"
           width="12"

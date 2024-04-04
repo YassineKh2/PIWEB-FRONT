@@ -9,7 +9,7 @@ import Swal from 'sweetalert2';
 
 function DisplayAllUsers() {
     const [userData, setUserData] = useState([]);
-
+    const baseUrl = "http://localhost:3000/";
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -120,7 +120,7 @@ function DisplayAllUsers() {
                   >
                     <td className="py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                       <img
-                        src={user.image}
+                        src={user.image ? `${baseUrl}${user.image}` : `${baseUrl}userImage.png`}
                         alt="User"
                         className="w-10 h-10 rounded-full"
                       />

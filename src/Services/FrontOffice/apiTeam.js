@@ -93,5 +93,27 @@ export async function getTeam(teamId) {
     throw error;
   }
 }
+export async function getTeams(teamsId) {
+  try {
+    const response = await axios.post(`${apiURL}/getTeams`,teamsId);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export async function updateLineup(teamData) {
+  try {
+    const response = await axios.put(`${apiURL}/updateLineup`,teamData);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+
+
 
 

@@ -8,7 +8,7 @@ const TextToSpeech = ({ text }) => {
   useEffect(() => {
     const synth = window.speechSynthesis;
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US"; 
+    u.lang = "en-US"; // Set language to English (United States)
     u.rate = .9;
 
     setUtterance(u);

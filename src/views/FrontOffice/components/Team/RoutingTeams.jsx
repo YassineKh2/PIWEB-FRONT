@@ -5,6 +5,7 @@ import RoutingDashboardTeam from "./Dashboard/RoutingDashboardTeam.jsx";
 import LiveStream from "../LiveStreaming/LiveStream.jsx";
 import ShowAllTeams from "./AllTeams/ShowAllTeams.jsx";
 import ShowTeam from "./ShowTeam/ShowTeam.jsx";
+import Dashboard from "./Dashboard/RoutingDashboardTeam.jsx";
 
 
 export default function RoutingTeams() {
