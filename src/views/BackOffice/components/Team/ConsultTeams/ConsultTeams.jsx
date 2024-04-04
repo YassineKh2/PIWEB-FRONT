@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import {getAllTeams} from "../../../../../services/FrontOffice/apiTeam.js";
+import {getAllTeams} from "../../../../../Services/FrontOffice/apiTeam";
 
 const ConsultTeams = () => {
   const [teams, setTeams] = useState([]);

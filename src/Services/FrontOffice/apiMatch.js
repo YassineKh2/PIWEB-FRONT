@@ -32,3 +32,25 @@ export async function updateMatchScore(matchData) {
     throw error;
   }
 }
+export async function getEmptyMatche(id, idTournament) {
+  try {
+    const response = await axios.get(
+      `${apiURL}/getemptymatch/${id}/${idTournament}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+export async function getTournamentMatchesDraw(idTournament) {
+  try {
+    const response = await axios.get(
+      `${apiURL}/getMatchesbydraw/${idTournament}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
