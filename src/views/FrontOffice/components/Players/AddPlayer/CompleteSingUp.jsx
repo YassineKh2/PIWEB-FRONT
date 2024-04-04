@@ -29,6 +29,7 @@ export default function CompleteSingUp() {
     const navigate = useNavigate();
     const [params, setParams] = useSearchParams()
     const [user, setUser] = useState({});
+    const [loading, setLoading] = useState(true);
 
 
     const [previousStep, setPreviousStep] = useState(0)
@@ -53,7 +54,8 @@ export default function CompleteSingUp() {
             let decodedToken = jwtDecode(authToken);
             getUserData(decodedToken.userId).then((data) => {
                 setUser(data.user);
-
+                console.log(data.user)
+                setLoading(false);
             })
         } catch (e) {
             navigate('/')
@@ -134,9 +136,11 @@ export default function CompleteSingUp() {
         reset
     } = useForm({
         resolver: yupResolver(schema),
-        defaultValues: {
+        values: {
             firstName: user.firstName,
             email: user.email,
+            lastName : user.lastName,
+            position: user.position
         }
     });
 
@@ -172,6 +176,10 @@ export default function CompleteSingUp() {
 
     return (
         <>
+            {loading ? (
+                <div>Loading...</div> // Render loading message or a spinner
+            ) : (
+
             <section className="relative z-10 overflow-hidden pt-36 pb-16 md:pb-20 lg:pt-[180px] lg:pb-28">
                 <div className="container">
 
@@ -671,6 +679,7 @@ export default function CompleteSingUp() {
                     </svg>
                 </div>
             </section>
+            )}
         </>
     );
 }
