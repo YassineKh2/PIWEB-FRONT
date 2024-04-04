@@ -12,7 +12,7 @@ const SigninSchema = Yup.object().shape({
 });
 
 
-  
+
 
 function SigninPage() {
   const navigate = useNavigate();
@@ -38,16 +38,16 @@ function SigninPage() {
       const userData = { email, password };
       const response = await signin(userData);
 
-      
-     
+
+
       if (response.token) {
-       
+
         localStorage.setItem('token', response.token);
 
 
-        
+
         if (response.user.role === 'A') {
-        
+
           navigate('/backoffice', { replace: true });
         } else if (response.user.role !== 'A') {
           navigate('/profile');
@@ -62,11 +62,11 @@ function SigninPage() {
           //console.log(localStorage);
         }
       } else {
-        
+
         setErro
         r("Token not found");
       } }
-    
+
 
     } catch (error) {
       // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
@@ -89,10 +89,10 @@ function SigninPage() {
           text: errorMessage || 'This Account is banned',
         });
       }
-  
 
 
-          
+
+
       }
 
 
@@ -103,12 +103,12 @@ function SigninPage() {
     const handleSignin = async (e) => {
       e.preventDefault();
       const userData = { email, password };
-  
+
       try {
         // Valide les champs du formulaire en utilisant le schéma Yup
         await SigninSchema.validate(userData, { abortEarly: false });
         setErrors({}); // Réinitialiser les erreurs si la validation est réussie
-  
+
         // Vérifie si l'utilisateur existe avant de tenter la connexion
         const userExists = await getUserByEmail(email);
         if (!userExists) {
@@ -116,17 +116,24 @@ function SigninPage() {
           setErrors({ email: "Email does not exist" });
           return; // Stoppe l'exécution de la fonction ici
         }
-  
+
         // Tentative de connexion
         const response = await signin(userData);
         if (response.token) {
+          const userDetailsResponse = await getUserByEmail(email);
+          console.log(userDetailsResponse.user);
           localStorage.setItem("token", response.token);
           if (response.user.role === "A") {
             navigate("/backoffice", { replace: true });
             window.location.reload();
-          } else {
+          } else if(response.user.role === "TM" && !userDetailsResponse.user.PlayingFor ){
+            console.log(userDetailsResponse.user.PlayingFor);
+
+            navigate("/team/add");
+
+          }else{
             navigate("/");
-            
+            window.location.reload();
           }
         } else {
           throw new Error("Token not found");
@@ -165,30 +172,30 @@ function SigninPage() {
           return;
         }
         console.log('Token reçu de Google :', credential);
-    
+
         // Extrait le token de la propriété "credential"
-        const token = credential; 
+        const token = credential;
         console.log(token)// Assurez-vous que la propriété contient bien le token
-    
+
         // Appel de la fonction googleAuth avec le token
         const authResponse = await googleAuth(token);
-    
+
         if (authResponse && authResponse.user.role === "C") {
           console.log("Redirection vers /profile");
           navigate('/profile');
         }
         // Enregistrement du token dans le local storage
        // localStorage.setItem('token', authResponse.token);
-    
+
         console.log('Authentification Google réussie, réponse du backend :', authResponse);
-        
+
         // Effectuez des actions supplémentaires, comme la redirection ou la mise à jour de l'état du composant
       } catch (error) {
         console.error('Échec de l\'authentification Google :', error);
         console.error('Détails de l\'erreur retournée par googleAuth :', error.response?.data);
       }
     };
-    
+
 
 
   return (
@@ -266,7 +273,7 @@ function SigninPage() {
                       className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      
+
                     />
                      {errors.email && (
           <p className="text-red-500 text-sm mt-2">{errors.email}</p>
@@ -292,7 +299,7 @@ function SigninPage() {
         )}
                   </div>
                   <div className="mb-8 flex flex-col justify-between sm:flex-row sm:items-center">
-                    
+
                   <div>
   <Link
     to="/forgotPassword"

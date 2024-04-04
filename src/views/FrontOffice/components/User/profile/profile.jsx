@@ -15,7 +15,7 @@ function ProfileComponent() {
   const [userData, setUserData] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  
+
   /*const deleteToken = () => {
     localStorage.removeItem("token");
     navigate('/signin')
@@ -58,13 +58,14 @@ const handleImageUpload = async (event) => {
 
       // Call updateUserImage with the user ID and the file
       const result = await updateUserImage(userId, file);
-      
+
       // Assuming the API returns the new image path after a successful upload
       // and that the path is in the user object under the image property
       if (result && result.user && result.user.image) {
         // Form the correct URL here, assuming result.user.image contains only the filename
         const newImageUrl = `${result.user.image}`;
         setUserData({ ...userData, image: newImageUrl });
+        window.location.reload();
       } else {
         console.error("Image path not found in the result:", result);
       }
@@ -77,8 +78,8 @@ const handleImageUpload = async (event) => {
 
 // ... rest of your code ...
 
-  
-  
+
+
   // Correct the base URL to match your server's public directory structure
   const baseUrl =  "http://localhost:3000/"; // This will dynamically set the base URL
   const imageUrl = userData?.image ? `${baseUrl}${userData.image}` : '';
@@ -93,17 +94,17 @@ return (
       className="h-full w-full rounded-tl-sm rounded-tr-sm object-cover object-center"
     />
     <div className="absolute bottom-1 right-1 z-10 xsm:bottom-4 xsm:right-4">
-     
+
     </div>
   </div>
   <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
   <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 sm:h-44 sm:max-w-44">
 
   <div className="h-full w-full rounded-full overflow-hidden">
-    
+
     <img src={imageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-  
-           
+
+
         <label
           htmlFor="profile"
           className="absolute bottom-0 right-0 flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-full bg-primary text-white hover:bg-opacity-90 sm:bottom-2 sm:right-2"
@@ -134,7 +135,7 @@ return (
             name="profile"
             id="profile"
             className="sr-only"
-            onChange={(e) => handleImageUpload(e, 'profile')} 
+            onChange={(e) => handleImageUpload(e, 'profile')}
           />
         </label>
       </div>
@@ -143,7 +144,7 @@ return (
     <h3 className="mb-1.5 text-2xl font-semibold text-black dark:text-white">
             {userData?.firstName} {userData?.lastName}
           </h3>
-      
+
           <div className="mx-auto mt-4.5 mb-5.5 grid max-w-94 grid-cols-3 rounded-md border border-stroke py-2.5 shadow-1 dark:border-strokedark dark:bg-[#37404F]">
           <div className="flex flex-col items-center justify-center gap-1 px-4 dark:border-strokedark xsm:flex-row">
   <span className="text-sm text-black dark:text-white">
@@ -155,7 +156,7 @@ return (
   <span className="text-sm text-black dark:text-white">
     {userData?.createdAt ? `Joined on ${new Date(userData.createdAt).toLocaleDateString()}` : "Join Date Unknown"}
   </span>
- 
+
 </div>
         <div className="flex flex-col items-center justify-center gap-1 px-4 xsm:flex-row">
           <span className="font-semibold text-black dark:text-white">
@@ -332,7 +333,7 @@ return (
               </defs>
             </svg>
           </Link>
-         
+
         </div>
       </div>
     </div>
