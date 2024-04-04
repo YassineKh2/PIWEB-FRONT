@@ -3,6 +3,7 @@ import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
 import {Link, useNavigate} from "react-router-dom";
 import SyGenie from "../AI/SyGenie.jsx";
+import DropdownUser from "../../../../views/BackOffice/components/Header/DropdownUser.jsx";
 
 const Header = () => {
   // Navbar toggle
@@ -175,7 +176,7 @@ const Header = () => {
      
             ) : (
               <>
-              
+              <DropdownUser />
              {/* <button
                 onClick={deleteToken}
                 className="py-3 px-7 text-base font-bold text-dark hover:opacity-70 dark:text-white md:block"
