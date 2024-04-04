@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUserProfile, update } from '../../../../../Services/apiUser';
+import { getUserProfile, update } from "../../../Services/apiUser";
 import { useNavigate } from 'react-router-dom';
 
 function UpdateUserProfile() {
@@ -33,6 +33,8 @@ function UpdateUserProfile() {
       } catch (fetchError) {
         setError('Failed to load user profile');
       }
+
+    
     };
 
     fetchUserProfile();
@@ -52,14 +54,14 @@ function UpdateUserProfile() {
       }
       await update(user._id, updatedInfo);
       setError('Profile updated successfully');
-      navigate('/profile'); // Redirect to profile page or show success message
+      navigate('/backoffice/profile'); // Redirect to profile page or show success message
     } catch (updateError) {
       setError('Failed to update user profile');
     }
   };
 
   const handleUpdatePassword = () => {
-    navigate('/updatePassword');
+    navigate('/backoffice/profile/updatePasswordAdmin');
   };
 
   return (
@@ -121,7 +123,7 @@ function UpdateUserProfile() {
                       <label htmlFor="password" className="mb-3 block text-sm font-medium text-dark dark:text-white">
                         Enter your password 
                       </label>
-                      <input type="password" id="password" name="password" placeholder="Enter new password" value={user.password} onChange={handleChange} className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp" />
+                      <input type="password" id="password" name="password" placeholder="Enter new password " value={user.password} onChange={handleChange} className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp" />
                       <small className="text-xs text-gray-500">You have to enter your password to update your profile</small>
                     </div>
                   </div>

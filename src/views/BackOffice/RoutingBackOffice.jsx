@@ -23,6 +23,7 @@ import RoutingUsersBack from "./components/User/RoutingUser.jsx";
 import { useRefresh } from "./hooks/useRefreshHook.js";
 import RequireAuth from "../FrontOffice/components/User/requireAuth.jsx"
 
+import RoutingProfile from "./Pages/RoutingProfile.jsx"
 export default function RoutingBackOffice() {
     const [loading, setLoading] = useState(true);
     const {pathname} = useLocation();
@@ -89,11 +90,11 @@ export default function RoutingBackOffice() {
                             }
                         />
                         <Route
-                            path="profile"
+                            path="profile/*"
                             element={
                                 <>
                                     <PageTitle title="Profile | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
-                                    <Profile/>
+                                    <RoutingProfile/>
                                 </>
                             }
                         />
