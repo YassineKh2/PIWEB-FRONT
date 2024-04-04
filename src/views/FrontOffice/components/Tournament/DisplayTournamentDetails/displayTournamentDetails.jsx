@@ -63,7 +63,7 @@ function DisplayAllTournaments() {
   const [user, setUser] = useState();
   const [tabChange, setTabChange] = useState();
   const [numberOfGroups, setnumberOfGroups] = useState();
-
+  const [matchs, setMatchs] = useState(null);
   const openModalInNewTab = (Allmatch) => {
     const match = selectedMatch;
     const state = { match, Tournament };
@@ -732,6 +732,13 @@ function DisplayAllTournaments() {
     setIsPopupOpen(true);
     getAllTournamentMatches();
   };
+  const handleReservationClick = (matchs) => {
+    localStorage.setItem('selectedMatch', JSON.stringify(matchs));
+navigate('/addReservation');
+
+  };
+  
+
   const handleMatchClickFixture = (match) => {
     setSelectedMatch(match);
     setIsPopupOpenFixture(true);
@@ -859,6 +866,7 @@ function DisplayAllTournaments() {
       <div>
         <div className="flex flex-wrap justify-center">
           {displayedMatches.map((match, index) => (
+          
             <Card
               key={index}
               onClick={() => handleMatchClick(match)}
@@ -907,10 +915,16 @@ function DisplayAllTournaments() {
                   <div>{match.matchTime}</div>
                   <div>{match.location}</div>
                 </div>
+                <button onClick={() => handleReservationClick(match)}>Reserver</button>
+
+
               </CardContent>
+             
             </Card>
+              
           ))}
         </div>
+       
         <div className="flex justify-center mb-5">
           {/* Previous Button */}
           <a

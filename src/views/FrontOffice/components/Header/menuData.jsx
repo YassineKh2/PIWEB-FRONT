@@ -11,6 +11,7 @@ const menuData = [
     path: "/about",
     newTab: false,
   },
+  /*
   {
     id: 33,
     title: "Our Sponsors",
@@ -23,7 +24,7 @@ const menuData = [
     path: "/addReservation",
     newTab: false,
   },
-  
+  */
   {
     id: 4,
     title: "Tournament",

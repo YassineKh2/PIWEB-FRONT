@@ -12,25 +12,15 @@ const SigninSchema = Yup.object().shape({
 });
 
 
-  
 
 function SigninPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState("");
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'email') setEmail(value);
-    if (name === 'password') setPassword(value);
-    // Supprime l'erreur spécifique pour le champ qui vient d'être modifié
-    const newErrors = { ...errors };
-    delete newErrors[name];
-    setErrors(newErrors);
-  };
-
-  /*const handleSignin = async (e) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+ 
+  
+  const handleSignin = async (e) => {
     e.preventDefault();
     try {
       await schema.validate(User, { abortEarly: false });
@@ -44,42 +34,29 @@ function SigninPage() {
        
         localStorage.setItem('token', response.token);
 
-
         
         if (response.user.role === 'A') {
         
           navigate('/backoffice', { replace: true });
         } else if (response.user.role !== 'A') {
           navigate('/profile');
-
-        if (response.user.role === "A") {
-          navigate("/backoffice", { replace: true });
-          window.location.reload();
-        } else if (response.user.role !== "A") {
-          navigate("/profile");
-
-
           //console.log(localStorage);
         }
       } else {
         
-        setErro
-        r("Token not found");
-      } }
-    
+        setError("Token not found");
+      }
 
-    } catch (error) {
+    }  catch (error) {
       // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
       const errorMessage = error.response?.data?.error;
-
+  
       // Afficher l'alerte spécifique si le compte est bloqué
-      if (errorMessage === "Votre compte est bloqué") {
+      if (errorMessage === 'Votre compte est bloqué') {
         Swal.fire({
-          icon: "error",
-          title: "Compte Bloqué",
-          text: "Votre compte est bloqué. Veuillez contacter le support pour plus d'informations.",
-
-
+          icon: 'error',
+          title: 'Compte Bloqué',
+          text: 'Votre compte est bloqué. Veuillez contacter le support pour plus d\'informations.',
         });
       } else {
         // Gérer d'autres types d'erreurs ici
@@ -90,105 +67,10 @@ function SigninPage() {
         });
       }
   
-
-
-          
-      }
-
-
       // Logger l'erreur pour le débogage
       console.error("Sign-in error:", errorMessage);
-    }*/
-
-    const handleSignin = async (e) => {
-      e.preventDefault();
-      const userData = { email, password };
-  
-      try {
-        // Valide les champs du formulaire en utilisant le schéma Yup
-        await SigninSchema.validate(userData, { abortEarly: false });
-        setErrors({}); // Réinitialiser les erreurs si la validation est réussie
-  
-        // Vérifie si l'utilisateur existe avant de tenter la connexion
-        const userExists = await getUserByEmail(email);
-        if (!userExists) {
-          // Ici, plutôt que de lancer une erreur, on pourrait directement définir le message d'erreur
-          setErrors({ email: "Email does not exist" });
-          return; // Stoppe l'exécution de la fonction ici
-        }
-  
-        // Tentative de connexion
-        const response = await signin(userData);
-        if (response.token) {
-          localStorage.setItem("token", response.token);
-          if (response.user.role === "A") {
-            navigate("/backoffice", { replace: true });
-            window.location.reload();
-          } else {
-            navigate("/");
-            
-          }
-        } else {
-          throw new Error("Token not found");
-        }
-      } catch (error) {
-        // Handle Yup validation errors
-        if (error instanceof Yup.ValidationError) {
-          const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
-          setErrors(newErrors);
-        } else if (error && error.error) {
-          // Handle API errors based on the error message from backend
-          Swal.fire({
-            icon: 'error',
-            title: 'Sorry',
-            text: error.error,
-          });
-        } else {
-          // Handle other kinds of errors (network error, etc.)
-          Swal.fire({
-            icon: 'error',
-            title: 'Sorry',
-            text: 'An unexpected error occurred.',
-          });
-        }
-        console.error("Sign-in error:", error.message || error);
-      }
-    };
-
-
-    const handleGoogleSignIn = async (response) => {
-      try {
-        console.log('Réponse complète de Google :', response);
-        const { credential } = response;
-        if (!credential) {
-          console.error('Token non trouvé dans la réponse de Google.');
-          return;
-        }
-        console.log('Token reçu de Google :', credential);
-    
-        // Extrait le token de la propriété "credential"
-        const token = credential; 
-        console.log(token)// Assurez-vous que la propriété contient bien le token
-    
-        // Appel de la fonction googleAuth avec le token
-        const authResponse = await googleAuth(token);
-    
-        if (authResponse && authResponse.user.role === "C") {
-          console.log("Redirection vers /profile");
-          navigate('/profile');
-        }
-        // Enregistrement du token dans le local storage
-       // localStorage.setItem('token', authResponse.token);
-    
-        console.log('Authentification Google réussie, réponse du backend :', authResponse);
-        
-        // Effectuez des actions supplémentaires, comme la redirection ou la mise à jour de l'état du composant
-      } catch (error) {
-        console.error('Échec de l\'authentification Google :', error);
-        console.error('Détails de l\'erreur retournée par googleAuth :', error.response?.data);
-      }
-    };
-    
+    }
+  };
 
 
   return (
