@@ -3,7 +3,7 @@ import ThemeToggler from "./ThemeToggler.jsx";
 import menuData from "./menuData.jsx";
 import {Link, useNavigate} from "react-router-dom";
 import SyGenie from "../AI/SyGenie.jsx";
-import DropdownUser from "../../../../views/BackOffice/components/Header/DropdownUser.jsx";
+import DropdownUser from "../../../BackOffice/components/Header/DowndropUserFront.jsx";
 
 const Header = () => {
   // Navbar toggle

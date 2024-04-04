@@ -15,7 +15,7 @@ const schema = yup.object().shape({
   password: yup.string().min(8, "Password must be at least 8 characters").required("Password is required"),
   birthDate: yup.date().typeError("Birth date must be a valid date").required("Birth date is required"),
   cin: yup.string().required("CIN is required"),
- 
+
 });
 function SignupPage() {
 const navigate = useNavigate();
@@ -45,10 +45,10 @@ const handleChange = (e) => {
     try {
 
       try {
-    
+
         await schema.pick(['firstName', 'lastName', 'email', 'password', 'birthDate', 'cin']).validate(User, {abortEarly: false});
-      
-        
+
+
         setErrors({});
     } catch (error) {
         if (error instanceof yup.ValidationError) {
@@ -99,9 +99,9 @@ const handleChange = (e) => {
   /*const handleGoogleSignIn = () => {
     // This function will be triggered when the button is clicked.
     google.accounts.id.prompt((notification) => {
-    
-  
-      
+
+
+
     });
   };*/
 
@@ -114,7 +114,7 @@ const handleChange = (e) => {
 
   const handleGoogleSignIn = async (credentialResponse) => {
     const decodedToken = jwtDecode(credentialResponse.credential);
-    const randomDummyPassword = generateRandomString(16); 
+    const randomDummyPassword = generateRandomString(16);
 
     try {
       // Construct user data from the decoded token
@@ -171,7 +171,7 @@ const handleGoogleSignIn = async (response) => {
     console.log('Token reçu de Google :', credential);
 
     // Extrait le token de la propriété "credential"
-    const token = credential; 
+    const token = credential;
     console.log(token)// Assurez-vous que la propriété contient bien le token
 
     // Appel de la fonction googleAuth avec le token
@@ -185,7 +185,7 @@ const handleGoogleSignIn = async (response) => {
    // localStorage.setItem('token', authResponse.token);
 
     console.log('Authentification Google réussie, réponse du backend :', authResponse);
-    
+
     // Effectuez des actions supplémentaires, comme la redirection ou la mise à jour de l'état du composant
   } catch (error) {
     console.error('Échec de l\'authentification Google :', error);
@@ -198,18 +198,18 @@ const handleGoogleSignIn = async (response) => {
     onError: () => console.log('Google login failed'),
     // Autres configurations si nécessaire
 });*/
-   
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       // Valider les champs du formulaire avec Yup
       await schema.validate(User, { abortEarly: false });
       setErrors({}); // Réinitialiser les erreurs
-  
+
       // Appel API pour inscription
       const response = await signup(User);
-  
+
       console.log("Utilisateur inscrit avec succès:", response);
       navigate('/signin'); // Redirection après inscription réussie
     } catch (error) {
@@ -228,8 +228,8 @@ const handleGoogleSignIn = async (response) => {
     }
   };
 
- 
-  
+
+
   return (
     <>
       <section className="relative z-10 overflow-hidden pt-36 pb-16 md:pb-20 lg:pt-[180px] lg:pb-28">
@@ -282,11 +282,11 @@ const handleGoogleSignIn = async (response) => {
         )}
       />
     </div>
-  
+
   <br></br>
-              
-                
-                <form onSubmit={handleSubmit}>
+
+
+                <form onSubmit={handleSubmit}  FinoValidate>
                   <div className="mb-8">
                     <label
                       htmlFor="firstName"
@@ -408,7 +408,7 @@ const handleGoogleSignIn = async (response) => {
         )}
                   </div>
                   <div className="mb-6">
-                    <button 
+                    <button
                       type="submit"
                       className="flex w-full items-center justify-center rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp"
                     >
