@@ -9,8 +9,6 @@ import {
   getTournamentMatchesDraw,
 } from "../../../../../Services/FrontOffice/apiMatch";
 import { useNavigate, useParams } from "react-router-dom";
-import ReactDOM from "react-dom";
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -31,13 +29,12 @@ import {
 import { getTeamDetails } from "../../../../../Services/FrontOffice/apiTeam";
 import { Card, CardContent } from "@mui/material";
 
-import Popupcontent from "./popup";
 import { io } from "socket.io-client";
 import { jwtDecode } from "jwt-decode";
 import { IoIosFootball } from "react-icons/io";
 import { getUserData } from "../../../../../Services/apiUser";
-import StatsSelectedMatch from "./statsSelectedMatch";
-
+import { getStatsForTournamentwithInfo } from "../../../../../Services/FrontOffice/apiGoalStats";
+import { FiPlus } from "react-icons/fi";
 function DisplayAllTournaments() {
   const { id } = useParams();
   const [isPopupOpenFixture, setIsPopupOpenFixture] = useState(false);
@@ -63,7 +60,10 @@ function DisplayAllTournaments() {
   const [user, setUser] = useState();
   const [tabChange, setTabChange] = useState();
   const [numberOfGroups, setnumberOfGroups] = useState();
-  const [matchs, setMatchs] = useState(null);
+  const [TournamentStats, setTournamentStats] = useState([]);
+  const [topScorer, setTopScorer] = useState();
+  const [topYellowCards, setTopYellowCards] = useState();
+  const [topRedCards, setTopRedCards] = useState();
   const openModalInNewTab = (Allmatch) => {
     const match = selectedMatch;
     const state = { match, Tournament };
@@ -160,6 +160,22 @@ function DisplayAllTournaments() {
   useEffect(() => {
     getAllTournamentMatches();
   }, []);
+
+  const getTournamentStats = async () => {
+    try {
+      const response = await getStatsForTournamentwithInfo(Tournament._id);
+      setTournamentStats(response.goalsList);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    if (Tournament) {
+      getTournamentStats();
+    }
+  }, [Tournament]);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === "matches") {
@@ -766,7 +782,20 @@ navigate('/addReservation');
       }
     });
   }, [socket]);
-
+  const getTournamentStatsUpdated = async (tournamentId) => {
+    try {
+      const response = await getStatsForTournamentwithInfo(tournamentId);
+      setTournamentStats(response.goalsList);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    socket.on("updateTournamentStats", (saveClicked, tournamentId) => {
+      console.log(tournamentId);
+      getTournamentStatsUpdated(tournamentId);
+    });
+  }, [socket]);
   useEffect(() => {
     const numberOfTeams = Tournament.nbTeamPartipate || 0;
     const teams = Array.from({ length: numberOfTeams }, (_, index) => ({
@@ -856,6 +885,107 @@ navigate('/addReservation');
     }
     setMatches(updatedMatches);
   }, [RealMatches]);
+  const calculateTopScorers = () => {
+    const playerGoals = {};
+    TournamentStats.forEach((goal) => {
+      const playerId = goal.scorer._id;
+      const teamId = goal.forTeam._id;
+
+      if (!(playerId in playerGoals)) {
+        playerGoals[playerId] = {
+          scorer: goal.scorer,
+          team: goal.forTeam,
+          goals: 0,
+        };
+      }
+
+      // Check if player is from the same team
+      if (playerGoals[playerId].team._id === teamId) {
+        playerGoals[playerId].goals += goal.goalNumber;
+      } else {
+        // If not from the same team, add a new player entry
+        const newPlayerId = playerId + "_" + teamId; // Using player id and team id to make it unique
+        if (!(newPlayerId in playerGoals)) {
+          playerGoals[newPlayerId] = {
+            scorer: goal.scorer,
+            team: goal.forTeam,
+            goals: 0,
+          };
+        }
+        playerGoals[newPlayerId].goals += goal.goalNumber;
+      }
+    });
+
+    const players = Object.values(playerGoals);
+    players.sort((a, b) => b.goals - a.goals);
+    setTopScorer(players);
+  };
+  useEffect(() => {
+    calculateTopScorers();
+  }, [TournamentStats]);
+  const calculateYellowCards = () => {
+    const playerYellowCards = {};
+    setTopYellowCards([]);
+
+    TournamentStats.forEach((goal) => {
+      const playerId = goal.scorer._id;
+      const teamId = goal.forTeam._id;
+
+      if (!(playerId in playerYellowCards)) {
+        playerYellowCards[playerId] = {
+          scorer: goal.scorer,
+          team: goal.forTeam,
+          yellowCardsNumber: 0,
+        };
+      }
+
+      // Check if player is from the same team
+      if (playerYellowCards[playerId].team._id === teamId) {
+        playerYellowCards[playerId].yellowCardsNumber += goal.yellowCardsNumber;
+      } else {
+        const newPlayerId = playerId + "_" + teamId;
+        if (!(newPlayerId in playerYellowCards)) {
+          playerYellowCards[newPlayerId] = {
+            scorer: goal.scorer,
+            team: goal.forTeam,
+            yellowCardsNumber: 0,
+          };
+        }
+        playerYellowCards[newPlayerId].yellowCardsNumber +=
+          goal.yellowCardsNumber;
+      }
+    });
+
+    const players = Object.values(playerYellowCards);
+    players.sort((a, b) => b.yellowCardsNumber - a.yellowCardsNumber);
+    setTopYellowCards(players);
+  };
+
+  useEffect(() => {
+    calculateYellowCards();
+  }, [TournamentStats]);
+  const calculateRedCards = () => {
+    const playerGoals = {};
+    TournamentStats.forEach((goal) => {
+      const playerId = goal.scorer._id;
+      if (!(playerId in playerGoals)) {
+        playerGoals[playerId] = {
+          scorer: goal.scorer,
+          team: goal.forTeam,
+          redCardsNumber: 0,
+        };
+      }
+
+      playerGoals[playerId].redCardsNumber += goal.redCardsNumber;
+    });
+
+    const players = Object.values(playerGoals);
+    players.sort((a, b) => b.redCardsNumber - a.redCardsNumber);
+    setTopRedCards(players);
+  };
+  useEffect(() => {
+    calculateRedCards();
+  }, [TournamentStats]);
   const MatchesComponent = ({ RealMatches, currentPage, handlePageClick }) => {
     const startIndex = currentPage * itemsPerPage;
     const displayedMatches = RealMatches.slice(
@@ -864,65 +994,61 @@ navigate('/addReservation');
     );
     return (
       <div>
-        <div className="flex flex-wrap justify-center">
-          {displayedMatches.map((match, index) => (
-          
-            <Card
-              key={index}
-              onClick={() => handleMatchClick(match)}
-              className="w-full max-w-xs mx-2 mb-4"
-            >
-              <CardContent className="p-4 grid gap-3 text-center">
-                <div className="flex flex-row items-center gap-2 text-sm justify-center">
-                  <img
-                    alt="Team A logo"
-                    className="rounded-full overflow-hidden border object-cover w-8 h-8 ml-2"
-                    height="30"
-                    src={path + match.team1?.image}
-                    style={{
-                      aspectRatio: "30/30",
-                      objectFit: "cover",
-                    }}
-                    width="30"
-                  />
-                  <div className="font-semibold">{match.team1?.name}</div>
-                  <div className="text-4xl font-bold mx-2">vs</div>
-                  <img
-                    alt="Team B logo"
-                    className="rounded-full overflow-hidden border object-cover w-8 h-8"
-                    height="30"
-                    src={path + match.team2?.image}
-                    style={{
-                      aspectRatio: "30/30",
-                      objectFit: "cover",
-                    }}
-                    width="30"
-                  />
-                  <div className="font-semibold">{match.team2?.name}</div>
-                </div>
-                <div className="flex items-center justify-center mb-4">
-                  {match.scoreTeam1 === "" && match.scoreTeam2 === "" ? (
-                    <p>Not Played</p>
-                  ) : (
-                    <div className="text-xl font-bold">
-                      {match.scoreTeam1} - {match.scoreTeam2}
-                    </div>
-                  )}
-                </div>
+        <div className="flex flex-wrap justify-center -ml-24">
+          {displayedMatches
+            .filter((match) => !match.knockoutStageAfterGroup)
+            .map((match, index) => (
+              <Card
+                key={index}
+                onClick={() => handleMatchClick(match)}
+                className="w-full max-w-xs mx-2 mb-4"
+              >
+                <CardContent className="p-4 grid gap-3 text-center">
+                  <div className="flex flex-row items-center gap-2 text-sm justify-center">
+                    <img
+                      alt="Team A logo"
+                      className="rounded-full overflow-hidden border object-cover w-8 h-8 ml-2"
+                      height="30"
+                      src={path + match.team1?.image}
+                      style={{
+                        aspectRatio: "30/30",
+                        objectFit: "cover",
+                      }}
+                      width="30"
+                    />
+                    <div className="font-semibold">{match.team1?.name}</div>
+                    <div className="text-4xl font-bold mx-2">vs</div>
+                    <img
+                      alt="Team B logo"
+                      className="rounded-full overflow-hidden border object-cover w-8 h-8"
+                      height="30"
+                      src={path + match.team2?.image}
+                      style={{
+                        aspectRatio: "30/30",
+                        objectFit: "cover",
+                      }}
+                      width="30"
+                    />
+                    <div className="font-semibold">{match.team2?.name}</div>
+                  </div>
+                  <div className="flex items-center justify-center mb-4">
+                    {match.scoreTeam1 === "" && match.scoreTeam2 === "" ? (
+                      <p>Not Played</p>
+                    ) : (
+                      <div className="text-xl font-bold">
+                        {match.scoreTeam1} - {match.scoreTeam2}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="text-xs grid gap-0.5">
-                  <div>{match.matchDate}</div>
-                  <div>{match.matchTime}</div>
-                  <div>{match.location}</div>
-                </div>
-                <button onClick={() => handleReservationClick(match)}>Reserver</button>
-
-
-              </CardContent>
-             
-            </Card>
-              
-          ))}
+                  <div className="text-xs grid gap-0.5">
+                    <div>{match.matchDate}</div>
+                    <div>{match.matchTime}</div>
+                    <div>{match.location}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
         </div>
        
         <div className="flex justify-center mb-5">
@@ -983,7 +1109,7 @@ navigate('/addReservation');
         <>
           <div className="flex justify-start items-start pt-8 mb-3 ">
             <div>
-              <a className="flex flex-col ml-30 mr-10 min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+              <a className="flex flex-col ml-20 mr-5 min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">
@@ -1055,32 +1181,46 @@ navigate('/addReservation');
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">
-                    FAVORITES TEAMS
+                    MY TEAMS
                   </p>
                 </div>
-                {favoritesTeams.map((team) => (
-                  <div key={team._id} className="w-full">
-                    <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
-                      <img
-                        alt="Team A logo"
-                        className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
-                        src={path + team.image}
-                        style={{
-                          aspectRatio: "1/1",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <div>
-                        <button
-                          className="text-[1rem]"
-                          onClick={() => handleOnClickOnFavoriteTeam(team)}
-                        >
-                          {team.name}
-                        </button>
-                      </div>
+                {favoritesTeams.length === 0 ? (
+                  <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
+                    <div className="flex items-center">
+                      <FiPlus className="mr-2 text-[#ff0046]" size={18} />
+                      <button
+                        className="text-[0.9rem] font-semibold font-sans text-[#ff0046]"
+                        onClick={() => navigate("/team/all")}
+                      >
+                        ADD TEAM
+                      </button>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  favoritesTeams.map((team) => (
+                    <div key={team._id} className="w-full">
+                      <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
+                        <img
+                          alt="Team A logo"
+                          className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                          src={path + team.image}
+                          style={{
+                            aspectRatio: "1/1",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <div>
+                          <button
+                            className="text-[1rem]"
+                            onClick={() => handleOnClickOnFavoriteTeam(team)}
+                          >
+                            {team.name}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </a>
             </div>
             <div>
@@ -1222,25 +1362,6 @@ navigate('/addReservation');
                       currentPage={currentPage}
                       handlePageClick={handlePageClick}
                     />
-
-                    {isPopupOpen &&
-                      selectedMatch &&
-                      userInfo &&
-                      userInfo.userId === Tournament.creator && (
-                        <div>
-                          <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
-                          <Popupcontent
-                            ref={popupRef}
-                            match={selectedMatch}
-                            Tournament={Tournament}
-                            onClose={() => {
-                              setIsPopupOpen(false);
-                              setSelectedMatch(null);
-                            }}
-                            socket={socket}
-                          />
-                        </div>
-                      )}
                   </div>
                 )}
                 {activeTab === "fixtures" && (
@@ -1416,71 +1537,92 @@ navigate('/addReservation');
                                   match.scoreTeam2 !== ""
                               )
                               .map((match, matchIndex) => (
-                                <div
-                                  key={matchIndex}
-                                  className="transition duration-500 hover:bg-[#e9e8e9] ml-15 mr-5"
-                                >
-                                  <div className="flex items-center ml-10 mt-1 ">
-                                    <p className="text-[#555e61] font-medium mr-3 text-[0.8rem]">
-                                      {formatDate(match.matchDate)}
-                                    </p>
-                                    <div>
-                                      <div className="flex items-center mb-2">
-                                        <div className="flex items-center space-x-75">
-                                          <div className="flex items-center">
-                                            <img
-                                              alt="Team A logo"
-                                              className="overflow-hidden border object-cover w-4 h-4 mr-3"
-                                              src={path + match.team1.image}
-                                              style={{
-                                                aspectRatio: "1/1",
-                                                objectFit: "cover",
-                                              }}
-                                            />
-                                            <p className="text-[#555e61] font-medium text-[0.8rem]">
-                                              {match.team1.name}
-                                            </p>
-                                          </div>
-                                          <span className="mx-2 text-black font-semibold text-[13px]">
-                                            {match.scoreTeam1}
-                                          </span>
+                                <>
+                                  <div className="flex justify-between items-center ml-10">
+                                    <div className="flex items-center">
+                                      <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
+                                        {formatDate(match.matchDate)}
+                                      </p>
+
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center mb-4">
+                                          <img
+                                            alt="Team A logo"
+                                            className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                            src={path + match.team1.image}
+                                            style={{
+                                              aspectRatio: "1/1",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                          <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                            {match.team1.name}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <img
+                                            alt="Team A logo"
+                                            className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                            src={path + match.team2.image}
+                                            style={{
+                                              aspectRatio: "1/1",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                          <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                            {match.team2.name}
+                                          </p>
                                         </div>
                                       </div>
-                                      <div className="flex items-center ">
-                                        <div className="flex items-center space-x-75">
-                                          <div className="flex items-center">
-                                            <img
-                                              alt="Team A logo"
-                                              className=" overflow-hidden border object-cover w-4 h-4 mr-3"
-                                              src={path + match.team2.image}
-                                              style={{
-                                                aspectRatio: "1/1",
-                                                objectFit: "cover",
-                                              }}
-                                            />
-                                            <p className="text-[#555e61] font-medium text-[0.8rem]">
-                                              {match.team2.name}
-                                            </p>
-                                          </div>
-                                          <span className="mx-2 text-black font-semibold text-[13px]">
-                                            {match.scoreTeam2}
-                                          </span>
+                                    </div>
+                                    <div className="flex items-center mr-20 ">
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center">
+                                          {match.scoreTeam1 !== "" &&
+                                          match.scoreTeam2 !== "" ? (
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam1}
+                                            </span>
+                                          ) : (
+                                            <span className="mx-2 text-[#555e61]">
+                                              -
+                                            </span>
+                                          )}
+                                          <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
                                         </div>
-                                        <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
+                                        <div className="flex items-center">
+                                          {match.scoreTeam1 !== "" &&
+                                          match.scoreTeam2 !== "" ? (
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam2}
+                                            </span>
+                                          ) : (
+                                            <span className="mx-2 text-[#555e61]">
+                                              -
+                                            </span>
+                                          )}
+                                          <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                        </div>
+                                      </div>
+                                      <div className="flex">
                                         <GiSoccerField
+                                          onClick={() =>
+                                            handleMatchClickFixture(match)
+                                          }
                                           size={18}
-                                          className="-mt-7 mr-10"
+                                          className="mr-10 cursor-pointer"
                                         />
                                         <TvIcon
-                                          className="-mt-7"
+                                          className="mt-1"
                                           style={{ fontSize: "small" }}
                                         />
                                       </div>
                                     </div>
                                   </div>
 
-                                  <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
-                                </div>
+                                  {isPopupOpenFixture &&
+                                    openModalInNewTab(match)}
+                                </>
                               ))}
                           </div>
                         ))}
@@ -1553,12 +1695,106 @@ navigate('/addReservation');
                 )}
               </div>
             </div>
+            <a className="flex flex-col ml-5 w-fit   min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+              <div className="flex mt-4 mb-2 ml-2 mr-5">
+                <MdGrade size={20} className="mr-1" />
+                <p className="text-black font-medium text-[0.9rem]">
+                  TOP SCORERS
+                </p>
+              </div>
+              {topScorer.map(
+                (player) =>
+                  // Check if player has scored any goals
+                  player.goals > 0 && (
+                    <div key={player.scorer._id} className="w-full">
+                      <div className="flex justify-start items-center mb-1 ml-7 mr-2 hover:bg-gray-200">
+                        <img
+                          alt="Team A logo"
+                          className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                          src={path + player.team.image}
+                          style={{
+                            aspectRatio: "1/1",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <div>
+                          <button className="text-[1rem]">
+                            {player.scorer.firstName} : {player.goals}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+              )}
+
+              <div className="flex mt-4 mb-2 ml-2 mr-2">
+                <MdGrade size={20} className="mr-1" />
+                <p className="text-black font-medium text-[0.9rem]">
+                  TOP YELLOW CARDS
+                </p>
+              </div>
+              {topYellowCards.map(
+                (player) =>
+                  // Check if player has scored any goals
+                  player.yellowCardsNumber > 0 && (
+                    <div key={player.scorer._id} className="w-full">
+                      <div className="flex justify-start items-center mb-1 ml-7 mr-2 hover:bg-gray-200">
+                        <img
+                          alt="Team A logo"
+                          className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                          src={path + player.team.image}
+                          style={{
+                            aspectRatio: "1/1",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <div>
+                          <button className="text-[1rem]">
+                            {player.scorer.firstName} :{" "}
+                            {player.yellowCardsNumber}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+              )}
+              <div className="flex mt-4 mb-2 ml-2 mr-2">
+                <MdGrade size={20} className="mr-1" />
+                <p className="text-black font-medium text-[0.9rem]">
+                  TOP RED CARDS
+                </p>
+              </div>
+              {topRedCards.map(
+                (player) =>
+                  // Check if player has scored any goals
+                  player.redCardsNumber > 0 && (
+                    <div key={player.scorer._id} className="w-full">
+                      <div className="flex justify-start items-center mb-1 ml-7 mr-2 hover:bg-gray-200">
+                        <img
+                          alt="Team A logo"
+                          className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                          src={path + player.team.image}
+                          style={{
+                            aspectRatio: "1/1",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <div>
+                          <button className="text-[1rem]">
+                            {player.scorer.firstName} : {player.redCardsNumber}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+              )}
+            </a>
           </div>
         </>
       )}
       {Tournament.tournamentType === "Group Stage" && (
         <>
-          <div className="flex justify-start ml-30 items-start pt-8 mb-3">
+          <div className="flex justify-start ml-15 items-start pt-8 mb-3">
             <div>
               <a className="flex flex-col min-h-screen  mr-8 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
@@ -1632,32 +1868,46 @@ navigate('/addReservation');
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">
-                    FAVORITES TEAMS
+                    MY TEAMS
                   </p>
                 </div>
-                {favoritesTeams.map((team) => (
-                  <div key={team._id} className="w-full">
-                    <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
-                      <img
-                        alt="Team A logo"
-                        className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
-                        src={path + team.image}
-                        style={{
-                          aspectRatio: "1/1",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <div>
-                        <button
-                          className="text-[1rem]"
-                          onClick={() => handleOnClickOnFavoriteTeam(team)}
-                        >
-                          {team.name}
-                        </button>
-                      </div>
+                {favoritesTeams.length === 0 ? (
+                  <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
+                    <div className="flex items-center">
+                      <FiPlus className="mr-2 text-[#ff0046]" size={18} />
+                      <button
+                        className="text-[0.9rem] font-semibold font-sans text-[#ff0046]"
+                        onClick={() => navigate("/team/all")}
+                      >
+                        ADD TEAM
+                      </button>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  favoritesTeams.map((team) => (
+                    <div key={team._id} className="w-full">
+                      <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
+                        <img
+                          alt="Team A logo"
+                          className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                          src={path + team.image}
+                          style={{
+                            aspectRatio: "1/1",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <div>
+                          <button
+                            className="text-[1rem]"
+                            onClick={() => handleOnClickOnFavoriteTeam(team)}
+                          >
+                            {team.name}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </a>
             </div>
             <div>
@@ -1743,6 +1993,19 @@ navigate('/addReservation');
                   {MatchesDrawGroupStage.length > 0 && (
                     <button
                       className={`inline-flex items-center justify-center ${
+                        activeTab === "fixturesgroupstage"
+                          ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                          : "bg-transparent text-[#555e61] hover:text-black"
+                      } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                      onClick={() => handleTabChange("fixturesgroupstage")}
+                    >
+                      Fixtures Group Stage
+                    </button>
+                  )}
+
+                  {MatchesDrawGroupStage.length > 0 && (
+                    <button
+                      className={`inline-flex items-center justify-center ${
                         activeTab === "draw"
                           ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
                           : "bg-transparent text-[#555e61] hover:text-black"
@@ -1811,25 +2074,6 @@ navigate('/addReservation');
                       currentPage={currentPage}
                       handlePageClick={handlePageClick}
                     />
-
-                    {isPopupOpen &&
-                      selectedMatch &&
-                      userInfo &&
-                      userInfo.userId === Tournament.creator && (
-                        <div>
-                          <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
-                          <Popupcontent
-                            ref={popupRef}
-                            match={selectedMatch}
-                            Tournament={Tournament}
-                            onClose={() => {
-                              setIsPopupOpen(false);
-                              setSelectedMatch(null);
-                            }}
-                            socket={socket}
-                          />
-                        </div>
-                      )}
                   </div>
                 )}
                 {activeTab === "results" && (
@@ -1877,69 +2121,86 @@ navigate('/addReservation');
                                   match.scoreTeam2 !== ""
                               )
                               .map((match, matchIndex) => (
-                                <div
-                                  key={matchIndex}
-                                  className="transition duration-500 hover:bg-[#e9e8e9] ml-15 mr-5"
-                                >
-                                  <div className="flex items-center ml-10 mt-1 ">
-                                    <p className="text-[#555e61] font-medium mr-3 text-[0.8rem]">
+                                <div className="flex justify-between items-center ml-10">
+                                  <div className="flex items-center">
+                                    <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
                                       {formatDate(match.matchDate)}
                                     </p>
-                                    <div>
-                                      <div className="flex items-center mb-2">
-                                        <div className="flex items-center space-x-75">
-                                          <div className="flex items-center">
-                                            <img
-                                              alt="Team A logo"
-                                              className="overflow-hidden border object-cover w-4 h-4 mr-3"
-                                              src={path + match.team1.image}
-                                              style={{
-                                                aspectRatio: "1/1",
-                                                objectFit: "cover",
-                                              }}
-                                            />
-                                            <p className="text-[#555e61] font-medium text-[0.8rem]">
-                                              {match.team1.name}
-                                            </p>
-                                          </div>
-                                          <span className="mx-2 text-black font-semibold text-[13px]">
-                                            {match.scoreTeam1}
-                                          </span>
-                                        </div>
+
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center mb-4">
+                                        <img
+                                          alt="Team A logo"
+                                          className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                          src={path + match.team1.image}
+                                          style={{
+                                            aspectRatio: "1/1",
+                                            objectFit: "cover",
+                                          }}
+                                        />
+                                        <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                          {match.team1.name}
+                                        </p>
                                       </div>
-                                      <div className="flex items-center ">
-                                        <div className="flex items-center space-x-75">
-                                          <div className="flex items-center">
-                                            <img
-                                              alt="Team A logo"
-                                              className=" overflow-hidden border object-cover w-4 h-4 mr-3"
-                                              src={path + match.team2.image}
-                                              style={{
-                                                aspectRatio: "1/1",
-                                                objectFit: "cover",
-                                              }}
-                                            />
-                                            <p className="text-[#555e61] font-medium text-[0.8rem]">
-                                              {match.team2.name}
-                                            </p>
-                                          </div>
-                                          <span className="mx-2 text-black font-semibold text-[13px]">
-                                            {match.scoreTeam2}
-                                          </span>
-                                        </div>
-                                        <hr className="border-t -mt-5 ml-5 px-5 py-5 border-red mb-2  transform rotate-90 mr-10" />
-                                        <GiSoccerField
-                                          size={18}
-                                          className="-mt-7 mr-10"
+                                      <div className="flex items-center">
+                                        <img
+                                          alt="Team A logo"
+                                          className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                          src={path + match.team2.image}
+                                          style={{
+                                            aspectRatio: "1/1",
+                                            objectFit: "cover",
+                                          }}
                                         />
-                                        <TvIcon
-                                          className="-mt-7"
-                                          style={{ fontSize: "small" }}
-                                        />
+                                        <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                          {match.team2.name}
+                                        </p>
                                       </div>
                                     </div>
                                   </div>
-                                  <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                                  <div className="flex items-center mr-20 ">
+                                    <div className="flex flex-col">
+                                      <div className="flex items-center">
+                                        {match.scoreTeam1 !== "" &&
+                                        match.scoreTeam2 !== "" ? (
+                                          <span className="mx-2 text-black font-semibold text-[13px]">
+                                            {match.scoreTeam1}
+                                          </span>
+                                        ) : (
+                                          <span className="mx-2 text-[#555e61]">
+                                            -
+                                          </span>
+                                        )}
+                                        <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                      </div>
+                                      <div className="flex items-center">
+                                        {match.scoreTeam1 !== "" &&
+                                        match.scoreTeam2 !== "" ? (
+                                          <span className="mx-2 text-black font-semibold text-[13px]">
+                                            {match.scoreTeam2}
+                                          </span>
+                                        ) : (
+                                          <span className="mx-2 text-[#555e61]">
+                                            -
+                                          </span>
+                                        )}
+                                        <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                      </div>
+                                    </div>
+                                    <div className="flex">
+                                      <GiSoccerField
+                                        onClick={() =>
+                                          handleMatchClickFixture(match)
+                                        }
+                                        size={18}
+                                        className="mr-10 cursor-pointer"
+                                      />
+                                      <TvIcon
+                                        className="mt-1"
+                                        style={{ fontSize: "small" }}
+                                      />
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                           </div>
@@ -2113,7 +2374,7 @@ navigate('/addReservation');
                                   </div>
                                 </a>
                                 {/* Table for the first group */}
-                                <Table className="lg:max-w-[530px] bg-white sm:max-w-[10px] mb-10 mt-5">
+                                <Table className="lg:max-w-[550px] bg-white sm:max-w-[10px] mb-10 mt-5">
                                   {/* Table header */}
                                   <TableHead className="text-left  font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
                                     <TableRow>
@@ -2209,7 +2470,7 @@ navigate('/addReservation');
                                     </div>
                                   </a>
                                   {/* Table for the second group */}
-                                  <Table className="lg:max-w-[500px] bg-white sm:max-w-[10px] mb-10 mt-5">
+                                  <Table className="lg:max-w-[550px] bg-white sm:max-w-[10px] mb-10 mt-5">
                                     {/* Table header */}
                                     <TableHead className="text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0">
                                       <TableRow>
@@ -2300,8 +2561,236 @@ navigate('/addReservation');
                     matchComponent={Match}
                   />
                 )}
+                {MatchesDrawGroupStage.length > 0 &&
+                  activeTab === "fixturesgroupstage" && (
+                    <>
+                      <div className="flex justify-center mb-5 ">
+                        <div
+                          href="#"
+                          className="flex flex-col w-full bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                        >
+                          {RealMatches.reduce((acc, match, index) => {
+                            const lastGroup = acc[acc.length - 1];
+                            if (
+                              !lastGroup ||
+                              lastGroup[0]?.groupNumber !== match.groupNumber
+                            ) {
+                              // Create a new group for matches with a new fixture number
+                              acc.push([match]);
+                            } else {
+                              // Add the match to the existing group
+                              lastGroup.push(match);
+                            }
+                            return acc;
+                          }, []).map((group, groupIndex) => (
+                            <div key={groupIndex}>
+                              {group
+                                .filter(
+                                  (match) =>
+                                    match.knockoutStageAfterGroup === "Draw" &&
+                                    match.team1 !== null &&
+                                    match.team2 !== null
+                                )
+                                .map((match, matchIndex) => {
+                                  return (
+                                    <>
+                                      <div className="flex justify-between items-center ml-10">
+                                        <div className="flex items-center">
+                                          <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
+                                            {formatDate(match.matchDate)}
+                                          </p>
+
+                                          <div className="flex flex-col">
+                                            <div className="flex items-center mb-4">
+                                              <img
+                                                alt="Team A logo"
+                                                className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                                src={path + match.team1?.image}
+                                                style={{
+                                                  aspectRatio: "1/1",
+                                                  objectFit: "cover",
+                                                }}
+                                              />
+                                              <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                                {match.team1?.name}
+                                              </p>
+                                            </div>
+                                            <div className="flex items-center">
+                                              <img
+                                                alt="Team A logo"
+                                                className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                                src={path + match.team2?.image}
+                                                style={{
+                                                  aspectRatio: "1/1",
+                                                  objectFit: "cover",
+                                                }}
+                                              />
+                                              <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                                {match.team2?.name}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center mr-20 ">
+                                          <div className="flex flex-col">
+                                            <div className="flex items-center">
+                                              {match?.scoreTeam1 !== "" &&
+                                              match?.scoreTeam2 !== "" ? (
+                                                <span className="mx-2 text-black font-semibold text-[13px]">
+                                                  {match?.scoreTeam1}
+                                                </span>
+                                              ) : (
+                                                <span className="mx-2 text-[#555e61]">
+                                                  -
+                                                </span>
+                                              )}
+                                              <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                            </div>
+                                            <div className="flex items-center">
+                                              {match?.scoreTeam1 !== "" &&
+                                              match?.scoreTeam2 !== "" ? (
+                                                <span className="mx-2 text-black font-semibold text-[13px]">
+                                                  {match?.scoreTeam2}
+                                                </span>
+                                              ) : (
+                                                <span className="mx-2 text-[#555e61]">
+                                                  -
+                                                </span>
+                                              )}
+                                              <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                            </div>
+                                          </div>
+                                          <div className="flex">
+                                            <GiSoccerField
+                                              onClick={() =>
+                                                handleMatchClickFixture(match)
+                                              }
+                                              size={18}
+                                              className="mr-10 cursor-pointer"
+                                            />
+                                            <TvIcon
+                                              className="mt-1"
+                                              style={{ fontSize: "small" }}
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {isPopupOpenFixture &&
+                                        userInfo &&
+                                        userInfo.userId ===
+                                          Tournament.creator &&
+                                        openModalInNewTab(match)}
+                                    </>
+                                  );
+                                })}
+
+                              <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
               </div>
             </div>
+            {activeTab !== "standings" && (
+              <a className="flex flex-col ml-5 w-fit   min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+                <div className="flex mt-4 mb-2 ml-2 mr-5">
+                  <MdGrade size={20} className="mr-1" />
+                  <p className="text-black font-medium text-[0.9rem]">
+                    TOP SCORERS
+                  </p>
+                </div>
+                {topScorer.map(
+                  (player) =>
+                    // Check if player has scored any goals
+                    player.goals > 0 && (
+                      <div key={player.scorer._id} className="w-full">
+                        <div className="flex justify-start items-center mb-1 ml-7 mr-2 hover:bg-gray-200">
+                          <img
+                            alt="Team A logo"
+                            className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                            src={path + player.team.image}
+                            style={{
+                              aspectRatio: "1/1",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <div>
+                            <button className="text-[1rem]">
+                              {player.scorer.firstName} : {player.goals}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                )}
+
+                <div className="flex mt-4 mb-2 ml-2 mr-2">
+                  <MdGrade size={20} className="mr-1" />
+                  <p className="text-black font-medium text-[0.9rem]">
+                    TOP YELLOW CARDS
+                  </p>
+                </div>
+                {topYellowCards.map(
+                  (player) =>
+                    // Check if player has scored any goals
+                    player.yellowCardsNumber > 0 && (
+                      <div key={player.scorer._id} className="w-full">
+                        <div className="flex justify-start items-center mb-1 ml-7 mr-2 hover:bg-gray-200">
+                          <img
+                            alt="Team A logo"
+                            className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                            src={path + player.team.image}
+                            style={{
+                              aspectRatio: "1/1",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <div>
+                            <button className="text-[1rem]">
+                              {player.scorer.firstName} :{" "}
+                              {player.yellowCardsNumber}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                )}
+                <div className="flex mt-4 mb-2 ml-2 mr-2">
+                  <MdGrade size={20} className="mr-1" />
+                  <p className="text-black font-medium text-[0.9rem]">
+                    TOP RED CARDS
+                  </p>
+                </div>
+                {topRedCards.map(
+                  (player) =>
+                    // Check if player has scored any goals
+                    player.redCardsNumber > 0 && (
+                      <div key={player.scorer._id} className="w-full">
+                        <div className="flex justify-start items-center mb-1 ml-7 mr-2 hover:bg-gray-200">
+                          <img
+                            alt="Team A logo"
+                            className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
+                            src={path + player.team.image}
+                            style={{
+                              aspectRatio: "1/1",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <div>
+                            <button className="text-[1rem]">
+                              {player.scorer.firstName} :{" "}
+                              {player.redCardsNumber}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                )}
+              </a>
+            )}
           </div>
         </>
       )}
@@ -2411,30 +2900,89 @@ navigate('/addReservation');
               </a>
             </div>
             <div>
-              <div>
-                <button
-                  className={`${
-                    activeTab === "matches"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  } px-4 py-2 rounded-md focus:outline-none mb-5 mr-5`}
-                  onClick={() => handleTabChange("matches")}
-                >
-                  Matches
-                </button>
-                <button
-                  className={`${
-                    activeTab === "standings"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  } px-4 py-2 rounded-md focus:outline-none mb-5`}
-                  onClick={() => handleTabChange("standings")}
-                >
-                  Draw
-                </button>
-              </div>
-              <div className="">
-                {activeTab === "standings" && (
+              <a
+                href="#"
+                className="flex  flex-col w-full mb-2  bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+              >
+                <div className="flex items-center ml-3 mt-3">
+                  <IoIosFootball
+                    className="text-black mr-2"
+                    style={{ fontSize: "1.3rem" }}
+                  />
+                  <p className="text-black font-medium text-[0.8rem]">
+                    FOOTBALL
+                  </p>
+                  <span className="mx-2 text-gray-400">{">"}</span>
+                  <p className="text-black font-medium text-[0.9rem]">
+                    {Tournament.city}
+                  </p>
+                </div>
+                <div className="flex items-center mb-4 ml-6 mt-4">
+                  <img
+                    alt="Team A logo"
+                    className="rounded-md overflow-hidden border object-cover w-16 h-16 mr-4"
+                    src={pathTournament + Tournament.image}
+                    style={{
+                      aspectRatio: "1/1",
+                      objectFit: "cover",
+                    }}
+                  />
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2">
+                      {Tournament.name}
+                    </h2>
+
+                    <p className="text-sm text-gray-600">
+                      {Tournament.description}
+                    </p>
+                  </div>
+                </div>
+                <hr className="border-t  border-white mb-2 " />{" "}
+                <div className="flex justify-start gap-2 ml-4 ">
+                  <button
+                    className={`inline-flex items-center justify-center ${
+                      activeTab === "matches"
+                        ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                        : "bg-transparent text-[#555e61] hover:text-black"
+                    } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                    onClick={() => handleTabChange("matches")}
+                  >
+                    <span>Matches</span>
+                  </button>
+                  <button
+                    className={`inline-flex items-center justify-center ${
+                      activeTab === "results"
+                        ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                        : "bg-transparent text-[#555e61] hover:text-black"
+                    } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                    onClick={() => handleTabChange("results")}
+                  >
+                    RESULTS
+                  </button>
+                  <button
+                    className={`inline-flex items-center justify-center ${
+                      activeTab === "fixtures"
+                        ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                        : "bg-transparent text-[#555e61] hover:text-black"
+                    } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                    onClick={() => handleTabChange("fixtures")}
+                  >
+                    FIXTURES
+                  </button>
+                  <button
+                    className={`inline-flex items-center justify-center ${
+                      activeTab === "draw"
+                        ? "bg-transparent text-[#ff0046] border-b-4 border-[#ff0046]"
+                        : "bg-transparent text-[#555e61] hover:text-black"
+                    } px-5 py-2 focus:outline-none text-[0.8rem] font-semibold`}
+                    onClick={() => handleTabChange("draw")}
+                  >
+                    DRAW
+                  </button>
+                </div>
+              </a>
+              <div className="min-w-[53rem]">
+                {activeTab === "draw" && (
                   <div className="flex justify-center">
                     <SingleEliminationBracket
                       matches={Matches}
@@ -2497,29 +3045,284 @@ navigate('/addReservation');
                       currentPage={currentPage}
                       handlePageClick={handlePageClick}
                     />
-
-                    {isPopupOpen &&
-                      selectedMatch &&
-                      userInfo &&
-                      userInfo.userId === Tournament.creator && (
-                        <div>
-                          <div className="fixed inset-0 bg-gray-900 bg-opacity-30" />
-                          <Popupcontent
-                            ref={popupRef}
-                            match={selectedMatch}
-                            Tournament={Tournament}
-                            onClose={() => {
-                              setIsPopupOpen(false);
-                              setSelectedMatch(null);
-                            }}
-                            socket={socket}
-                          />
-                        </div>
-                      )}
                   </div>
+                )}
+                {activeTab === "fixtures" && (
+                  <>
+                    <div className="flex justify-center  mb-5 ">
+                      <div
+                        href="#"
+                        className="flex flex-col w-full bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                        // Adjust the width as needed
+                      >
+                        {RealMatches.reduce((acc, match, index) => {
+                          const lastGroup = acc[acc.length - 1];
+                          if (
+                            !lastGroup ||
+                            lastGroup[0]?.fixture !== match.fixture
+                          ) {
+                            // Create a new group for matches with a new fixture number
+                            acc.push([match]);
+                          } else {
+                            // Add the match to the existing group
+                            lastGroup.push(match);
+                          }
+                          return acc;
+                        }, []).map((group, groupIndex) => (
+                          <div key={groupIndex}>
+                            <a
+                              href="#"
+                              className="mt-2 mb-3 flex flex-col ml-5 mr-5 h-6 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                            >
+                              <div className="flex items-center ml-5 mt-1 ">
+                                <p className="text-[#555e61] font-medium text-[0.7rem]">
+                                  ROUND {group[0].fixture}
+                                </p>
+                              </div>
+                            </a>
+
+                            {group
+                              .filter(
+                                (match) =>
+                                  match.team1 !== null && match.team2 !== null
+                              )
+                              .map((match, matchIndex) => (
+                                <>
+                                  <div className="flex justify-between items-center ml-10">
+                                    <div className="flex items-center">
+                                      <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
+                                        {formatDate(match.matchDate)}
+                                      </p>
+
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center mb-4">
+                                          <img
+                                            alt="Team A logo"
+                                            className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                            src={path + match.team1.image}
+                                            style={{
+                                              aspectRatio: "1/1",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                          <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                            {match.team1.name}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <img
+                                            alt="Team A logo"
+                                            className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                            src={path + match.team2.image}
+                                            style={{
+                                              aspectRatio: "1/1",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                          <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                            {match.team2.name}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center mr-20 ">
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center">
+                                          {match.scoreTeam1 !== "" &&
+                                          match.scoreTeam2 !== "" ? (
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam1}
+                                            </span>
+                                          ) : (
+                                            <span className="mx-2 text-[#555e61]">
+                                              -
+                                            </span>
+                                          )}
+                                          <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                        </div>
+                                        <div className="flex items-center">
+                                          {match.scoreTeam1 !== "" &&
+                                          match.scoreTeam2 !== "" ? (
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam2}
+                                            </span>
+                                          ) : (
+                                            <span className="mx-2 text-[#555e61]">
+                                              -
+                                            </span>
+                                          )}
+                                          <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                        </div>
+                                      </div>
+                                      <div className="flex">
+                                        <GiSoccerField
+                                          onClick={() =>
+                                            handleMatchClickFixture(match)
+                                          }
+                                          size={18}
+                                          className="mr-10 cursor-pointer"
+                                        />
+                                        <TvIcon
+                                          className="mt-1"
+                                          style={{ fontSize: "small" }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {isPopupOpenFixture &&
+                                    openModalInNewTab(match)}
+                                </>
+                              ))}
+
+                            <hr className="border-t px-5 py-2 border-red ml-5 mr-5" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+                {activeTab === "results" && (
+                  <>
+                    <div className="flex justify-center mb-5 ">
+                      <div
+                        href="#"
+                        className="flex flex-col  w-full bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                      >
+                        {RealMatches.reduce((acc, match, index) => {
+                          const lastGroup = acc[acc.length - 1];
+                          if (
+                            !lastGroup ||
+                            lastGroup[0]?.fixture !== match.fixture
+                          ) {
+                            // Create a new group for matches with a new fixture number
+                            acc.push([match]);
+                          } else {
+                            // Add the match to the existing group
+                            lastGroup.push(match);
+                          }
+                          return acc;
+                        }, []).map((group, groupIndex) => (
+                          <div key={groupIndex}>
+                            {group.some(
+                              (match) =>
+                                match.scoreTeam1 !== "" &&
+                                match.scoreTeam2 !== ""
+                            ) && (
+                              <a
+                                href="#"
+                                className="mt-2 mb-1 flex flex-col ml-5 mr-5 h-6 bg-white border border-gray-200 rounded-md shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                              >
+                                <div className="flex items-center ml-5 mt-1 ">
+                                  <p className="text-[#555e61] font-medium text-[0.7rem]">
+                                    ROUND {group[0].fixture}
+                                  </p>
+                                </div>
+                              </a>
+                            )}
+                            {group
+                              .filter(
+                                (match) =>
+                                  match.scoreTeam1 !== "" &&
+                                  match.scoreTeam2 !== ""
+                              )
+                              .map((match, matchIndex) => (
+                                <>
+                                  <div className="flex justify-between items-center ml-10">
+                                    <div className="flex items-center">
+                                      <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
+                                        {formatDate(match.matchDate)}
+                                      </p>
+
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center mb-4">
+                                          <img
+                                            alt="Team A logo"
+                                            className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                            src={path + match.team1.image}
+                                            style={{
+                                              aspectRatio: "1/1",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                          <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                            {match.team1.name}
+                                          </p>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <img
+                                            alt="Team A logo"
+                                            className="overflow-hidden border object-cover w-4 h-4 mr-3"
+                                            src={path + match.team2.image}
+                                            style={{
+                                              aspectRatio: "1/1",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                          <p className="text-[#555e61] font-medium text-[0.8rem]">
+                                            {match.team2.name}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center mr-20 ">
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center">
+                                          {match.scoreTeam1 !== "" &&
+                                          match.scoreTeam2 !== "" ? (
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam1}
+                                            </span>
+                                          ) : (
+                                            <span className="mx-2 text-[#555e61]">
+                                              -
+                                            </span>
+                                          )}
+                                          <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                        </div>
+                                        <div className="flex items-center">
+                                          {match.scoreTeam1 !== "" &&
+                                          match.scoreTeam2 !== "" ? (
+                                            <span className="mx-2 text-black font-semibold text-[13px]">
+                                              {match.scoreTeam2}
+                                            </span>
+                                          ) : (
+                                            <span className="mx-2 text-[#555e61]">
+                                              -
+                                            </span>
+                                          )}
+                                          <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
+                                        </div>
+                                      </div>
+                                      <div className="flex">
+                                        <GiSoccerField
+                                          onClick={() =>
+                                            handleMatchClickFixture(match)
+                                          }
+                                          size={18}
+                                          className="mr-10 cursor-pointer"
+                                        />
+                                        <TvIcon
+                                          className="mt-1"
+                                          style={{ fontSize: "small" }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {isPopupOpenFixture &&
+                                    openModalInNewTab(match)}
+                                </>
+                              ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
+            <div></div>
           </div>
         </>
       )}
