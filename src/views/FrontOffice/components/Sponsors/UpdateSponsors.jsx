@@ -52,7 +52,7 @@ function UpdateSponsors() {
             console.log("Sponsor ID:", _id);
             console.log("New data:", newData);
             await updateSp(_id, newData);
-            navigate("/Team");
+            navigate("/Team/all");
         } catch (error) {
             console.error("Error updating sponsor:", error);
             if (error.response) {

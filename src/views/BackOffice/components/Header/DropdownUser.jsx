@@ -11,6 +11,10 @@ const DropdownUser = () => {
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
+
+  const baseUrl =  "http://localhost:3000/"; // This will dynamically set the base URL
+  const imageUrl = userData?.image ? `${baseUrl}${userData.image}` : '';
+
   useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -24,10 +28,19 @@ const DropdownUser = () => {
     fetchUserProfile();
   }, []);
 
+  useEffect(() => {
+    const autoLogoutTimeout = setTimeout(() => {
+      deleteToken();
+    }, 58 * 60 * 1000); // Timeout réglé pour 58 minutes
+
+    return () => clearTimeout(autoLogoutTimeout);
+  }, []);
+
   const deleteToken = () => {
     localStorage.removeItem("token");
     setTimeout(() =>  navigate('/signin'), 1000);
-  
+    window.location.reload();
+
   };
   // close on click outside
   useEffect(() => {
@@ -67,13 +80,16 @@ const DropdownUser = () => {
           <span className="block text-sm font-medium text-black dark:text-white">
             {userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}
           </span>
-          
+
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-  <img src={userData?.image|| UserOne} alt="User" />
+        <span className="h-12 w-12 rounded-full overflow-hidden">
+  <img
+    className="h-full w-full object-cover"
+    src={imageUrl || UserOne}
+    alt="User"
+  />
 </span>
-
         <svg
           className="hidden fill-current sm:block"
           width="12"
@@ -128,7 +144,7 @@ const DropdownUser = () => {
           </li>
           <li>
             <Link
-              to="#"
+              to="backoffice/profile/update"
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <svg
@@ -149,7 +165,7 @@ const DropdownUser = () => {
           </li>
           <li>
             <Link
-              to="/pages/settings"
+              to="/backoffice/profile/update"
               className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
             >
               <svg
@@ -173,7 +189,7 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        
+
         <button  onClick={deleteToken} className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
           <svg
             className="fill-current"

@@ -6,6 +6,8 @@ import Tournaments from "./Components/Tournaments.jsx";
 import TeamProfile from "./Components/TeamProfile.jsx";
 import Invitations from "./Components/Invitations.jsx";
 import LineUps from "./Components/LineUps.jsx";
+import TeamMembers from "./Components/TeamMembers.jsx";
+import SentInvitations from "./Components/SentInvitations.jsx";
 
 
 export default function RoutingDashboardTeam() {
@@ -42,8 +44,16 @@ export default function RoutingDashboardTeam() {
                     element={ <Invitations/> }
                 />
                 <Route
+                    path="sentinvitations"
+                    element={ <SentInvitations/> }
+                />
+                <Route
                     path="lineups"
                     element={ <LineUps/> }
+                />
+                <Route
+                    path="members"
+                    element={ <TeamMembers/> }
                 />
 
             </Route>

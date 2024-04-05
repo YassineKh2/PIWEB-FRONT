@@ -1,7 +1,7 @@
 import {Route, Routes} from "react-router-dom";
 import PageTitle from "../PageTitle.jsx";
 import ConsultTeams from "./ConsultTeams/ConsultTeams.jsx";
-import TableTwo from "../Tables/TableTwo.jsx";
+import TeamProfile from "./ConsultTeams/ProfileTeam.jsx";
 
 export default function RoutingTeamsBack() {
 return(
@@ -16,11 +16,11 @@ return(
             }
         />
         <Route
-            path="test"
+            path="profile/:id"
             element={
                 <>
                     <PageTitle title="Calendar | TailAdmin - Tailwind CSS Admin Dashboard Template"/>
-                    <TableTwo/>
+                    <TeamProfile/>
                 </>
             }
         />

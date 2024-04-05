@@ -85,7 +85,10 @@ console.log(selectedStadiumsToDelete)
 },[])
   return (
     <div>
-      <button onClick={() => setShowCheckboxes(!showCheckboxes)}>Toggle Selection</button>
+      <button 
+                    className="mt-6  ease-in-up hidden rounded-md bg-primary py-2 text-base font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-9 lg:px-6 xl:px-9"
+
+      onClick={() => setShowCheckboxes(!showCheckboxes)}>Toggle Selection</button>
       <div>
             <button
               onClick={() => navigate("/backoffice/stadiums/add")}
@@ -93,15 +96,34 @@ console.log(selectedStadiumsToDelete)
             >
               Create Stadium
             </button>
+            {showCheckboxes && (
+        <button 
+        className="mt-6  ease-in-up hidden rounded-md bg-red-500 py-2 px-6 text-base font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-9 lg:px-6 xl:px-9 ml-auto mr-10"
+        
+        onClick={handleDeleteSelected}>Delete Selected</button>
+      )}
           </div>
       <div className="mt-6 mb-12 ml-10 mr-10 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
         {stadiums.map((stadium) => (
           <div key={stadium._id} className="w-full">
+               {showCheckboxes && (
+                 <>
+                 <div class="flex items-center ps-4 border border-gray-200 rounded dark:border-gray-700">
+    <input onChange={(e) => handleCheckboxChange(e, stadium)} id={"bordered-checkbox-1"+stadium._id} type="checkbox" value="" name="bordered-checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+    <label for={"bordered-checkbox-1"+stadium._id} class="w-full py-4 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Select</label>
+</div>
+                 </>
+              
+                 
+                )}
             <div className="wow fadeInUp relative overflow-hidden rounded-md bg-white shadow-one dark:bg-dark">
               <a href="/" className="relative block h-[220px] w-full">
+                
                 <span className="absolute top-6 right-6 z-20 inline-flex items-center justify-center rounded-full bg-primary py-2 px-4 text-sm font-semibold capitalize text-white">
                   {stadium.name}
                 </span>
+            
+                
                 <img
                   src="https://via.placeholder.com/350" // Replace with actual image source
                   alt="Stadium"
@@ -111,6 +133,7 @@ console.log(selectedStadiumsToDelete)
                     objectFit: "cover",
                   }}
                 />
+                
               </a>
               <div className="p-6 sm:p-8 md:py-8 md:px-6 lg:p-8 xl:py-8 xl:px-5 2xl:p-8">
                 <h3>
@@ -132,9 +155,6 @@ console.log(selectedStadiumsToDelete)
                 </p>
               </div>
               <div className="flex flex-wrap justify-center md:justify-start">
-                {showCheckboxes && (
-                  <input type="checkbox" onChange={(e) => handleCheckboxChange(e, stadium)} />
-                )}
                 <button onClick={() => handleReadMore(stadium._id)} className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8">Read More</button>
                 <button onClick={() => handleUpdateClick(stadium)} className="mb-4 -mt-4 mr-2 ease-in-up rounded-full bg-primary py-2 px-6 text-sm font-bold text-white transition duration-300 hover:bg-opacity-90 hover:shadow-signUp md:block md:px-8 lg:px-3 xl:px-8">Update</button>
               </div>
@@ -144,9 +164,7 @@ console.log(selectedStadiumsToDelete)
       </div>
       {showModal && <ShowDetailsModal show={showModal} handleClose={handleCloseModal} stadium={selectedStadium} />}
       {showUpdateModal && <UpdateStadiumModal show={showUpdateModal} handleClose={handleCloseUpdateModal} selectedStadium={selectedStadium} />}
-      {showCheckboxes && (
-        <button onClick={handleDeleteSelected}>Delete Selected</button>
-      )}
+    
     </div>
   );
 }

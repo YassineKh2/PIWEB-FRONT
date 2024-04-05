@@ -58,6 +58,10 @@ function UpdateUserProfile() {
     }
   };
 
+  const handleUpdatePassword = () => {
+    navigate('/updatePassword');
+  };
+
   return (
     <section id="update-profile" className="overflow-hidden py-16 md:py-20 lg:py-28">
       <div className="container">
@@ -115,17 +119,21 @@ function UpdateUserProfile() {
                   <div className="w-full px-4">
                     <div className="mb-8">
                       <label htmlFor="password" className="mb-3 block text-sm font-medium text-dark dark:text-white">
-                        Password (Optional)
+                        Enter your password 
                       </label>
-                      <input type="password" id="password" name="password" placeholder="Enter new password (optional)" value={user.password} onChange={handleChange} className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp" />
-                      <small className="text-xs text-gray-500">Leave blank to keep current password.</small>
+                      <input type="password" id="password" name="password" placeholder="Enter new password" value={user.password} onChange={handleChange} className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp" />
+                      <small className="text-xs text-gray-500">You have to enter your password to update your profile</small>
                     </div>
                   </div>
-                  <div className="w-full px-4">
-                    <button className="rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
-                      Update Profile
-                    </button>
-                  </div>
+                  <div className="w-full px-4 flex justify-between">
+  <button className="rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
+    Update Profile
+  </button>
+
+  <button className="rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp" onClick={handleUpdatePassword}>
+        Update Password
+      </button>
+</div>
                 </div>
               </form>
               {error && <p className="mt-4 text-center text-red-500">{error}</p>}

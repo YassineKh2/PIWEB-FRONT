@@ -9,7 +9,11 @@ import {
   GetCountries,
   GetStateByCountry,
 } from "../../../../../Services/APis/CountryAPI";
-import { getAllTeams } from "../../../../../Services/FrontOffice/apiTeam";
+import {
+  getAllTeams,
+  getTeamDetails,
+  updateTeam,
+} from "../../../../../Services/FrontOffice/apiTeam";
 import { addMatch } from "../../../../../Services/FrontOffice/apiMatch";
 import * as yup from "yup";
 import { getGeocodingData } from "../../../../../Services/APis/Geocoding";
@@ -327,9 +331,13 @@ useEffect(() => {
 
   fetchStadiums();
 }, []);
+
+
+
  // Filter stadiums by the selected city
  useEffect(() => {
   if (Tournament.city && Array.isArray(stadiums)) {
+    
     const filtered = stadiums.filter(stadium => stadium.address && stadium.address.city === Tournament.city);
     setFilteredStadiums(filtered);
     console.log(Tournament.city)
@@ -440,7 +448,7 @@ const hideNotifications = () => {
       } else if (error.request) {
         setError("Network Error. Please check your internet connection.");
       } else {
-        setError("Error fetching hotels. Please try again.");
+        setError("Error fetching hotels. Please try changing the raduis");
       }
 
       setHotelData([]);
@@ -452,7 +460,7 @@ const hideNotifications = () => {
   // useEffect hook
   useEffect(() => {
     fetchData(SelectedCities);
-  }, [SelectedCities]);
+  }, [SelectedCities,]);
 
   const toggleHotelSelection = (hotelId) => {
     //setError(null);
@@ -514,7 +522,7 @@ const hideNotifications = () => {
     setCity(e.target.value);
   };
   const handleRadiusChange = () => {
-    fetchData();
+    fetchData(Tournament.city);
   };
 
   // Calculate the index of the last hotel on the current page
@@ -674,9 +682,30 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
         const matchesPerRound = numTeams / 2;
 
         if (Tournament.tournamentType === "League") {
+          selectedTeams.forEach(async (team) => {
+            try {
+              const teamData = await getTeamDetails(team);
+
+              teamData.team.tournaments.push(
+                latestTournamentId.latestTournamentId
+              );
+              teamData.team.tournamentInvitations.push({
+                tournament: latestTournamentId.latestTournamentId,
+              });
+              await updateTeam(teamData.team);
+            } catch (error) {
+              console.error(`Error updating team ${team.id}: ${error.message}`);
+            }
+          });
           let teamOrder = selectedTeams.slice();
+          const tournamentStartDate = new Date(Tournament.startDate);
+          const tournamentEndDate = new Date(Tournament.endDate);
+          let currentDate = new Date(tournamentStartDate);
+          // Initialize the match date (start from the tournament start date)
 
           for (let round = 0; round < totalRounds; round++) {
+            const randomHour = 8 + Math.floor(Math.random() * 12); // Random hour between 8 and 19
+            currentDate.setHours(randomHour, 0, 0, 0);
             for (let match = 0; match < matchesPerRound; match++) {
               // Determine the indices for the home and away teams
               const homeIndex = match;
@@ -691,7 +720,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                 const matchData = {
                   win: "",
                   loss: "",
-                  matchDate: new Date(),
+                  matchDate: new Date(currentDate),
                   scoreTeam1: "",
                   scoreTeam2: "",
                   fixture: round + 1, // Assign the round number as the fixture number
@@ -701,13 +730,30 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                 };
 
                 await addMatch(matchData);
+                currentDate.setHours(currentDate.getHours() + 3);
               }
             }
+            currentDate.setDate(currentDate.getDate() + 1);
 
             // Rotate the array of teams for the next round, keeping the first team fixed
             teamOrder = [teamOrder[0]].concat(teamOrder.slice(2), teamOrder[1]);
           }
         } else if (Tournament.tournamentType === "Knockout") {
+          selectedTeams.forEach(async (team) => {
+            try {
+              const teamData = await getTeamDetails(team);
+
+              teamData.team.tournaments.push(
+                latestTournamentId.latestTournamentId
+              );
+              teamData.team.tournamentInvitations.push({
+                tournament: latestTournamentId.latestTournamentId,
+              });
+              await updateTeam(teamData.team);
+            } catch (error) {
+              console.error(`Error updating team ${team.id}: ${error.message}`);
+            }
+          });
           selectedTeams.sort(() => Math.random() - 0.5);
 
           while (selectedTeams.length >= 2) {
@@ -718,7 +764,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
               win: "",
               loss: "",
               nextMatchId: j + idNextMatch,
-              matchDate: new Date(),
+              matchDate: Tournament.startDate,
               scoreTeam1: "",
               scoreTeam2: "",
               fixture: "",
@@ -734,20 +780,25 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
             RealMatches.push(matchData);
             await addMatch(matchData);
           }
+          let matchDate = new Date(Tournament.startDate);
+          console.log(matchDate);
           for (let i = 0; i < RealMatches.length - 1; i++) {
             if (i % 2 === 0) {
               idNextMatch++;
+              matchDate = randomDate(matchDate, new Date(Tournament.endDate));
             }
 
             if (idNextMatch > RealMatches.length * 2 - 1) {
               idNextMatch = null;
+              matchDate = Tournament.endDate;
             }
+
             const emptyMatch = {
               id: RealMatches.length + i + 1,
               win: "",
               loss: "",
               nextMatchId: idNextMatch,
-              matchDate: new Date(),
+              matchDate: matchDate,
               scoreTeam1: "",
               scoreTeam2: "",
               fixture: "",
@@ -779,6 +830,11 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
     if (image) {
       fileReader.readAsDataURL(image);
     }
+  };
+  const randomDate = (start, end) => {
+    return new Date(
+      start.getTime() + Math.random() * (end.getTime() - start.getTime())
+    );
   };
 
   const TeamItem = ({ team }) => {
@@ -1277,7 +1333,8 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
             )}
 
             {currentStep === 2 && (
-           <>{
+           <>
+           {
             <div className="mt-6 mb-12 ml-10 mr-10 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 xl:grid-cols-3">
   {filteredStadiums.map((stadium) => (
     <div key={stadium._id} className="w-full">
@@ -1447,6 +1504,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
                       }).map((_, index) => (
                         <button
                           key={index}
+                          type="button"
                           onClick={() => handlePageChange(index + 1)}
                           className={`mx-2 px-3 py-2 border ${
                             currentPage === index + 1
@@ -1513,6 +1571,7 @@ const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
               ) : (
                 <div className="flex justify-center">
                   {/* Center the submit button */}
+                  
                   <button
                     type="submit"
                     className="flex justify-center duration-80 mb-4 w-50 cursor-pointer rounded-md border border-transparent bg-primary py-3 px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"

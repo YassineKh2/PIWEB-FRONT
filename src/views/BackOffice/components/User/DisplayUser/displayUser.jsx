@@ -9,7 +9,9 @@ import Swal from 'sweetalert2';
 
 function DisplayAllUsers() {
     const [userData, setUserData] = useState([]);
-
+    const baseUrl = "http://localhost:3000/";
+    const pathPlayer ="http://localhost:3000/public/images/players/"
+    const pathStaff= "http://localhost:3000/public/images/staff/"
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -111,7 +113,19 @@ function DisplayAllUsers() {
                 </tr>
               </thead>
               <tbody>
-                {userData.map((user, index) => (
+                {userData.map((user, index) => {
+                  
+                  let path =baseUrl
+
+                  if(user.role === "P")
+                  path = pathPlayer
+
+                  if(user.role === "S")
+                  path = pathStaff
+              
+          
+                  return (
+                  
                   <tr
                     key={index}
                     className={`${
@@ -120,7 +134,7 @@ function DisplayAllUsers() {
                   >
                     <td className="py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                       <img
-                        src={user.image}
+                        src={user.image ? `${path}${user.image}` : `${baseUrl}userImage.png`}
                         alt="User"
                         className="w-10 h-10 rounded-full"
                       />
@@ -171,7 +185,9 @@ function DisplayAllUsers() {
                           
                     </td>
                   </tr>
-                ))}
+                )}
+                
+                )}
               </tbody>
             </table>
           </div>
