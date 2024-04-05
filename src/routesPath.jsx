@@ -55,8 +55,6 @@ function RoutesPath() {
         <Route path="/upres" element={<UpReservation/>}/>
         <Route path="/upsp" element={<UpdateSponsors/>}/>
         <Route path="/syGenie" element={<SyGenie/>}/>
-
-        <Route path="/team" element={<AddTeam />} />
         <Route path="signin" element={<SigninPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="about" element={<About />} />
