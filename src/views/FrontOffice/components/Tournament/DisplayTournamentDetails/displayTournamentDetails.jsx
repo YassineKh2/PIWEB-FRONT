@@ -351,9 +351,27 @@ function DisplayAllTournaments() {
           numGroup--;
         }
         numGroup = numberOfGroups;
-
         while (numGroup !== 0) {
+          groups[numGroup].sort((teamA, teamB) => {
+            if (teamA.points !== teamB.points) {
+              return teamB.points - teamA.points;
+            }
+            return teamB.goalDifference - teamA.goalDifference;
+          });
+        
+          winners[numGroup] = [groups[numGroup][0]]; // First team with highest points
+          runnerups[numGroup] = [groups[numGroup][1]]; // Second team with second highest points
+        
+          numGroup--;
+        }
+      /*  while (numGroup !== 0) {
+
           groups[numGroup].forEach((team) => {
+            console.log(team)
+            if (winners[numGroup].length === 0) {
+              // If winners[numGroup] is empty, directly push the team into it
+              winners[numGroup].push(team);
+            } else {
             if (team.points > maxPoints) {
               runnerups[numGroup] = winners[numGroup];
               maxPoints = team.points;
@@ -371,11 +389,12 @@ function DisplayAllTournaments() {
             } else if (team.points === runnerUpPoints) {
               runnerups[numGroup].push(team);
             }
+          }
           });
           maxPoints = 0;
           runnerUpPoints = 0;
           numGroup--;
-        }
+        }*/
         winners = winners.slice(1);
         runnerups = runnerups.slice(1);
         const numberOfTeamsQualified = runnerups.length + winners.length;
@@ -386,27 +405,22 @@ function DisplayAllTournaments() {
           winners.length === numRealMatches &&
           runnerups.length === numRealMatches
         ) {
-          // Remove the first element from each array
-          console.log(winners);
 
-          console.log(winners);
           const flattenedWinners = winners.flat();
           const flattenedRunnerups = runnerups.flat();
           const matches = [];
-          console.log(flattenedWinners);
-          console.log(flattenedRunnerups);
 
           if (numberOfGroups === 1) {
-            for (let i = 0; i < numRealMatches - 1; i++) {
-              const winnerTeam = flattenedWinners[i];
-              const runnerUpTeam = flattenedRunnerups[i];
-              console.log(winnerTeam);
-              console.log(runnerUpTeam);
+      
+              const winnerTeam = flattenedWinners[0];
+              const runnerUpTeam = flattenedRunnerups[0];
+
               const matchData = {
-                id: i + 1,
+                id: 1,
                 win: "",
                 loss: "",
                 matchDate: new Date(),
+                nextMatchId: null,
                 scoreTeam1: "",
                 scoreTeam2: "",
                 knockoutStageAfterGroup: "Draw",
@@ -417,8 +431,9 @@ function DisplayAllTournaments() {
               };
 
               matches.push(matchData);
+
               await addMatch(matchData);
-            }
+            
           } else {
             let k = 0;
             let selectedRunnerUps = [];
@@ -434,18 +449,14 @@ function DisplayAllTournaments() {
               ) {
                 const runnerUpTeam = flattenedRunnerups[j]; // Access the first (and only) object in the array
 
-                console.log("Winner Group Number:", winnerTeam.groupNumber);
-                console.log(
-                  "Runner-Up Group Number:",
-                  runnerUpTeam.groupNumber
-                );
+               
 
                 if (
                   !selectedRunnerUps.includes(runnerUpTeam) &&
                   winnerTeam.groupNumber !== runnerUpTeam.groupNumber
                 ) {
                   k++;
-                  console.log("Groups are different");
+
                   const matchData = {
                     id: matches.length + 1,
                     win: "",
@@ -471,7 +482,7 @@ function DisplayAllTournaments() {
               }
             }
           }
-          console.log(numberOfTeamsQualified / 2);
+
           for (let h = 0; h < numRealMatches - 1; h++) {
             if (h % 2 === 0) {
               idNextMatch++;
@@ -792,7 +803,7 @@ navigate('/addReservation');
   };
   useEffect(() => {
     socket.on("updateTournamentStats", (saveClicked, tournamentId) => {
-      console.log(tournamentId);
+
       getTournamentStatsUpdated(tournamentId);
     });
   }, [socket]);
@@ -1794,9 +1805,9 @@ navigate('/addReservation');
       )}
       {Tournament.tournamentType === "Group Stage" && (
         <>
-          <div className="flex justify-start ml-15 items-start pt-8 mb-3">
-            <div>
-              <a className="flex flex-col min-h-screen  mr-8 bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+          <div className="flex justify-start sm:ml-15 items-start pt-8 mb-3 flex-col sm:flex-row">
+            <div >
+              <a className="hidden md:flex mr-5 flex-col ml-5 w-fit min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                 <div className="flex mt-4 mb-2 ml-2 mr-2">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">
@@ -1949,7 +1960,7 @@ navigate('/addReservation');
                   </div>
                 </div>
                 <hr className="border-t  border-white mb-2 " />{" "}
-                <div className="flex justify-start gap-2 ml-4 ">
+                <div className="flex-col sm:flex-row justify-start gap-2 sm:ml-4 ">
                   <button
                     className={`inline-flex items-center justify-center ${
                       activeTab === "matches"
@@ -2246,7 +2257,7 @@ navigate('/addReservation');
                               .map((match, matchIndex) => {
                                 return (
                                   <>
-                                    <div className="flex justify-between items-center ml-10">
+                                    <div className="flex justify-start sm:justify-between items-center ml-10">
                                       <div className="flex items-center">
                                         <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
                                           {formatDate(match.matchDate)}
@@ -2695,7 +2706,7 @@ navigate('/addReservation');
               </div>
             </div>
             {activeTab !== "standings" && (
-              <a className="flex flex-col ml-5 w-fit   min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow  dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+              <a className="hidden md:flex flex-col ml-5 w-fit min-h-screen bg-[#f6f8ff] border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
                 <div className="flex mt-4 mb-2 ml-2 mr-5">
                   <MdGrade size={20} className="mr-1" />
                   <p className="text-black font-medium text-[0.9rem]">

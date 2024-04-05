@@ -33,7 +33,7 @@ const firstStepSchema = yup.object().shape({
   state: yup.string().required("State is required"),
   city: yup.string().required("City is required"),
 });
-const secondStepSchema = yup.object().shape({
+const secondStepSchema  = yup.object().shape({
   startDate: yup
     .date()
     .required("Start Date is required")
@@ -46,7 +46,7 @@ const secondStepSchema = yup.object().shape({
     .mixed()
     .required("Number of Teams to Participate is required"),
   tournamentType: yup.string().required("Tournament Type is required"),
-  /* teams: yup
+  teams: yup
     .array()
     .required("Select at least one team")
     .min(
@@ -56,11 +56,27 @@ const secondStepSchema = yup.object().shape({
     .max(
       yup.ref("nbTeamPartipate"),
       "Selected Teams sould be equal to the number of the teams participating"
-    ),*/
+    ),
+});
+const secondStepSchemaGroupStage  = yup.object().shape({
+  startDate: yup
+    .date()
+    .required("Start Date is required")
+    .min(new Date(), "Start Date should be in the future"),
+  endDate: yup
+    .date()
+    .required("End Date is required")
+    .min(yup.ref("startDate"), "End Date should be after Start Date"),
+  nbTeamPartipate: yup
+    .mixed()
+    .required("Number of Teams to Participate is required"),
+  tournamentType: yup.string().required("Tournament Type is required"),
+ 
 });
 
 import hotelService from "../../../../../Services/APis/HotelAPI.js";
 import HotelService from "../../../../../Services/FrontOffice/apiHotel.js";
+import { MdOutlineCancel } from "react-icons/md";
 
 const steps = [
   {
@@ -130,6 +146,7 @@ function AddTournament() {
     state: "",
     city: "",
     teams: [],
+    status: "PENDING",
   });
   const [Match, setMatch] = useState({
     win: "",
@@ -161,7 +178,11 @@ function AddTournament() {
       if (currentStep === 0) {
         await firstStepSchema.validate(Tournament, { abortEarly: false });
       } else if (currentStep === 1) {
+        if(Tournament.tournamentType === "League" || Tournament.tournamentType === "Knockout"){
         await secondStepSchema.validate(Tournament, { abortEarly: false });
+      } else {
+        await secondStepSchemaGroupStage.validate(Tournament, { abortEarly: false });
+      }
       }
 
       // Proceed to the next step
@@ -450,6 +471,7 @@ function AddTournament() {
         state: Tournament.state,
         city: Tournament.city,
         creator: userInfo.userId,
+        status: Tournament.status,
       };
 
       try {
@@ -513,6 +535,7 @@ function AddTournament() {
             country: Tournament.country,
             state: Tournament.state,
             city: Tournament.city,
+            status: Tournament.status,
             creator: userInfo.userId,
           };
 
@@ -572,7 +595,9 @@ function AddTournament() {
               );
               teamData.team.tournamentInvitations.push({
                 tournament: latestTournamentId.latestTournamentId,
+                
               });
+              console.log(teamData)
               await updateTeam(teamData.team);
             } catch (error) {
               console.error(`Error updating team ${team.id}: ${error.message}`);
@@ -772,7 +797,13 @@ function AddTournament() {
         isOver: monitor.isOver(),
       }),
     });
-
+    const removeTeam = (index) => {
+      setSelectTeamsPots((prevTeams) => {
+        const updatedTeams = { ...prevTeams };
+        updatedTeams[potNumber].splice(index, 1);
+        return updatedTeams;
+      });
+    };
     return (
       <div
         ref={drop}
@@ -783,7 +814,7 @@ function AddTournament() {
           {/* Render selected teams for this pot */}
           {selectTeamPots[potNumber] &&
             selectTeamPots[potNumber].map((team, index) => (
-              <div className="flex items-cente mb-1.5">
+              <div className="flex items-center mb-1.5">
                 <img
                   alt="Team A logo"
                   className="overflow-hidden border object-cover w-6 h-6 mr-2"
@@ -796,6 +827,11 @@ function AddTournament() {
                   width="30"
                 />
                 <p key={index}>{team.team.name}</p>
+                <MdOutlineCancel
+                          className="ml-3"
+                          size={18}
+                          onClick={() => removeTeam(index)}
+                        />
               </div>
             ))}
         </div>
@@ -1173,7 +1209,11 @@ function AddTournament() {
                         {errors.teams && (
                           <span className="text-red-500">{errors.teams}</span>
                         )}
-
+                        {errors.teamsGroupStage && (
+                                <span className="text-red-500">
+                                  {errors.teamsGroupStage}
+                                </span>
+                              )}
                         <DndProvider backend={HTML5Backend}>
                           {showPots && (
                             <>
