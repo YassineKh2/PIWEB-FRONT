@@ -221,14 +221,14 @@ function UpdateTournament() {
   };
   const handleCitiesChange = (e) => {
     const { name, value } = e.target;
-    
+
     setSelectedCities(value);
     setTournament({ ...Tournament, city: value });
-  
+
     console.log('New City:', value);
     console.log('Previous City:', previousCity);
   };
-  
+
   useEffect(() => {
     if (SelectedCountry) {
       setCities([]);
@@ -264,42 +264,255 @@ function UpdateTournament() {
     getTeams();
   }, []);
 /////////////////////////////////////////////////////////////////stadiums/////////////////////////////////////////////////////////
-useEffect(() => {
-  const fetchStadiumsAndSetExisting = async () => {
-    try {
-      // Fetch all stadiums
-      const allStadiumsResponse = await stadiumService.getAllStadiums();
-      const allStadiums = allStadiumsResponse.Stadiums;
-      console.log("All stadiums data:", allStadiums);
-      console.log("tournament._id:", state.tournament._id);
+  useEffect(() => {
+    const fetchStadiumsAndSetExisting = async () => {
+      try {
+        // Fetch all stadiums
+        const allStadiumsResponse = await stadiumService.getAllStadiums();
+        const allStadiums = allStadiumsResponse.Stadiums;
+        console.log("All stadiums data:", allStadiums);
+        console.log("tournament._id:", state.tournament._id);
 
-      // Fetch existing stadium IDs based on the tournament ID
-      const existingStadiumIdsResponse = await stadiumService.getStadiumsByTournamentId(state.tournament._id);
-      const existingStadiumIds = existingStadiumIdsResponse.map(stadium => stadium._id);
-      console.log("Existing stadium IDs:", existingStadiumIds);
+        // Fetch existing stadium IDs based on the tournament ID
+        const existingStadiumIdsResponse = await stadiumService.getStadiumsByTournamentId(state.tournament._id);
+        const existingStadiumIds = existingStadiumIdsResponse.map(stadium => stadium._id);
+        console.log("Existing stadium IDs:", existingStadiumIds);
 
-      if (Array.isArray(allStadiums)) {
-        const updatedStadiums = allStadiums.map(stadium => ({
-          ...stadium,
-          selected: existingStadiumIds.includes(stadium._id),
-          available: existingStadiumIds.includes(stadium._id)
-        }));
-        console.log("Updated stadiums:", updatedStadiums);
-        setStadiums(updatedStadiums);
-      } else {
-        console.error("Error fetching stadiums: All stadiums data is not an array");
-        setStadiums([]);
+        if (Array.isArray(allStadiums)) {
+          const updatedStadiums = allStadiums.map(stadium => ({
+            ...stadium,
+            selected: existingStadiumIds.includes(stadium._id),
+            available: existingStadiumIds.includes(stadium._id)
+          }));
+          console.log("Updated stadiums:", updatedStadiums);
+          setStadiums(updatedStadiums);
+        } else {
+          console.error("Error fetching stadiums: All stadiums data is not an array");
+          setStadiums([]);
+        }
+
+        setExistingStadiumIds(existingStadiumIds);
+      } catch (error) {
+        console.error("Error fetching stadiums:", error);
       }
-      
+    };
 
-      setExistingStadiumIds(existingStadiumIds);
-    } catch (error) {
-      console.error("Error fetching stadiums:", error);
+    fetchStadiumsAndSetExisting();
+  }, [state.tournament._id]);
+
+  const handleStadiumSelect = (e, stadiumId) => {
+    if (e.target.checked) {
+      setSelectedStadiums([...selectedStadiums, stadiumId]);
+    } else {
+      setSelectedStadiums(selectedStadiums.filter(id => id !== stadiumId));
     }
-  }
-  fetchStadiumsAndSetExisting();
-}, [state.tournament._id]);
+  };
 
+
+  useEffect(() => {
+    if (Array.isArray(stadiums) && stadiums.length > 0 && state.tournament.city) {
+      const filtered = stadiums.filter(stadium =>
+          stadium.address && stadium.address.city === state.tournament.city
+      );
+      console.log("Filtered stadiums:", filtered);
+      setFilteredStadiums(filtered);
+    }
+  }, [stadiums, state.tournament.city]);
+
+  useEffect(() => {
+    const updateStadiumAvailability = async () => {
+      try {
+        // Filter stadiums based on the tournament city
+        const filtered = stadiums.filter(stadium =>
+            stadium.address && stadium.address.city === state.tournament.city
+        );
+
+        const updatedStadiums = await Promise.all(filtered.map(async (stadium) => {
+          const isSelectedForTournament = state.tournament.stadiums.some(tournamentStadium => tournamentStadium._id === stadium._id);
+          console.log("Is selected for tournament:", isSelectedForTournament);
+
+          if (!isSelectedForTournament) {
+            return { ...stadium, available: true };
+          } else {
+            const available = await fetchStadiumAvailability(stadium._id, state.tournament.startDate, state.tournament.endDate);
+            console.log(`Stadium ${stadium.name} availability:`, available);
+            return { ...stadium, available: available };
+          }
+
+        }));
+
+        console.log("Updated stadiums with availability:", updatedStadiums);
+        setFilteredStadiums(updatedStadiums);
+      } catch (error) {
+        console.error('Error updating stadium availability:', error);
+      }
+    };
+
+    updateStadiumAvailability();
+  }, [stadiums, state.tournament.startDate, state.tournament.endDate, state.tournament.stadiums]);
+
+  const fetchStadiumAvailability = async (stadiumId, startDate, endDate) => {
+    try {
+      // Check the availability directly without considering maintenance periods
+      const response = await stadiumService.checkStadiumAvailability(stadiumId, startDate, endDate);
+      console.log('Response from checkStadiumAvailability:', response);
+
+      if (response && response.available !== undefined) {
+        return response.available;
+      } else {
+        console.error('Invalid response format:', response);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error fetching stadium availability:', error);
+      return false;
+    }
+  };
+
+
+
+
+  const isSelected = (stadiumId) => {
+    return selectedStadiums.includes(stadiumId);
+  };
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////Hotel/////////////////////////////////////////////////////////////
+  const hideNotifications = () => {
+    setShowErrorNotification(false);
+    setShowSuccessNotification(false);
+  };
+
+
+
+
+  const fetchData = async (city) => {
+    setLoading(true);
+
+    try {
+      let targetCity = city || Tournament.city; // Use selected city if provided, otherwise use tournament's city
+
+      const geocodingData = await getGeocodingData(targetCity);
+      const response = await hotelService.getHotelsByGeoCode(
+          geocodingData.latitude,
+          geocodingData.longitude,
+          radius
+      );
+
+      if (response) {
+        setHotelData(response.data);
+        setError(null);
+      } else {
+        setHotelData([]);
+        setError("Invalid response format. Please try again.");
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      if (error.response) {
+        setError(`API Error: ${error.response.data.message}`);
+      } else if (error.request) {
+        setError("Network Error. Please check your internet connection.");
+      } else {
+        setError("Error fetching hotels. Please try again.");
+      }
+      setHotelData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  // useEffect hook
+  useEffect(() => {
+    fetchData(SelectedCities);
+  }, [SelectedCities]);
+
+  const toggleHotelSelection = (hotelId) => {
+    //setError(null);
+    //setShowErrorNotification(null);
+    setShowSuccessNotification(null);
+    // Toggle the selection status of the hotel
+    setSelectedHotels((prevSelected) =>
+        prevSelected.includes(hotelId)
+            ? prevSelected.filter((id) => id !== hotelId)
+            : [...prevSelected, hotelId]
+    );
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "radius") {
+      setRadius(value);
+    }
+  };
+
+  const addHotelsToDatabase = async (hotels, tournamentId) => {
+    try {
+      // Check if the city has changed from the previous one and if the previous city exists
+
+      await HotelService.deleteHotelsByTournamentAndCity(tournamentId, Tournament.city);
+
+      // Filter selected hotels to add
+      const hotelsToAdd = hotels.filter((hotel) =>
+          selectedHotels.includes(hotel.hotelId)
+      );
+
+      if (hotelsToAdd.length === 0) {
+        console.log("No hotels selected to add.");
+        return;
+      }
+
+      // Add selected hotels to the database
+      await Promise.all(
+          hotelsToAdd.map(async (hotel) => {
+            try {
+              hotel.idTournament = tournamentId;
+              const addHotelResponse = await HotelService.addHotel([hotel]);
+              console.log("Hotel added to database:", addHotelResponse);
+            } catch (error) {
+              if (error.response && error.response.status === 400) {
+                console.error(
+                    "Hotel already exists:",
+                    error.response.data.message
+                );
+              } else {
+                console.error("Error adding hotel to database:", error);
+              }
+            }
+          })
+      );
+
+      // Update the previous city with the current city
+      setPreviousCity(Tournament.city);
+
+      setShowSuccessNotification(true);
+      setTimeout(hideNotifications, 2000);
+    } catch (error) {
+      console.error("Error adding selected hotels to database:", error);
+      setShowErrorNotification(true);
+      setTimeout(hideNotifications, 2000);
+    }
+  };
+  const handleCityChange = (e) => {
+    setCity(e.target.value);
+  };
+  const handleRadiusChange = () => {
+    fetchData();
+  };
+
+  // Calculate the index of the last hotel on the current page
+  const indexOfLastHotel = currentPage * hotelsPerPage;
+  // Calculate the index of the first hotel on the current page
+  const indexOfFirstHotel = indexOfLastHotel - hotelsPerPage;
+  // Get the hotels for the current page
+  const currentHotels = hotelData.slice(indexOfFirstHotel, indexOfLastHotel);
+
+
+// Change page
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
   useEffect(() => {
@@ -518,12 +731,14 @@ useEffect(() => {
 
     const res = updateTournament(imageData)
       .then(() => {
+        addHotelsToDatabase(hotelData, state.tournament._id);
         console.log("update passed");
         navigate("/tournament/showAll");
       })
       .catch((error) => {
         console.log(error.response.data.message);
       });
+
   };
 
   const [previousStep, setPreviousStep] = useState(0);
@@ -1222,6 +1437,7 @@ useEffect(() => {
                       }).map((_, index) => (
                         <button
                           key={index}
+                          type="button"
                           onClick={() => handlePageChange(index + 1)}
                           className={`mx-2 px-3 py-2 border ${
                             currentPage === index + 1

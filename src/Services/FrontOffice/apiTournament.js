@@ -1,3 +1,4 @@
+import { config } from "@fortawesome/fontawesome-svg-core";
 import axios from "axios";
 
 const apiURL = "http://localhost:3000/tournament";

@@ -29,6 +29,7 @@ import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
+import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -74,7 +75,7 @@ function RoutesPath() {
               </>
             }
         />
-        
+
         <Route
             path="team/*"
             element={
@@ -83,7 +84,8 @@ function RoutesPath() {
               </>
             }
         />
-          
+
+
           <Route
             path="staff/*"
             element={
@@ -92,6 +94,15 @@ function RoutesPath() {
               </>
             }
         />
+
+          <Route
+              path="player/*"
+              element={
+                  <>
+                      <RoutingPlayers/>
+                  </>
+              }
+          />
           <Route
                     path="hotels/*"
                     element={

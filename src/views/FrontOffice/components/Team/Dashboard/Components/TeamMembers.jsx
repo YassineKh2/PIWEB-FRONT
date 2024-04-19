@@ -459,31 +459,31 @@ export default function TeamMembers() {
 
     function addplayer() {
 
-        let {error, errors} = verifyNewMember(NewStaff)
-
-        if (error) {
-            setNewPlayerErrors(errors)
-            return
-        }
-
-        setNewPlayerErrors({
-            firstName: {
-                state: false,
-                message: '',
-            },
-            lastName: {
-                state: false,
-                message: '',
-            },
-            email: {
-                state: false,
-                message: '',
-            },
-            position: {
-                state: false,
-                message: '',
-            },
-        })
+        // let {error, errors} = verifyNewMember(NewStaff)
+        //
+        // if (error) {
+        //     setNewPlayerErrors(errors)
+        //     return
+        // }
+        //
+        // setNewPlayerErrors({
+        //     firstName: {
+        //         state: false,
+        //         message: '',
+        //     },
+        //     lastName: {
+        //         state: false,
+        //         message: '',
+        //     },
+        //     email: {
+        //         state: false,
+        //         message: '',
+        //     },
+        //     position: {
+        //         state: false,
+        //         message: '',
+        //     },
+        // })
         let playertoadd = {
             teamId: Team._id,
             players: [{

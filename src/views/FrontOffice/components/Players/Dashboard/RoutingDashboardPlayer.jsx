@@ -1,6 +1,5 @@
 import {Route, Routes} from "react-router-dom";
 import Dashboard from "./Dashboard.jsx";
-import HomeDash from "./Components/HomeDash.jsx";
 import Invitations from "./Components/Invitations.jsx";
 import Credentials from "./Components/PlayerCredentials.jsx";
 import Preferences from "./Components/PlayerPreferences.jsx";
@@ -16,14 +15,10 @@ export default function RoutingDashboardPlayer() {
                 path=""
                 element={
                     <>
-                        <Dashboard/>
+                        <Dashboard />
                     </>
                 }
             >
-                <Route
-                    index
-                    element={ <HomeDash /> }
-                />
                 <Route
                     path="invitations"
                     element={ <Invitations /> }

@@ -86,6 +86,13 @@ export default function ProfilePlayer() {
         }
 
     }, [player])
+    useEffect(() => {
+        console.log("player.previousTeams")
+
+
+
+    }, [])
+
 
 
     const [previousTeams, setpreviousTeams] = useState([]);
@@ -110,7 +117,7 @@ export default function ProfilePlayer() {
 
                                 <div className="w-24 h-24 relative rounded-full overflow-hidden">
                                     <img
-                                        src={path + player.image}
+                                        src={path + player?.image}
                                         alt="Player Image"
                                         width="100"
                                         height="100"
@@ -119,17 +126,17 @@ export default function ProfilePlayer() {
                                     />
                                 </div>
                                 <div className="text-2xl font-bold tracking-tight">
-                                    <span>{player.firstName} {player.lastName}</span>
+                                    <span>{player?.firstName} {player?.lastName}</span>
                                 </div>
                                 <div className="text-sm font-medium tracking-tighter opacity-60">
-                                    <span>{positionMapping[player.position]}</span>
+                                    <span>{positionMapping[player?.position]}</span>
                                 </div>
                             </div>
 
                             <div className="flex flex-col justify-center items-center">
                                 <div className="w-24 h-24 relative rounded-full overflow-hidden">
                                     <img
-                                        src={pathteam + team.image}
+                                        src={pathteam + team?.image}
                                         alt="Team Image"
                                         width="100"
                                         height="100"
@@ -138,10 +145,10 @@ export default function ProfilePlayer() {
                                     />
                                 </div>
                                 <div className="text-2xl font-bold tracking-tight">
-                                    <span>{team.name}</span>
+                                    <span>{team?.name}</span>
                                 </div>
                                 <div className="text-sm font-medium tracking-tighter opacity-60">
-                                    <span>{team.wins}</span>
+                                    <span>{team?.wins}</span>
                                 </div>
                             </div>
                         </div>
@@ -152,7 +159,7 @@ export default function ProfilePlayer() {
                         </div>
                         <div className="p-6">
                             <p className="text-sm opacity-60">
-                                {player.bio}
+                                {player?.bio}
                             </p>
                         </div>
                     </div>
@@ -163,19 +170,19 @@ export default function ProfilePlayer() {
                                 <div className="flex gap-3">
                                     <div className="flex flex-col items-center">
                                         <Ball className="text-green-500" size={20}/>
-                                        <p>{player.goals}</p>
+                                        <p>{player?.goals}</p>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <Ball className="text-gray-500" size={20}/>
-                                        <p>{player.assists}</p>
+                                        <p>{player?.assists}</p>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <Card className="text-yellow-500" size={20}/>
-                                        <p>{player.yellowCards}</p>
+                                        <p>{player?.yellowCards}</p>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <Card className="text-red-500" size={20}/>
-                                        <p>{player.redCards}</p>
+                                        <p>{player?.redCards}</p>
                                     </div>
                                 </div>
                             </div>
@@ -201,31 +208,31 @@ export default function ProfilePlayer() {
                                             let goals = 0;
                                             let assists = 0;
 
-                                            if (match.team1._id === player.PlayingFor) {
+                                            if (match?.team1?._id === player?.PlayingFor) {
                                                 match.goalsScoredByTeam1.map((goal) => {
-                                                    if (goal.scorer === player._id) {
+                                                    if (goal?.scorer === player?._id) {
                                                         goals++
                                                     }
                                                 })
                                             }
-                                            if (match.team2._id === player.PlayingFor) {
+                                            if (match?.team2?._id === player?.PlayingFor) {
                                                 match.goalsScoredByTeam2.map((goal) => {
-                                                    if (goal.scorer === player._id) {
+                                                    if (goal?.scorer === player?._id) {
                                                         goals++
                                                     }
                                                 })
                                             }
 
-                                            if (match.team1._id === player.PlayingFor) {
+                                            if (match?.team1?._id === player?.PlayingFor) {
                                                 match.goalsScoredByTeam1.map((goal) => {
-                                                    if (goal.assistedBy === player._id) {
+                                                    if (goal?.assistedBy === player?._id) {
                                                         assists++
                                                     }
                                                 })
                                             }
-                                            if (match.team2._id === player.PlayingFor) {
+                                            if (match?.team2?._id === player?.PlayingFor) {
                                                 match.goalsScoredByTeam2.map((goal) => {
-                                                    if (goal.assistedBy === player._id) {
+                                                    if (goal?.assistedBy === player?._id) {
                                                         assists++
                                                     }
                                                 })
@@ -235,7 +242,7 @@ export default function ProfilePlayer() {
                                                 <>
                                                     <tr key={index}
                                                         className="divide-x divide-gray-200 dark:divide-gray-800">
-                                                        <td className="px-4 py-3 text-sm">{match.team1.name} Vs {match.team2.name}</td>
+                                                        <td className="px-4 py-3 text-sm">{match?.team1?.name} Vs {match?.team2?.name}</td>
 
                                                         <td className="px-4 py-3 text-sm">{goals}</td>
                                                         <td className="px-4 py-3 text-sm">{assists}</td>
@@ -258,15 +265,15 @@ export default function ProfilePlayer() {
                                 <ul className="grid gap-4 sm:grid-cols-2">
                                     {previousTeams.map((team, index) => (
                                         <>
-                                            <Link to={"/team/profile/"+team._id}>
+                                            <Link to={"/team/profile/"+team?._id}>
                                                 <li className="flex items-center space-x-4" key={index}>
                                                     <img
-                                                        src={pathteam + team.image}
+                                                        src={pathteam + team?.image}
                                                         alt={"team Image"}
                                                         className="rounded w-2/12"
                                                     />
                                                     <span
-                                                        className="text-sm font-medium tracking-tight">{team.name}</span>
+                                                        className="text-sm font-medium tracking-tight">{team?.name}</span>
                                                 </li>
                                             </Link>
                                         </>

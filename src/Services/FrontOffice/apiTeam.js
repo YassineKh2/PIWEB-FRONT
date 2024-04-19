@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const apiURL = "http://localhost:3000/team";
+const apiURLUser = "http://localhost:3000/user";
 
 export async function addTeam(teamData) {
     try {
@@ -65,6 +66,7 @@ export async function getTeamDetails(id) {
 
 export async function updateTeam(teamData) {
     try {
+        console.log(teamData)
         const response = await axios.put(`${apiURL}/update`, teamData);
         return response.data;
     } catch (error) {

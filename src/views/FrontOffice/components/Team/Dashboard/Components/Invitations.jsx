@@ -53,7 +53,9 @@ export default function Invitations() {
 
 
     function acceptTournament(tournament) {
+        console.log(tournament)
         const index = tournaments.findIndex(t => t.tournament === tournament.tournament);
+     
         if (index !== -1) {
             tournaments.splice(index, 1);
             setTournaments([...tournaments]);
@@ -61,7 +63,9 @@ export default function Invitations() {
 
         let data = {
             ...team,
-            tournaments: [...team.tournaments, tournament.idTournament],
+            tournaments: [...team.tournaments, {
+                tournament: tournament.idTournament,
+            }],
             tournamentInvitations: tournaments
         }
 
