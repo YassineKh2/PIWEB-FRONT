@@ -188,6 +188,10 @@ export default function AddTeam() {
             if (currentStep === steps.length - 2) {
                 // await handleSubmit(processForm)()
             }
+            if (currentStep == 3 && showForm)
+            {        
+                await addSponsors(sponsor);
+            }
             setPreviousStep(currentStep)
             setCurrentStep(step => step + 1)
         }
@@ -319,19 +323,16 @@ export default function AddTeam() {
 
 
     const handleChange = async (e) => {
-        const {name, value} = e.target;
-        setSponsor({...sponsor, [name]: value});
+        const { name, value } = e.target;
+        setSponsor({ ...sponsor, [name]: value });
         try {
             await yup.reach(schemasp, name).validate(value);
-            setErrors({...error, [name]: ""});
+            setErrors({ ...error, [name]: "" });
         } catch (error) {
-
-            setErrors({...error, [name]: error.message});
-
-            setErrors({...error, [name]: error.message});
-
+            setErrors({ ...error, [name]: error.message });
         }
     };
+    
 
 
     const onSubmit = async (data) => {
@@ -341,12 +342,12 @@ export default function AddTeam() {
             data.imagename = file2[0].name;
             data.foundedIn = date;
 
-            console.log("te")
+            const lastteam = { ...data, sponsors: sponsor };
+            console.log("sirine: " + JSON.stringify(lastteam)); 
 
-            //
-            const lastteam = {...data, sponsors: sponsor};
-            const addedTeam = await addTeam(lastteam);
-            const teamId = addedTeam.Team._id;
+            await addTeam(lastteam);
+            await addSponsors(sponsor);
+            navigate('/team/all');
 
 
             let InvitedUsers = {
@@ -360,10 +361,10 @@ export default function AddTeam() {
             })
 
             // Ajout du sponsor avec l'ID de l'équipe associée
-            if (showForm) {
+           /* if (showForm) {
                 const sponsorData = {...data, teamId};
                 await addSponsors(sponsorData);
-            }
+            }*/
 
 
             navigate("/team/all");
