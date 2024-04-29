@@ -28,7 +28,11 @@ export default function TeamProfile() {
     useEffect(() => {
         getTeam(id).then((res) => {
             SetTeam(res.team)
-            getTournaments(res.team.tournaments).then((res) => {
+            let idTournaments = []
+            res.team.tournaments.forEach((tournament) => {
+                idTournaments.push(tournament.tournament)
+            })
+            getTournaments(idTournaments).then((res) => {
                 setTournaments(res.Tournaments)
                 setTournamentsCopy(res.Tournaments)
             })

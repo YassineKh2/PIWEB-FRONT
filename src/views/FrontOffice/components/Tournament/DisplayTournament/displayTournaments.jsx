@@ -36,12 +36,21 @@ function DisplayAllTournaments() {
         setTournaments(res.tournaments);
       })
       .catch((err) => {
+        console.log(err.message)
         console.log(err);
       });
   };
+
+
+
   useEffect(() => {
     getTournaments();
   }, []);
+
+
+
+
+
   useEffect(() => {
     const userToken = localStorage.getItem("token");
     if (userToken) {
@@ -58,6 +67,8 @@ function DisplayAllTournaments() {
       });
     }
   }, []);
+
+
   const getUserTournament = async () => {
     const res = getTournamentsByUser(userInfo.userId)
       .then((res) => {
@@ -70,6 +81,8 @@ function DisplayAllTournaments() {
   useEffect(() => {
     if (userInfo) getUserTournament();
   }, [userInfo]);
+
+
   useEffect(() => {
     if (user) setfollowedTournaments(user.followedTournaments);
   }, [user]);
@@ -94,6 +107,8 @@ function DisplayAllTournaments() {
     updatedLikedTournaments[idTournament] = false;
     setLikedTournaments(updatedLikedTournaments);
   };
+
+  
   return (
     <>
       <SectionTitle

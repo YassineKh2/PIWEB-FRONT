@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import DisplayStadiums from "../../Stadiums/DisplayingStadiumsTournaments/DisplayStadiums";
+
 import {
   getAllTournaments,
   getTournamentDetails,
@@ -60,6 +62,8 @@ function DisplayAllTournaments() {
   const [user, setUser] = useState();
   const [tabChange, setTabChange] = useState();
   const [numberOfGroups, setnumberOfGroups] = useState();
+
+  const [tournamentId, setTournamentId] = useState("");
   const [TournamentStats, setTournamentStats] = useState([]);
   const [topScorer, setTopScorer] = useState();
   const [topYellowCards, setTopYellowCards] = useState();
@@ -147,6 +151,9 @@ function DisplayAllTournaments() {
   const getAllTournamentMatches = async () => {
     try {
       const res = await getTournamentMatches(id);
+
+      console.log(res.matchList)
+
       setRealMatches(res.matchList);
       setMatchesCopy(res.matchList);
     } catch (err) {
@@ -159,6 +166,7 @@ function DisplayAllTournaments() {
   }, []);
   useEffect(() => {
     getAllTournamentMatches();
+
   }, []);
 
   const getTournamentStats = async () => {
@@ -235,9 +243,9 @@ function DisplayAllTournaments() {
 
   const initializeStats = () => {
     const initialStats = RealTeams.map((team) => ({
-      teamId: team._id,
-      teamName: team.name,
-      teamLogo: team.image,
+      teamId: team?._id,
+      teamName: team?.name,
+      teamLogo: team?.image,
       points: 0,
       matchesPlayed: 0,
       wins: 0,
@@ -323,7 +331,23 @@ function DisplayAllTournaments() {
     }
     setStanding(standings);
   };
+  const handleMatchesDraw = async () => {
+   // console.log(Tournament)
+    try {
+      const response = await getTournamentMatchesDraw(Tournament._id);
+      console.log(Tournament)
 
+      if (response.matchList.length === 0) {
+        addMatchAfterGroupStage();
+      } else {
+        setDrawMatchesGroupStage(response.matchList);
+        console.log("they already exits the draw matches");
+      }
+    } catch (error) {
+      // Handle any errors
+      console.error(error);
+    }
+  };
   useEffect(() => {
     const addMatchAfterGroupStage = async () => {
       let winners = [];
@@ -358,10 +382,10 @@ function DisplayAllTournaments() {
             }
             return teamB.goalDifference - teamA.goalDifference;
           });
-        
+
           winners[numGroup] = [groups[numGroup][0]]; // First team with highest points
           runnerups[numGroup] = [groups[numGroup][1]]; // Second team with second highest points
-        
+
           numGroup--;
         }
       /*  while (numGroup !== 0) {
@@ -411,7 +435,7 @@ function DisplayAllTournaments() {
           const matches = [];
 
           if (numberOfGroups === 1) {
-      
+
               const winnerTeam = flattenedWinners[0];
               const runnerUpTeam = flattenedRunnerups[0];
 
@@ -433,7 +457,7 @@ function DisplayAllTournaments() {
               matches.push(matchData);
 
               await addMatch(matchData);
-            
+
           } else {
             let k = 0;
             let selectedRunnerUps = [];
@@ -449,7 +473,7 @@ function DisplayAllTournaments() {
               ) {
                 const runnerUpTeam = flattenedRunnerups[j]; // Access the first (and only) object in the array
 
-               
+
 
                 if (
                   !selectedRunnerUps.includes(runnerUpTeam) &&
@@ -624,10 +648,10 @@ function DisplayAllTournaments() {
     const standings = initializeStats();
 
     RealMatches.forEach((match) => {
-      const team1Id = match.team1._id;
-      const team2Id = match.team2._id;
-      const scoreTeam1 = parseInt(match.scoreTeam1);
-      const scoreTeam2 = parseInt(match.scoreTeam2);
+      const team1Id = match?.team1?._id;
+      const team2Id = match?.team2?._id;
+      const scoreTeam1 = parseInt(match?.scoreTeam1);
+      const scoreTeam2 = parseInt(match?.scoreTeam2);
 
       if (!isNaN(scoreTeam1) && !isNaN(scoreTeam2)) {
         // The match has been played
@@ -764,7 +788,7 @@ function DisplayAllTournaments() {
 navigate('/addReservation');
 
   };
-  
+
 
   const handleMatchClickFixture = (match) => {
     setSelectedMatch(match);
@@ -998,11 +1022,19 @@ navigate('/addReservation');
     calculateRedCards();
   }, [TournamentStats]);
   const MatchesComponent = ({ RealMatches, currentPage, handlePageClick }) => {
+    console.log( RealMatches)
     const startIndex = currentPage * itemsPerPage;
     const displayedMatches = RealMatches.slice(
       startIndex,
       startIndex + itemsPerPage
     );
+
+    const handleButtonClick = () => {
+      // Assuming you have a way to fetch the tournament ID, set it here
+      const fetchedTournamentId = id;
+      setTournamentId(fetchedTournamentId);
+    };
+
     return (
       <div>
         <div className="flex flex-wrap justify-center -ml-24">
@@ -1061,7 +1093,7 @@ navigate('/addReservation');
               </Card>
             ))}
         </div>
-       
+
         <div className="flex justify-center mb-5">
           {/* Previous Button */}
           <a
@@ -1132,13 +1164,13 @@ navigate('/addReservation');
                     {innerArray.map((tournament) => {
                       return (
                         <div
-                          key={tournament._id}
+                          key={tournament?._id}
                           className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200"
                         >
                           <img
                             alt="Team A logo"
                             className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
-                            src={pathTournament + tournament.image}
+                            src={pathTournament + tournament?.image}
                             style={{
                               aspectRatio: "1/1",
                               objectFit: "cover",
@@ -1151,7 +1183,7 @@ navigate('/addReservation');
                                 handleOnClickOnFavorite(tournament)
                               }
                             >
-                              {tournament.name}
+                              {tournament?.name}
                             </button>
                           </div>
                         </div>
@@ -1167,12 +1199,12 @@ navigate('/addReservation');
                   </p>
                 </div>
                 {favoritesTournament.map((tournament) => (
-                  <div key={tournament._id} className="w-full">
+                  <div key={tournament?._id} className="w-full">
                     <div className="flex justify-start items-center mb-1 ml-8 hover:bg-gray-200">
                       <img
                         alt="Team A logo"
                         className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
-                        src={pathTournament + tournament.image}
+                        src={pathTournament + tournament?.image}
                         style={{
                           aspectRatio: "1/1",
                           objectFit: "cover",
@@ -1183,7 +1215,7 @@ navigate('/addReservation');
                           className="text-[1rem]"
                           onClick={() => handleOnClickOnFavorite(tournament)}
                         >
-                          {tournament.name}
+                          {tournament?.name}
                         </button>
                       </div>
                     </div>
@@ -1214,7 +1246,7 @@ navigate('/addReservation');
                         <img
                           alt="Team A logo"
                           className="rounded-md overflow-hidden border object-cover w-5 h-5 mr-1"
-                          src={path + team.image}
+                          src={path + team?.image}
                           style={{
                             aspectRatio: "1/1",
                             objectFit: "cover",
@@ -1225,7 +1257,7 @@ navigate('/addReservation');
                             className="text-[1rem]"
                             onClick={() => handleOnClickOnFavoriteTeam(team)}
                           >
-                            {team.name}
+                            {team?.name}
                           </button>
                         </div>
                       </div>
@@ -1316,7 +1348,7 @@ navigate('/addReservation');
                   </button>
                 </div>
               </a>
-              <div className="min-w-[53rem]">
+              <div className="min-w-[100rem]">
                 {activeTab === "matches" && (
                   <div className="">
                     <ul className="flex items-center justify-center space-y-2 space-x-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-5">
@@ -1413,7 +1445,7 @@ navigate('/addReservation');
                                 <div className="flex justify-between items-center ml-10">
                                   <div className="flex items-center">
                                     <p className="text-[#555e61]  font-medium mr-3 text-[0.8rem]">
-                                      {formatDate(match.matchDate)}
+                                      {formatDate(match?.matchDate)}
                                     </p>
 
                                     <div className="flex flex-col">
@@ -1421,28 +1453,28 @@ navigate('/addReservation');
                                         <img
                                           alt="Team A logo"
                                           className="overflow-hidden border object-cover w-4 h-4 mr-3"
-                                          src={path + match.team1.image}
+                                          src={path + match?.team1?.image}
                                           style={{
                                             aspectRatio: "1/1",
                                             objectFit: "cover",
                                           }}
                                         />
                                         <p className="text-[#555e61] font-medium text-[0.8rem]">
-                                          {match.team1.name}
+                                          {match?.team1?.name}
                                         </p>
                                       </div>
                                       <div className="flex items-center">
                                         <img
                                           alt="Team A logo"
                                           className="overflow-hidden border object-cover w-4 h-4 mr-3"
-                                          src={path + match.team2.image}
+                                          src={path + match?.team2?.image}
                                           style={{
                                             aspectRatio: "1/1",
                                             objectFit: "cover",
                                           }}
                                         />
                                         <p className="text-[#555e61] font-medium text-[0.8rem]">
-                                          {match.team2.name}
+                                          {match?.team2?.name}
                                         </p>
                                       </div>
                                     </div>
@@ -1450,10 +1482,10 @@ navigate('/addReservation');
                                   <div className="flex items-center mr-20 ">
                                     <div className="flex flex-col">
                                       <div className="flex items-center">
-                                        {match.scoreTeam1 !== "" &&
-                                        match.scoreTeam2 !== "" ? (
+                                        {match?.scoreTeam1 !== "" &&
+                                        match?.scoreTeam2 !== "" ? (
                                           <span className="mx-2 text-black font-semibold text-[13px]">
-                                            {match.scoreTeam1}
+                                            {match?.scoreTeam1}
                                           </span>
                                         ) : (
                                           <span className="mx-2 text-[#555e61]">
@@ -1463,10 +1495,10 @@ navigate('/addReservation');
                                         <hr className="border-t ml-5 px-5 py-5 border-red transform rotate-90 mr-10" />
                                       </div>
                                       <div className="flex items-center">
-                                        {match.scoreTeam1 !== "" &&
-                                        match.scoreTeam2 !== "" ? (
+                                        {match?.scoreTeam1 !== "" &&
+                                        match?.scoreTeam2 !== "" ? (
                                           <span className="mx-2 text-black font-semibold text-[13px]">
-                                            {match.scoreTeam2}
+                                            {match?.scoreTeam2}
                                           </span>
                                         ) : (
                                           <span className="mx-2 text-[#555e61]">
@@ -2028,7 +2060,7 @@ navigate('/addReservation');
                   )}
                 </div>
               </a>
-              <div className="min-w-[55rem]">
+              <div className="min-w-[100rem]">
                 {activeTab === "matches" && (
                   <div className="">
                     <ul className="flex items-center justify-center space-y-2 space-x-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-5">
@@ -2992,7 +3024,7 @@ navigate('/addReservation');
                   </button>
                 </div>
               </a>
-              <div className="min-w-[53rem]">
+              <div className="min-w-[100rem]">
                 {activeTab === "draw" && (
                   <div className="flex justify-center">
                     <SingleEliminationBracket

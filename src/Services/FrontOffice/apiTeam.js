@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const apiURL = "http://localhost:3000/team";
+const apiURLUser = "http://localhost:3000/user";
 
 export async function addTeam(teamData) {
     try {

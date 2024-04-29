@@ -1,6 +1,6 @@
 import {useFieldArray, useForm} from "react-hook-form";
 
-import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
+import {addTeam, getTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
 import {useCallback, useEffect, useRef, useState} from "react";
@@ -16,9 +16,16 @@ import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
 import {useNavigate} from "react-router-dom";
 import {FaTrash as Trash} from "react-icons/fa6";
 import {MultiSelect} from 'primereact/multiselect';
-import {getAllPlayers, getAllStaff, sendinvitationtomembers} from "../../../../../Services/apiUser.js";
+import {
+    getAllPlayers,
+    getAllStaff,
+    getUserData,
+    sendinvitationtomembers,
+    updateUser
+} from "../../../../../Services/apiUser.js";
 import {addSponsors} from "../../../../../Services/FrontOffice/apiSponsors.js";
 import {useDropzone} from "react-dropzone";
+import {jwtDecode} from "jwt-decode";
 
 
 const schema = yup.object().shape({
@@ -102,6 +109,7 @@ export default function AddTeam() {
 
     const [selectedPlayers, setSelectedPlayers] = useState([]);
     const [selectedStaff, setselectedStaff] = useState([]);
+    const [TeamManager, setTeamManager] = useState({});
 
 
     const [players, setPlayers] = useState([]);
@@ -130,6 +138,25 @@ export default function AddTeam() {
         })
     }, []);
 
+    useEffect(() => {
+        try {
+            if (localStorage.getItem('token') === null)
+                return;
+
+            const userToken = localStorage.getItem('token');
+            const decodedToken = jwtDecode(userToken);
+            getUserData(decodedToken.userId).then((response) => {
+                setTeamManager(response.user)
+            })
+
+
+        } catch (e) {
+            console.log(e.message)
+        }
+
+
+    }, [])
+
 
     const [isMonthly, setIsMonthly] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -143,7 +170,7 @@ export default function AddTeam() {
       contact: 0,
       adresse: ""
     });
-    
+
     const [error, setErrors] = useState({
         name: "",
         description: "",
@@ -364,6 +391,13 @@ export default function AddTeam() {
                 const sponsorData = {...data, teamId};
                 await addSponsors(sponsorData);
             }
+
+            let teammanager={
+                ...TeamManager,
+                "PlayingFor":teamId
+            }
+
+
 
 
             navigate("/team/all");
@@ -1304,7 +1338,7 @@ export default function AddTeam() {
                                 {error.adresse && <div className="text-red-500">{error.adresse}</div>}
                             </div>
                         </form>
-                   
+
                 </div>
             </div>
         </div>
