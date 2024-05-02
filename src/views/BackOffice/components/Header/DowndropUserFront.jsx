@@ -11,6 +11,7 @@ const DropdownUser = () => {
   const trigger = useRef(null);
   const dropdown = useRef(null);
 
+  
   useEffect(() => {
     async function fetchUserProfile() {
       try {
@@ -34,6 +35,7 @@ const DropdownUser = () => {
 
   const deleteToken = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
     navigate("/signin");
    
   };

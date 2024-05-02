@@ -51,13 +51,16 @@ export async function signin(userData) {
   try {
     const response = await axios.post(`${BASE_URL}/signin`, userData);
     // Stockage du token JWT dans le localStorage
-    localStorage.setItem("token", response.data.token);
+   
     //console.log(localStorage.getItem('token'));
     return response.data;
   } catch (error) {
     throw error.response.data;
   }
 }
+
+
+
 
 export async function getAllUsers() {
   try {
@@ -488,3 +491,24 @@ export const updatePasswordAfterRecovery = async (email, newPassword) => {
     throw error;
   }
 }
+
+export async function enable2FA(userId) {
+  try {
+    const response = await axios.post(`${BASE_URL}/enable-2fa`, { userId });
+    // The backend should return the QR code data URL
+    return response.data;
+  } catch (error) {
+    // Handle error response
+    throw error.response.data;
+  }
+}
+
+export async function verifyTwoFactorAuth(userId, token) {
+  try {
+    const response = await axios.post(`${BASE_URL}/verify-2fa`, { userId, token });
+    return response.data; // Contains success status and message
+  } catch (error) {
+    throw new Error(error.response.data.message || 'Failed to verify 2FA code.');
+  }
+}
+

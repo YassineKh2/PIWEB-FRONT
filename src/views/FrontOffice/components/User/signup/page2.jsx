@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,7 +30,13 @@ function SignupPage() {
         birthDate: '',
         cin: '',
     });
-    const [certificate, setCertificate] = useState(null);
+    //const [certificate, setCertificate] = useState(null);
+    const [certificate, setCertificate] = useState({
+      file: null,
+      preview: '',
+      isImage: false
+  });
+
     const [errors, setErrors] = useState({});
   /*  const handleChange = (e) => {
         setUser({ ...User, [e.target.name]: e.target.value });
@@ -45,13 +51,39 @@ function SignupPage() {
       }
     };
 
-    const { getRootProps, getInputProps } = useDropzone({
+   /* const { getRootProps, getInputProps } = useDropzone({
         accept: 'application/pdf,image/*',
         onDrop: acceptedFiles => setCertificate(acceptedFiles[0]),
-    });
+    });*/
 
+   /* const { getRootProps, getInputProps } = useDropzone({
+      accept: 'application/pdf,image/*',
+      onDrop: acceptedFiles => {
+          const file = acceptedFiles[0];
+          setCertificate({
+              file: file,
+              preview: URL.createObjectURL(file),
+              isImage: file.type.startsWith('image/')
+          });
+      }
+  });*/
 
-    const handleSubmit = async (e) => {
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: 'application/pdf,image/*',
+    onDrop: (acceptedFiles) => {
+        const file = acceptedFiles[0];
+        if (file) {
+            let isPDF = file.type === 'application/pdf';
+            setCertificate({
+                file: file,
+                preview: isPDF ? URL.createObjectURL(file) : null, // For PDFs, we will create an object URL
+                isImage: file.type.startsWith('image/') // Update the isImage state based on file type
+            });
+        }
+    }
+});
+   
+    /*const handleSubmit = async (e) => {
       e.preventDefault();
 
       // Tentative de validation des champs pour la première étape
@@ -96,9 +128,123 @@ function SignupPage() {
               }
           }
       }
-  };
+  };*/
 
+  /*const handleSubmit = async (e) => {
+    e.preventDefault();
 
+    // Validate fields for the first step
+    if (currentStep === 0) {
+        try {
+            // Validate only the fields necessary for the first step
+            await schema.pick(['firstName', 'lastName', 'email', 'password', 'birthDate', 'cin']).validate(User, {abortEarly: false});
+            // If validation is successful, go to the next step and reset the errors
+            setCurrentStep(1);
+            setErrors({});
+        } catch (error) {
+            if (error instanceof yup.ValidationError) {
+                // Transform validation errors into an object for display
+                const newErrors = error.inner.reduce((acc, cur) => ({...acc, [cur.path]: cur.message}), {});
+                setErrors(newErrors);
+            } else {
+                console.error("Error during validation:", error);
+            }
+        }
+    } else if (currentStep === 1) {
+        // Validation and submission for the second step (including the certificate)
+        try {
+            // Validate the entire form including the certificate
+            await schema.validate({...User, certificate: certificate ? 'present' : undefined}, {abortEarly: false});
+            // If validation is successful, proceed with submission
+            const formData = new FormData();
+            Object.entries(User).forEach(([key, value]) => formData.append(key, value));
+            if (certificate) {
+                formData.append("certificate", certificate);
+            }
+  
+            const response = await addTM(formData); // Make sure the addTM function can handle FormData with files
+            Swal.fire('Success!', 'Your account has been created successfully.', 'success');
+            navigate('/signin');
+            setErrors({}); // Reset errors after successful submission
+        } catch (error) {
+            if (error instanceof yup.ValidationError) {
+                // Handle validation errors specific to this step
+                const newErrors = error.inner.reduce((acc, cur) => ({...acc, [cur.path]: cur.message}), {});
+                setErrors(newErrors);
+            } else {
+                console.error("Error during submission:", error);
+                Swal.fire('Error!', 'There was a problem with your registration. Please try again later.', 'error');
+            }
+        }
+    }
+};*/
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (currentStep === 0) {
+    try {
+      // Validate only the fields necessary for the first step
+      const firstStepSchema = schema.pick(['firstName', 'lastName', 'email', 'password', 'birthDate', 'cin']);
+      await firstStepSchema.validate(User, { abortEarly: false });
+      setCurrentStep(1);
+      setErrors({});
+    } catch (error) {
+      if (error instanceof yup.ValidationError) {
+        // Transform validation errors into an object for display
+        const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
+        setErrors(newErrors);
+      } else {
+        console.error("Error during validation:", error);
+      }
+    }
+  } else if (currentStep === 1) {
+    try {
+      // Validate the entire form including the certificate
+      await schema.validate({ ...User, certificate: certificate.file ? 'present' : undefined }, { abortEarly: false });
+
+      const formData = new FormData();
+      Object.entries(User).forEach(([key, value]) => formData.append(key, value));
+
+      // Append certificate file to FormData if it's a File object
+      if (certificate.file instanceof File) {
+        formData.append("certificate", certificate.file, certificate.file.name);
+      } else {
+        Swal.fire('Error!', 'Please upload a valid certificate file.', 'error');
+        return; // Stop the submission process if the certificate is not a file
+      }
+
+      // API call to add the TM user
+      const response = await addTM(formData);
+
+      // Assuming `addTM` resolves to an object with a `success` boolean
+      if (response.success) {
+        Swal.fire('Success!', 'Your account has been created successfully.', 'success');
+        navigate('/signin');
+        // Optionally reset the form state here
+      } else {
+        // If the API response contains a message, display it; otherwise, a default message
+        Swal.fire('Error!', response.message || 'There was an issue with your submission.', 'error');
+      }
+    } catch (error) {
+      if (error instanceof yup.ValidationError) {
+        const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
+        setErrors(newErrors);
+      } else {
+        console.error("Error during submission:", error);
+        Swal.fire('Error!', 'There was a problem with your registration. Please try again later.', 'error');
+      }
+    }
+  }
+};
+
+  
+  useEffect(() => {
+    return () => {
+        if (certificate.preview) {
+            URL.revokeObjectURL(certificate.preview);
+        }
+    };
+}, [certificate]);
 
     return (
       <>
@@ -240,9 +386,15 @@ function SignupPage() {
                                   ) : (
                                     <div {...getRootProps()} className="dropzone">
   <input {...getInputProps()} />
-  {certificate ? (
-    <img src={URL.createObjectURL(certificate)} alt="Preview" className="w-full h-64 object-cover rounded-lg" />
-  ) : (
+    {certificate.preview ? (
+        certificate.isImage ? (
+            // If it's an image, render an img tag
+            <img src={certificate.preview} alt="Preview" className="w-full h-64 object-cover rounded-lg" />
+        ) : (
+            // If it's a PDF, render an embed tag
+            <embed src={certificate.preview} type="application/pdf" width="100%" height="500px" />
+        )
+    ) : (
     <div className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 cursor-pointer dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
       <div className="flex flex-col items-center justify-center pt-5 pb-6">
         <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">

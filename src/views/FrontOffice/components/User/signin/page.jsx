@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { signin,getUserByEmail } from "../../../../../Services/apiUser"; // Import the signin function
+import { signin,getUserByEmail ,verifyTwoFactorAuth} from "../../../../../Services/apiUser"; // Import the signin function
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from 'yup';
 import Swal from 'sweetalert2';
 import { GoogleLogin } from '@react-oauth/google';
 import { googleAuth }  from "../../../../../Services/apiUser";
-
+import TwoFASettings from "./TwoFASettings"
 const SigninSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email address').required('Email is required'),
   password: Yup.string().min(8, 'Password must be at least 8 characters').required('Password is required'),
@@ -15,14 +15,98 @@ const SigninSchema = Yup.object().shape({
 
 function SigninPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState("");
  
-    const handleSignin = async (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'email') setEmail(value);
+    if (name === 'password') setPassword(value);
+   
+    // Supprime l'erreur spécifique pour le champ qui vient d'être modifié
+    const newErrors = { ...errors };
+    delete newErrors[name];
+    setErrors(newErrors);
+  };
+
+  /*const handleSignin = async (e) => {
+    e.preventDefault();
+    try {
+      await schema.validate(User, { abortEarly: false });
+      setErrors({}); // Réinitialiser les erreurs
+      const userData = { email, password };
+      const response = await signin(userData);
+
+      
+     
+      if (response.token) {
+       
+        localStorage.setItem('token', response.token);
+
+
+        
+        if (response.user.role === 'A') {
+        
+          navigate('/backoffice', { replace: true });
+        } else if (response.user.role !== 'A') {
+          navigate('/profile');
+
+        if (response.user.role === "A") {
+          navigate("/backoffice", { replace: true });
+          window.location.reload();
+        } else if (response.user.role !== "A") {
+          navigate("/profile");
+
+
+          //console.log(localStorage);
+        }
+      } else {
+        
+        setErro
+        r("Token not found");
+      } }
+    
+
+    } catch (error) {
+      // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
+      const errorMessage = error.response?.data?.error;
+
+      // Afficher l'alerte spécifique si le compte est bloqué
+      if (errorMessage === "Votre compte est bloqué") {
+        Swal.fire({
+          icon: "error",
+          title: "Compte Bloqué",
+          text: "Votre compte est bloqué. Veuillez contacter le support pour plus d'informations.",
+
+
+        });
+      } else {
+        // Gérer d'autres types d'erreurs ici
+        Swal.fire({
+          icon: 'error',
+          title: 'Sorry!',
+          text: errorMessage || 'This Account is banned',
+        });
+      }
+  
+
+
+          
+      }
+
+
+      // Logger l'erreur pour le débogage
+      console.error("Sign-in error:", errorMessage);
+    }*/
+
+    //////////////////////
+
+    /*const handleSignin = async (e) => {
       e.preventDefault();
       const userData = { email, password };
-
+      
+  
       try {
         // Valide les champs du formulaire en utilisant le schéma Yup
         await SigninSchema.validate(userData, { abortEarly: false });
@@ -38,6 +122,8 @@ function SigninPage() {
 
         // Tentative de connexion
         const response = await signin(userData);
+      
+
         if (response.token) {
           const userDetailsResponse = await getUserByEmail(email);
           console.log(userDetailsResponse.user);
@@ -47,9 +133,9 @@ function SigninPage() {
             window.location.reload();
           } else if(response.user.role === "TM" && !userDetailsResponse.user.PlayingFor ){
             console.log(userDetailsResponse.user.PlayingFor);
-
+           
             navigate("/team/add");
-
+            
           }else{
             navigate("/");
             window.location.reload();
@@ -57,6 +143,7 @@ function SigninPage() {
         } else {
           throw new Error("Token not found");
         }
+
       } catch (error) {
         // Handle Yup validation errors
         if (error instanceof Yup.ValidationError) {
@@ -79,8 +166,116 @@ function SigninPage() {
         }
         console.error("Sign-in error:", error.message || error);
       }
-    };
+    };*/
 
+
+  
+  
+  
+  
+    
+      const handleSignin = async (e) => {
+        e.preventDefault();
+        try {
+          const userData = { email, password };
+          await SigninSchema.validate(userData, { abortEarly: false });
+          const userDetailsResponse = await getUserByEmail(email);
+          const userExists = await getUserByEmail(email);
+          if (!userExists) {
+            // Ici, plutôt que de lancer une erreur, on pourrait directement définir le message d'erreur
+            setErrors({ email: "Email does not exist" });
+            return; // Stoppe l'exécution de la fonction ici
+          }
+          const response = await signin(userData);
+          console.log(response);
+         
+
+          if (response.blocked) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: message || 'Account blocked.'
+            });
+            return;
+          }
+    
+          localStorage.setItem('userInfo', JSON.stringify(response));
+    
+          // Check 2FA status and redirect accordingly
+          if (!response.twoFactorRequired) {
+            navigate('/qrcode'); // Redirect to 2FA setup page
+          } else {
+            // Redirect based on role after 2FA has been verified
+            if (role === "A") {
+              navigate("/backoffice", { replace: true });
+            } else if (response.user.role === "TM" && !userDetailsResponse.user.PlayingFor) {
+              navigate("/team/add");
+            } else {
+              navigate("/");
+            }
+          }
+        } catch (error) {
+          handleSignInErrors(error);
+        }
+      };
+    
+     /* const handleSignInErrors = (error) => {
+        if (error instanceof Yup.ValidationError) {
+          const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
+          setErrors(newErrors);
+        } else if (error.response) {
+          const message = error.response.data.message.toLowerCase();
+          if (error.response.status === 401 || message.includes("invalid credentials")) {
+            toast.error('Invalid email or password.');
+          } else {
+            toast.error(message || 'Login failed. Please try again.');
+          }
+        } else {
+          toast.error('An unexpected error occurred. Please try again.');
+        }
+      };*/
+
+      const handleSignInErrors = (error) => {
+        if (error instanceof Yup.ValidationError) {
+          const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
+          setErrors(newErrors);
+        } else if (error.response) {
+          const message = error.response.data.message.toLowerCase();
+          if (error.response.status === 401 ) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Invalid email or password.'
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: message || 'Login failed. Please try again.'
+            });
+          }
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An unexpected error occurred. Please try again.'
+          });
+        }
+      };
+      
+    
+
+  /*const navigateBasedOnRole = (role) => {
+    if (role === "A") {
+      navigate("/backoffice", { replace: true });
+    } else if (role === "TM") {
+      navigate("/team/add");
+    } else {
+      navigate("/");
+    }
+  };*/
+
+ 
 
     const handleGoogleSignIn = async (response) => {
       try {
@@ -114,6 +309,9 @@ function SigninPage() {
         console.error('Détails de l\'erreur retournée par googleAuth :', error.response?.data);
       }
     };
+
+    
+    
 
 
   

@@ -22,6 +22,8 @@ const UserDetails = ({ onActionComplete }) => {
   const navigate = useNavigate();
   const baseUrl = "http://localhost:3000/public/images/certificate/";
   const certificateUrl = user?.certificate ? `${baseUrl}${user.certificate}` : '';
+// Function to check if the URL is for a PDF
+const isPdf = (certificateUrl) => /\.pdf$/i.test(certificateUrl);
 
   const handleAccept = async () => {
     Swal.fire({
@@ -83,6 +85,9 @@ const UserDetails = ({ onActionComplete }) => {
     return <p>Loading user details...</p>;
   }
 
+  console.log('Certificate URL:', certificateUrl);
+    console.log('Is a PDF:', isPdf(certificateUrl));
+
   return (
     <div className="flex items-center justify-center min-h-screen">
       <Card className="w-full max-w-2xl shadow-xl rounded-lg">
@@ -96,11 +101,22 @@ const UserDetails = ({ onActionComplete }) => {
             <p className="text-gray-500">{user.email}</p>
             <p className="text-gray-500">{user.role}</p>
           </div>
-          {certificateUrl && (
+
+  {certificateUrl && (
+    isPdf(certificateUrl) ? (
+      <object data={certificateUrl} type="application/pdf" width="100%" height="400px">
+        <a href={certificateUrl} target="_blank" rel="noopener noreferrer">View Certificate</a>
+      </object>
+    ) : (
+      <img src={certificateUrl} alt="User Certificate" className="max-w-full h-auto rounded-lg shadow-md" />
+    )
+    
+  )}
+        {/*} {certificateUrl && (
             <div className="w-full flex justify-center">
               <img src={certificateUrl} alt="User Certificate" className="max-w-full h-auto rounded-lg shadow-md" />
             </div>
-          )}
+        )}*/}
           <div className="flex space-x-4">
             <Button variant="outline" onClick={handleDecline}>Decline</Button>
             <Button variant="outline" onClick={handleAccept}>Accept</Button>
