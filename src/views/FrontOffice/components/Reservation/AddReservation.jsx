@@ -2,20 +2,22 @@ import React, { useEffect, useState } from "react";
 import { addReservation } from "../../../../Services/FrontOffice/apiReservation";
 import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
-import QRCode from 'qrcode.react'; 
+import QRCode from 'qrcode.react';
+import { useNumber } from "../Reservation/NumberContext";
 
 function AddReservation() {
   const navigate = useNavigate();
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const { number } = useNumber();
   const [reservation, setReservation] = useState({
-    date: new Date().toISOString().split('T')[0], 
-    nbplace: "",
-    matchId: null ,
-    team1:null,
-    team2:null
+    date: new Date().toISOString().split('T')[0],
+    nbplace: number,
+    matchId: null,
+    team1: null,
+    team2: null,
   });
   const [qrCodeValue, setQrCodeValue] = useState("");
-  
+
   useEffect(() => {
     const selectedMatch = JSON.parse(localStorage.getItem('selectedMatch'));
     if (selectedMatch) {
@@ -23,10 +25,11 @@ function AddReservation() {
       setReservation(prevReservation => ({
         ...prevReservation,
         matchId: selectedMatch._id ,
-        team1:selectedMatch.team1?.name,
-team2:selectedMatch.team2?.name      }));
+        team1: selectedMatch.team1?.name,
+        team2: selectedMatch.team2?.name
+      }));
     }
-  }, [selectedMatch]); // Run effect when selectedMatch changes
+  }, [selectedMatch]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,6 +38,14 @@ team2:selectedMatch.team2?.name      }));
     }
     setReservation({ ...reservation, [name]: value });
   };
+
+  // Handle the change of number
+  useEffect(() => {
+    setReservation(prevReservation => ({
+      ...prevReservation,
+      nbplace: number
+    }));
+  }, [number]);
 
   const add = async (e) => {
     e.preventDefault();
@@ -48,17 +59,16 @@ team2:selectedMatch.team2?.name      }));
         });
         return;
       }
-      
+     
       const res = await addReservation(reservation);
       const qrCodeData = {
         reservationId: res._id,
         nbplace: reservation.nbplace,
-        // Add any other relevant data here
       };
       const qrCodeString = JSON.stringify(qrCodeData);
       setQrCodeValue(qrCodeString);
       console.log("Successful addition");
-    
+   
       Swal.fire({
         title: 'Thank You!',
         text: 'Please finalize the payment.',
@@ -79,7 +89,6 @@ team2:selectedMatch.team2?.name      }));
             Reservation
           </h3>
           <form>
-    
             <div className="mb-4">
               <label htmlFor="date" className="text-body-color block mb-1 font-serif">Date:</label>
               <input
@@ -89,24 +98,24 @@ team2:selectedMatch.team2?.name      }));
                 value={reservation.date}
                 onChange={(e) => handleChange(e)}
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                disabled 
+                disabled
               />
             </div>
-            
+           
             <div className="mb-4">
               <label htmlFor="nbplace" className="text-body-color block mb-1 font-serif">Seat Number:</label>
               <input
-                type="text" 
+                type="text"
                 id="nbplace"
                 name="nbplace"
                 placeholder="Seat Number"
-                value={reservation.nbplace}
-                onChange={(e) => handleChange(e)}
+                value={reservation.nbplace} // Use reservation.nbplace here
+                onChange={(e) => handleChange(e)} // Handle the change
                 className="w-full rounded-md border border-body-color border-opacity-10 py-3 px-6 text-base font-medium text-body-color placeholder-body-color outline-none focus:border-primary focus:border-opacity-100 focus-visible:shadow-none dark:border-white dark:border-opacity-10 dark:bg-[#242B51] focus:dark:border-opacity-50"
-                required 
+                required
               />
             </div>
-            <div className="flex justify-center"> 
+            <div className="flex justify-center">
               <input
                 type="submit"
                 value="Confirm"

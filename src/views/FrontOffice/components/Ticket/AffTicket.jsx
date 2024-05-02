@@ -95,10 +95,6 @@ function AffTicket() {
         });
     };
     
-       
-    
-
-
     // Classnames for buttons
     const modifierButtonClass = classnames(
         "duration-80",
@@ -125,6 +121,30 @@ function AffTicket() {
 
     const payerButtonClass = classnames(
         "ml-7",
+        "duration-80",
+        "cursor-pointer",
+        "rounded-md",
+        "border",
+        "border-transparent",
+        "bg-green-500",
+        "py-2",
+        "px-4",
+        "sm:py-3",
+        "sm:px-6",
+        "text-center",
+        "text-base",
+        "font-medium",
+        "text-white",
+        "outline-none",
+        "transition",
+        "ease-in-out",
+        "hover:bg-opacity-80",
+        "hover:shadow-signUp",
+        "focus-visible:shadow-none",
+    );
+
+    const deleteButtonClass = classnames(
+        
         "duration-80",
         "cursor-pointer",
         "rounded-md",
@@ -177,7 +197,7 @@ function AffTicket() {
                                     }
                                 });
                             }}
-                            className="duration-80 cursor-pointer rounded-md border border-transparent bg-green-500 py-2 px-4 sm:py-3 sm:px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
+                            className={deleteButtonClass} 
                         />
                         <div>
                             <button className={modifierButtonClass} onClick={handleModifyTicket}>Update</button>
@@ -186,9 +206,8 @@ function AffTicket() {
                     </div>
                     {/* Affichage du QR Code ici */}
                     <div style={{ position: "absolute", top: "100px", left: "570px"}}>
-                        <QRCode value={JSON.stringify(ticket)} />
+                        <QRCode value={`La ticket est bien réservée: ${ticket.reservation.team1} vs ${ticket.reservation.team2} pour la place ${ticket.reservation.nbplace} `} renderAs="svg" />
                         <p style={{ position: "absolute", top: "140px", left: "0px", color: "black", fontSize: "20px",fontWeight: "bold" }}>{formatDate(ticket.reservation.date)}</p>
-
                     </div>
                 </div>
             )}

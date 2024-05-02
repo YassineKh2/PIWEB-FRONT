@@ -3,7 +3,7 @@ import SigninPage from "./views/FrontOffice/components/User/signin/page.jsx";
 
 import SignupPageTRM from "./views/FrontOffice/components/User/signup/page1.jsx"
 import SignupPageTM from "./views/FrontOffice/components/User/signup/page2.jsx"
-
+import Help from "./views/FrontOffice/components/AI/Help.jsx";
 import About from "./views/FrontOffice/HomePage/components/About/AboutSectionOne.jsx";
 import Blog from "./views/FrontOffice/HomePage/components/Blog/index.jsx";
 import Home from "./views/FrontOffice/HomePage/page.jsx";
@@ -30,6 +30,7 @@ import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
+import Chatbot from "./views/FrontOffice/components/chatbot/chatbot.jsx";
 function RoutesPath() {
   return (
     <div>
@@ -51,10 +52,12 @@ function RoutesPath() {
         <Route path="/allReservation" element={<AllReservation/>} />
         <Route path="/allSponsors" element={<AllSponsors/>} />
         <Route path="/BTicket" element={<BTicket/>} />
+        <Route path="/help" element={<Help/>} />
         <Route path="/ticket" element={<AffTicket/>}/>
         <Route path="/upres" element={<UpReservation/>}/>
         <Route path="/upsp" element={<UpdateSponsors/>}/>
         <Route path="/syGenie" element={<SyGenie/>}/>
+        <Route path="/chat" element={<Chatbot/>}/>
         <Route path="signin" element={<SigninPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="about" element={<About />} />

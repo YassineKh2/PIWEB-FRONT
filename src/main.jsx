@@ -6,9 +6,10 @@ import './index.css'
 import {PrimeReactProvider} from 'primereact/api';
 import Tailwind from 'primereact/passthrough/tailwind';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { NumberProvider } from './views/FrontOffice/components/Reservation/NumberContext.jsx';
 ReactDOM.createRoot(document.getElementById('root')).render(
 
-
+<NumberProvider>
     
         <BrowserRouter>
             <PrimeReactProvider value={{ unstyled: true, pt: Tailwind }}>
@@ -17,5 +18,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 </GoogleOAuthProvider>
             </PrimeReactProvider>
         </BrowserRouter>
-    
+        </NumberProvider>
 )

@@ -10,6 +10,8 @@ import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import PublicRoutes from "./publicRoutes";
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie";
+import { NumberProvider } from "./views/FrontOffice/components/Reservation/NumberContext";
+import Chatbot from "./views/FrontOffice/components/chatbot/chatbot";
 function App() {
   const location = useLocation();
   const [shouldDisplayHeader, setShouldDisplayHeader] = useState(0);
@@ -35,36 +37,50 @@ function App() {
   return (
     
     <>
-       <div className="fixed bottom-10 left-10">
-  <SyGenie />
+<div className="fixed bottom-10 right-10">
+  <Chatbot/>
 </div>
+<div className="fixed bottom-10 left-10">
+    
+          <SyGenie />
+         
+    
+      </div>
       {shouldDisplayHeader === 0 && (
         <Providers>
+    
           <Header />
           <PublicRoutes />
           <Footer />
+        
         </Providers>
       )}
       
       {shouldDisplayHeader === 1 && (
         <Providers>
+  
           <Header />
           <RoutesPath />
           <Footer />
+     
         </Providers>
       )}
        {shouldDisplayHeader === 3 && (
         <Providers>
+            
           <Header />
           <RoutesPath />
           <Footer />
+   
         </Providers>
       )}
        {shouldDisplayHeader === 4 && (
         <Providers>
+       
           <Header />
           <RoutesPath />
           <Footer />
+        
         </Providers>
       )}
       {shouldDisplayHeader === 2 && <RoutingBackOffice />}
