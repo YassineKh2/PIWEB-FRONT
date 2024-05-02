@@ -32,7 +32,7 @@ const DropdownUser = () => {
     const autoLogoutTimeout = setTimeout(() => {
       deleteToken();
     }, 58 * 60 * 1000); // Timeout réglé pour 58 minutes
-  
+
     return () => clearTimeout(autoLogoutTimeout);
   }, []);
 
@@ -40,7 +40,8 @@ const DropdownUser = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userInfo");
     setTimeout(() =>  navigate('/signin'), 1000);
-  
+    window.location.reload();
+
   };
   // close on click outside
   useEffect(() => {
@@ -80,7 +81,7 @@ const DropdownUser = () => {
           <span className="block text-sm font-medium text-black dark:text-white">
             {userData ? `${userData.firstName} ${userData.lastName}` : 'Loading...'}
           </span>
-          
+
         </span>
 
         <span className="h-12 w-12 rounded-full overflow-hidden">
@@ -189,7 +190,7 @@ const DropdownUser = () => {
             </Link>
           </li>
         </ul>
-        
+
         <button  onClick={deleteToken} className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base">
           <svg
             className="fill-current"

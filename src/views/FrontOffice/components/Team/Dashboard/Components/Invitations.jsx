@@ -53,7 +53,9 @@ export default function Invitations() {
 
 
     function acceptTournament(tournament) {
+        console.log(tournament)
         const index = tournaments.findIndex(t => t.tournament === tournament.tournament);
+     
         if (index !== -1) {
             tournaments.splice(index, 1);
             setTournaments([...tournaments]);
@@ -61,7 +63,9 @@ export default function Invitations() {
 
         let data = {
             ...team,
-            tournaments: [...team.tournaments, tournament.idTournament],
+            tournaments: [...team.tournaments, {
+                tournament: tournament.idTournament,
+            }],
             tournamentInvitations: tournaments
         }
 
@@ -163,122 +167,48 @@ export default function Invitations() {
                                                         onClick={() => acceptTournament(tournament)}
                                                         className="text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">Accept
                                                 </button>
-                                                {showAcceptModal ? (
-                                                    <>
-                                                        <div
-                                                            className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
-                                                        >
-                                                            <div className="relative w-auto my-6 mx-auto max-w-sm">
-                                                                {/*content*/}
-                                                                <div
-                                                                    className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                                                                    {/*header*/}
-                                                                    <div
-                                                                        className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                                                                        <h3 className="text-3xl font-semibold">
-                                                                            Accept Invitation
-                                                                        </h3>
-                                                                        <button
-                                                                            className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                                                                            onClick={() => setshowAcceptModal(false)}
-                                                                        >
-                    <span
-                        className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
-                      ×
-                    </span>
-                                                                        </button>
-                                                                    </div>
-                                                                    {/*body*/}
-                                                                    <div className="relative p-6 flex-auto">
-                                                                        <p className="my-4 text-blueGray-500 text-lg leading-relaxed">
-                                                                            You&apos;re already part of a team
-                                                                        </p>
-                                                                    </div>
-                                                                    {/*footer*/}
-                                                                    <div
-                                                                        className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                                                                        <button
-                                                                            className="text-gray-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                                                                            type="button"
-                                                                            onClick={() => setshowAcceptModal(false)}
-                                                                        >
-                                                                            Close
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-                                                    </>
-                                                ) : null}
 
 
                                                 <button type="button"
                                                         onClick={() => setShowModal(true)}
                                                         className="text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900">Decline
                                                 </button>
-                                                {showModal ? (
-                                                    <>
+                                                {
+                                                    showModal && (
                                                         <div
-                                                            className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
+                                                            className="justify-center bg-gray-400 bg-opacity-60 dark:bg-opacity-10  items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
                                                         >
-                                                            <div className="relative w-auto my-6 mx-auto max-w-sm">
-                                                                {/*content*/}
+                                                            <div
+                                                                className="m-10 dark:bg-neutral-900 dark:text-gray-100  bg-white flex max-w-lg flex-col items-center rounded-md border px-8 py-10 text-gray-800 shadow-lg">
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                     className="h-16 w-16 rounded-xl bg-red-50 p-2 text-red-500"
+                                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round"
+                                                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                </svg>
+
+                                                                <p className="mt-4 text-center text-xl font-bold">Remove Invitation</p>
+                                                                <p className="mt-2 text-center text-lg">Are you sure you want the decline the invitation from {tournament.tournament}
+                                                                    !</p>
+                                                                <p className="mt-2 text-center text-lg"><span className="truncate font-medium">This Action is cannot be reversed</span>
+                                                                </p>
                                                                 <div
-                                                                    className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
-                                                                    {/*header*/}
-                                                                    <div
-                                                                        className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-                                                                        <h3 className="text-3xl font-semibold">
-                                                                            Decline Invitation
-                                                                        </h3>
-                                                                        <button
-                                                                            className="p-1 ml-auto bg-transparent border-0 text-black opacity-5 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                                                                            onClick={() => setShowModal(false)}
-                                                                        >
-                    <span
-                        className="bg-transparent text-black opacity-5 h-6 w-6 text-2xl block outline-none focus:outline-none">
-                      ×
-                    </span>
-                                                                        </button>
-                                                                    </div>
-                                                                    {/*body*/}
-                                                                    <div className="relative p-6 flex-auto">
-                                                                        <p className="my-4 text-blueGray-500 text-lg leading-relaxed">
-                                                                            You&apos;re going to decline the invitation
-                                                                            from <strong>{tournament.tournament} </strong>team,
-                                                                            are you
-                                                                            sure?
-                                                                        </p>
-                                                                    </div>
-                                                                    {/*footer*/}
-                                                                    <div
-                                                                        className="flex items-center justify-end p-6 border-t border-solid border-blueGray-200 rounded-b">
-                                                                        <button
-                                                                            className="text-gray-500 background-transparent font-bold uppercase px-6 py-2 text-sm outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                                                                            type="button"
-                                                                            onClick={() => setShowModal(false)}
-                                                                        >
-                                                                            Close
-                                                                        </button>
-                                                                        <button
-                                                                            className="bg-red-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setShowModal(false)
-                                                                                declineTournament(tournament)
-                                                                            }}
-                                                                        >
-                                                                            Delete
-                                                                        </button>
-                                                                    </div>
+                                                                    className="mt-8 flex flex-col justify-center space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setShowModal(false)
+                                                                            declineTournament(tournament)
+                                                                        }}
+                                                                        className="whitespace-nowrap rounded-md bg-red-500 px-4 py-3 font-medium text-white">Decline
+                                                                        the invitation
+                                                                    </button>
+                                                                    <button    onClick={() => setShowModal(false)} className="whitespace-nowrap rounded-md bg-gray-200 px-4 py-3 font-medium dark:bg-gray-800">Cancel
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
-                                                    </>
-                                                ) : null}
-
+                                                    )
+                                                }
                                             </div>
                                         </td>
                                     </tr>

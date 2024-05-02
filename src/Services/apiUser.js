@@ -133,6 +133,19 @@ export async function finishplayerprofile(userData) {
     throw error.response.data;
   }
 }
+export async function finishstaffprofile(userData) {
+    try {
+        const response = await axios.post(`${BASE_URL}/finishstaffprofile`, userData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        // localStorage.setItem('token', response.data.token);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
 
 export async function getAllPlayers() {
   try {
@@ -197,13 +210,13 @@ export async function update(id, newData) {
   }
 }
 
-export async function sendinvitationplayers(data) {
-  try {
-    const response = await axios.post(`${BASE_URL}/sendinvitationplayer`, data);
-    return response.data;
-  } catch (error) {
-    return error.message;
-  }
+export async function sendinvitationtomembers(data) {
+    try {
+        const response = await axios.post(`${BASE_URL}/sendinvitationmember`, data);
+        return response.data;
+    } catch (error) {
+        return error.message
+    }
 }
 export async function updateFollowedTeams(userData) {
   try {
@@ -287,6 +300,56 @@ export async function getplayersbyteam(idteam) {
     throw error.response.data;
   }
 }
+export async function getstaffbyteam(idteam) {
+    try {
+        const response = await axios.get(`${BASE_URL}/getstaffbyteam/${idteam}`);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+export async function getTeamMembers(idteam) {
+    try {
+        const response = await axios.get(`${BASE_URL}/getTeamMembers/${idteam}`);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+
+export async function addplayers(players) {
+    try {
+        const response = await axios.post(`${BASE_URL}/addplayers`,players);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+export async function addstaff(staff) {
+    try {
+        const response = await axios.post(`${BASE_URL}/addstaff`,staff);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+export async function updateTeamMember(userData) {
+    try {
+        const response = await axios.put(`${BASE_URL}/updateTeamMember`, userData);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+export async function getInvitationsByTeam(idTeam) {
+    try {
+        const response = await axios.get(`${BASE_URL}/getInvitationsByTeam/${idTeam}`);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+}
+
 
 
 export async function finishTRMTMProfile(userData) {

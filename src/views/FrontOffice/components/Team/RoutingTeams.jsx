@@ -1,10 +1,11 @@
 import {Route, Routes} from "react-router-dom";
 import UpdateTeam from "./UpdateTeam/UpdateTeam.jsx";
 import AddTeam from "./AddTeam/AddTeam.jsx";
-import LiveStream from "../LiveStreaming/LiveStream.jsx";
+import RoutingDashboardTeam from "./Dashboard/RoutingDashboardTeam.jsx";
 import ShowAllTeams from "./AllTeams/ShowAllTeams.jsx";
 import ShowTeam from "./ShowTeam/ShowTeam.jsx";
 import Dashboard from "./Dashboard/RoutingDashboardTeam.jsx";
+
 
 export default function RoutingTeams() {
 
@@ -14,24 +15,15 @@ export default function RoutingTeams() {
                 path="*"
                 element={
                     <>
-                        <Dashboard/>
+                        <RoutingDashboardTeam/>
                     </>
                 }
             />
-
             <Route
                 path="add"
                 element={
                     <>
                         <AddTeam/>
-                    </>
-                }
-            />
-            <Route
-                path="stream"
-                element={
-                    <>
-                        <LiveStream />
                     </>
                 }
             />

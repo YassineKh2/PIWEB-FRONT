@@ -1,14 +1,13 @@
 import {useFieldArray, useForm} from "react-hook-form";
 
-import {addTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
+import {addTeam, getTeam} from "../../../../../Services/FrontOffice/apiTeam.js";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
 
 import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry,} from "../../../../../Services/APis/CountryAPI.js";
 import {DatePickerDemo} from "./DatePicker.jsx";
-import {AiOutlinePicture as Picture} from "react-icons/ai";
 import {motion} from "framer-motion";
 
 import SectionTitle from "../../../HomePage/components/Common/SectionTitle.jsx";
@@ -17,8 +16,16 @@ import OfferList from "../../../HomePage/components/Pricing/OfferList.jsx";
 import {useNavigate} from "react-router-dom";
 import {FaTrash as Trash} from "react-icons/fa6";
 import {MultiSelect} from 'primereact/multiselect';
-import {getAllPlayers, getAllStaff, sendinvitationplayers} from "../../../../../Services/apiUser.js";
+import {
+    getAllPlayers,
+    getAllStaff,
+    getUserData,
+    sendinvitationtomembers,
+    updateUser
+} from "../../../../../Services/apiUser.js";
 import {addSponsors} from "../../../../../Services/FrontOffice/apiSponsors.js";
+import {useDropzone} from "react-dropzone";
+import {jwtDecode} from "jwt-decode";
 
 
 const schema = yup.object().shape({
@@ -37,16 +44,22 @@ const schema = yup.object().shape({
     players: yup.array().of(
         yup.object({
             playername: yup.string().required(),
-            email: yup.string().email().required()
+            lastName: yup.string().required(),
+            email: yup.string().email().required(),
+            position: yup.string().required(),
+
         })
     ),
     staff: yup.array().of(
         yup.object({
             staffname: yup.string().required(),
-            email: yup.string().email().required()
+            lastName: yup.string().required(),
+            email: yup.string().email().required(),
+            position: yup.string().required(),
         })
     )
 });
+
 
 const steps = [
     {
@@ -73,25 +86,13 @@ const steps = [
 ]
 
 
-const schemasp = yup.object().shape({
-    name: yup
-        .string()
-        .required("Name is required")
-        .matches(/^[A-Za-z]+$/, "Name must contain only letters"),
-    description: yup.string().required("Description is required"),
-    contact: yup
-        .number()
-        .required("Contact is required")
-        .typeError("Contact must be a number")
-        .test(
-            "len",
-            "Contact must be exactly 8 digits",
-            (val) => String(val).length === 8
-        ),
-    adresse: yup.string().required("Adresse is required"),
+const schemasp=yup.object().shape({
+  name: yup.string().required("Name is required").matches(/^[A-Za-z]+$/, "Name must contain only letters"),
+  description: yup.string().required("Description is required"),
+  logo:yup.string(),
+  contact: yup.number().required("Contact is required").typeError("Contact must be a number").test('len', 'Contact must be exactly 8 digits', val => String(val).length === 8),
+  adresse: yup.string().required("Adresse is required")
 });
-
-
 
 
 export default function AddTeam() {
@@ -108,6 +109,7 @@ export default function AddTeam() {
 
     const [selectedPlayers, setSelectedPlayers] = useState([]);
     const [selectedStaff, setselectedStaff] = useState([]);
+    const [TeamManager, setTeamManager] = useState({});
 
 
     const [players, setPlayers] = useState([]);
@@ -136,6 +138,25 @@ export default function AddTeam() {
         })
     }, []);
 
+    useEffect(() => {
+        try {
+            if (localStorage.getItem('token') === null)
+                return;
+
+            const userToken = localStorage.getItem('token');
+            const decodedToken = jwtDecode(userToken);
+            getUserData(decodedToken.userId).then((response) => {
+                setTeamManager(response.user)
+            })
+
+
+        } catch (e) {
+            console.log(e.message)
+        }
+
+
+    }, [])
+
 
     const [isMonthly, setIsMonthly] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -143,7 +164,6 @@ export default function AddTeam() {
     const navigate = useNavigate();
     const [logo, setLogo] = useState(null);
     const [sponsor, setSponsor] = useState({
-
       name: "",
       description: "",
       logo: "",
@@ -154,16 +174,17 @@ export default function AddTeam() {
     const [error, setErrors] = useState({
         name: "",
         description: "",
+        logo:"",
         contact: 0,
         adresse: ""
       });
+
 
     useEffect(() => {
         GetCountries().then((response) => {
             setCountries(response);
         });
     }, []);
-
 
 
     const [showAddPlayer, setShowAddPlayer] = useState(true);
@@ -179,10 +200,14 @@ export default function AddTeam() {
     }, []);
 
 
-
     const next = async () => {
         const fields = steps[currentStep].fields
         const output = await trigger(fields, {shouldFocus: true})
+
+        if (!file) {
+            setVerifImage(true)
+            return
+        }
 
         if (!output) return
 
@@ -204,22 +229,26 @@ export default function AddTeam() {
 
     const handleLogoChange = (e) => {
         setLogo(e.target.files[0]);
-      };
+    };
 
 
     const Player = {
         playername: '',
-        email: ''
+        lastName: '',
+        email: '',
+        position: ''
     }
     const Staff = {
         staffname: '',
-        email: ''
+        lastName: '',
+        email: '',
+        position: ''
     }
 
     const {
         register,
         handleSubmit,
-        formState: {errors, isSubmitting},
+        formState: {errors, isSubmitting, isSubmitted},
         setError,
         watch,
         trigger,
@@ -250,10 +279,29 @@ export default function AddTeam() {
     })
 
 
-
     const selectedCountry = watch("country", true);
     const selectedState = watch("state", true);
-    const image = watch("image", true);
+
+
+    const [file, setFile] = useState();
+    const [file2, setFile2] = useState();
+    const [verifImage, setVerifImage] = useState(false)
+
+    const onDrop = useCallback(acceptedFiles => {
+        try {
+            setVerifImage(false)
+            setFile2(acceptedFiles)
+            setFile(URL.createObjectURL(acceptedFiles[0]));
+        } catch (e) {
+            console.log(e)
+        }
+    }, [])
+
+    const {getRootProps, getInputProps, isDragActive} = useDropzone({
+        onDrop,
+        accept:
+            {'image/*': []}
+    });
 
 
     useEffect(() => {
@@ -297,7 +345,6 @@ export default function AddTeam() {
     }, [currentStep, showForm]);
 
 
-
     const handleChange = async (e) => {
         const {name, value} = e.target;
         setSponsor({...sponsor, [name]: value});
@@ -306,7 +353,7 @@ export default function AddTeam() {
             setErrors({...error, [name]: ""});
         } catch (error) {
 
-            setErrors({ ...error, [name]: error.message });
+            setErrors({...error, [name]: error.message});
 
             setErrors({...error, [name]: error.message});
 
@@ -314,62 +361,55 @@ export default function AddTeam() {
     };
 
 
-
-
-
     const onSubmit = async (data) => {
         try {
 
-
-            console.log(selectedPlayers)
-            data.image = image[0];
-            data.imagename = image[0].name;
+            data.image = file2[0];
+            data.imagename = file2[0].name;
             data.foundedIn = date;
 
+            console.log("te")
 
-
-            const lastteam = { ...data, sponsors: sponsor };
-            console.log("azizz: " + JSON.stringify(lastteam));
-
-            await addTeam(lastteam);
-            await addSponsors(sponsor);
-            navigate('/team/all');
-
-            await schemasp.validate(sponsor);
-            // Ajout de l'équipe
-            const addedTeam = await addTeam(data);
-
-
-            //await sendinvitationplayers(selectedPlayers)
-            const teamId = addedTeam.data._id;
-
+            //
+            const lastteam = {...data, sponsors: sponsor};
+            const addedTeam = await addTeam(lastteam);
+            const teamId = addedTeam.Team._id;
 
 
             let InvitedUsers = {
                 "idTeam": teamId,
-                "invitedPlayers": selectedPlayers
+                "invitedPlayers": selectedPlayers,
+                "invitedStaff": selectedStaff
             }
 
+            sendinvitationtomembers(InvitedUsers).then((response) => {
+                console.log(response)
+            })
+
             // Ajout du sponsor avec l'ID de l'équipe associée
-            if(showForm){
+            if (showForm) {
                 const sponsorData = {...data, teamId};
                 await addSponsors(sponsorData);
             }
+
+            let teammanager={
+                ...TeamManager,
+                "PlayingFor":teamId
+            }
+
+
 
 
             navigate("/team/all");
 
         } catch (error) {
+            console.log(error.message);
             setError("root", {
                 message: error.message,
             });
         }
 
     }
-
-
-
-
 
 
     return (
@@ -443,17 +483,6 @@ export default function AddTeam() {
                                                 animate={{x: 0, opacity: 1}}
                                                 transition={{duration: 0.3, ease: 'easeInOut'}}
                                             >
-                                                <div
-                                                    className="rounded-full bg-amber-50 p-6 w-1/5 md:p-5 lg:p-6 md:w-1/12">
-                                                    <input {...register("image")} type="file" name="image"
-                                                           accept="image/*"
-                                                           id="image"
-                                                           className="hidden"/>
-                                                    <label htmlFor={"image"}
-                                                           className="flex items-baseline justify-center"><Picture
-                                                        className="text-black-2"></Picture></label>
-                                                </div>
-
 
                                                 <div className="-mx-4 flex flex-wrap">
                                                     <div className="w-full px-4 md:w-1/2">
@@ -610,7 +639,49 @@ export default function AddTeam() {
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <label
+                                                    htmlFor="image"
+                                                    className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                >
+                                                    {" "}
+                                                    Team Picture{" "}
+                                                </label>
+                                                <div
+                                                    className="flex flex-col items-center justify-center w-full gap-6"  {...getRootProps()} >
+                                                    <label htmlFor="dropzone-file"
+                                                           className="flex flex-col items-center dark:bg-[#242B51] justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                                                        <div
 
+                                                            className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                            <svg
+                                                                className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                                                                aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none" viewBox="0 0 20 16">
+                                                                <path stroke="currentColor" strokeLinecap="round"
+                                                                      strokeLinejoin="round" strokeWidth="2"
+                                                                      d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                                            </svg>
+                                                            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                                                                <span
+                                                                    className="font-semibold">Click to upload</span> or
+                                                                drag and drop</p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">SVG,
+                                                                PNG, JPG or GIF (MAX. 800x400px)</p>
+                                                        </div>
+                                                        <input id="dropzone-file" type="file"
+                                                               className="hidden" {...getInputProps()}
+                                                               name="image"
+                                                               {...register("image")}/>
+                                                    </label>
+                                                    {file && (
+                                                        <img className="rounded-2xl w-2/4 h-2/4"
+                                                             src={file}
+                                                             alt="Extra large avatar"/>
+                                                    )}
+
+                                                    {((!file2 && isSubmitted) || verifImage) &&
+                                                        <p className="text-danger my-2">Team Image is needed</p>}
+                                                </div>
 
                                             </motion.div>
                                         )}
@@ -634,7 +705,7 @@ export default function AddTeam() {
                                                             </label>
                                                             <div className="flex flex-col ">
                                                                 <DatePickerDemo date={date} setDate={setDate}/>
-                                                                {!date &&
+                                                                {(!date && isSubmitted) &&
                                                                     <p className="text-danger">You must insert a
                                                                         date</p>}
                                                             </div>
@@ -731,8 +802,8 @@ export default function AddTeam() {
                                                             </div>
                                                         </div>
 
-                                                    </div>
 
+                                                    </div>
 
                                                 </div>
 
@@ -784,14 +855,37 @@ export default function AddTeam() {
                                                                                         htmlFor="name"
                                                                                         className="mb-3 block text-sm font-medium text-dark dark:text-white"
                                                                                     >
-                                                                                        Name
+                                                                                        First Name
                                                                                     </label>
                                                                                     <div className="flex flex-col">
                                                                                         <input
                                                                                             {...register(`players.${index}.playername`)}
                                                                                             type="text"
                                                                                             name={`players.${index}.playername`}
-                                                                                            placeholder="Player Name"
+                                                                                            placeholder="First Name"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+
+                                                                                        {errors.players?.[index]?.playername &&
+                                                                                            <p className="text-danger mb-2">{errors.players?.[index]?.playername?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="name"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Last Name
+                                                                                    </label>
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`players.${index}.lastName`)}
+                                                                                            type="text"
+                                                                                            name={`players.${index}.lastName`}
+                                                                                            placeholder="Last Name"
                                                                                             className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                                                                                         />
 
@@ -819,6 +913,72 @@ export default function AddTeam() {
                                                                                         />
                                                                                         {errors.players?.[index]?.email &&
                                                                                             <p className="text-danger">{errors.players?.[index]?.email?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                            </div>
+
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="email"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Position
+                                                                                    </label>
+
+                                                                                    <div className="flex flex-col">
+                                                                                        <select    {...register(`players.${index}.position`)}
+                                                                                                   name={`players.${index}.position`}
+                                                                                                   className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
+                                                                                            <option
+                                                                                                value="AM">Attacking
+                                                                                                Midfielder
+                                                                                            </option>
+                                                                                            <option value="CB">Center
+                                                                                                Back
+                                                                                            </option>
+                                                                                            <option value="CF">Center
+                                                                                                Forward
+                                                                                            </option>
+                                                                                            <option value="CM">Central
+                                                                                                Midfielder
+                                                                                            </option>
+                                                                                            <option value="D">Defender
+                                                                                            </option>
+                                                                                            <option value="DM">Defensive
+                                                                                                Midfielder
+                                                                                            </option>
+                                                                                            <option value="FB">Full
+                                                                                                Back
+                                                                                            </option>
+                                                                                            <option value="F">Forward
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="GK">Goalkeeper
+                                                                                            </option>
+                                                                                            <option value="LM">Left
+                                                                                                Midfielder
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="M">Midfielder
+                                                                                            </option>
+                                                                                            <option value="RM">Right
+                                                                                                Midfielder
+                                                                                            </option>
+                                                                                            <option value="S">Striker
+                                                                                            </option>
+                                                                                            <option value="SS">Second
+                                                                                                Striker
+                                                                                            </option>
+                                                                                            <option value="WB">Wing
+                                                                                                Back
+                                                                                            </option>
+                                                                                            <option value="W">Winger
+                                                                                            </option>
+                                                                                        </select>
+                                                                                        {errors.players?.[index]?.position &&
+                                                                                            <p className="text-danger">{errors.players?.[index]?.position?.message}</p>}
                                                                                     </div>
                                                                                 </div>
 
@@ -861,7 +1021,7 @@ export default function AddTeam() {
                                                                  options={players} optionLabel="name"
                                                                  filter placeholder="Select Players"
                                                                  maxSelectedLabels={3}
-                                                                 virtualScrollerOptions={{itemSize: 40}}
+                                                                 showSelectAll={false}
                                                                  checkboxIcon filterIcon
                                                                  className="w-full md:w-20rem"/>
 
@@ -890,7 +1050,7 @@ export default function AddTeam() {
                                                         {staffTable.fields.map((staff, index) => {
                                                             return (
                                                                 <>
-                                                                    <div className="-mx-4 " key={staff.id}>
+                                                                    <div className="-mx-4 " key={staff.id * 4}>
                                                                         <div
                                                                             className="flex items-center justify-between mb-4">
                                                                             <h1 className="bg-gray-300 rounded-3xl px-3 py-2 dark:bg-blue-600">{index}</h1>
@@ -906,7 +1066,7 @@ export default function AddTeam() {
                                                                                         htmlFor="staffname"
                                                                                         className="mb-3 block text-sm font-medium text-dark dark:text-white"
                                                                                     >
-                                                                                        Name
+                                                                                        First Name
                                                                                     </label>
                                                                                     <div className="flex flex-col">
                                                                                         <input
@@ -919,6 +1079,28 @@ export default function AddTeam() {
 
                                                                                         {errors.staff?.[index]?.staffname &&
                                                                                             <p className="text-danger mb-2">{errors.staff?.[index]?.staffname?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="staffname"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Last Name
+                                                                                    </label>
+                                                                                    <div className="flex flex-col">
+                                                                                        <input
+                                                                                            {...register(`staff.${index}.lastName`)}
+                                                                                            type="text"
+                                                                                            name={`staff.${index}.lastName`}
+                                                                                            placeholder="Staff Name"
+                                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                                                                        />
+
+                                                                                        {errors.staff?.[index]?.lastName &&
+                                                                                            <p className="text-danger mb-2">{errors.staff?.[index]?.lastName?.message}</p>}
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
@@ -945,8 +1127,75 @@ export default function AddTeam() {
                                                                                 </div>
 
                                                                             </div>
+                                                                            <div className="w-full px-4 md:w-1/2">
+                                                                                <div className="mb-8">
+                                                                                    <label
+                                                                                        htmlFor="position"
+                                                                                        className="mb-3 block text-sm font-medium text-dark dark:text-white"
+                                                                                    >
+                                                                                        Position
+                                                                                    </label>
+
+                                                                                    <div className="flex flex-col">
+                                                                                        <select    {...register(`staff.${index}.position`)}
+                                                                                                   name={`staff.${index}.position`}
+                                                                                                   className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
+                                                                                            <option
+                                                                                                value="manager">Manager
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="assistant_manager">Assistant
+                                                                                                Manager
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="coach">Coach
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="goalkeeping_coach">Goalkeeping
+                                                                                                Coach
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="fitness_coach">Fitness
+                                                                                                Coach
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="analyst">Analyst
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="scout">Scout
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="physiotherapist">Physiotherapist
+                                                                                            </option>
+                                                                                            <option value="doctor">Team
+                                                                                                Doctor
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="nutritionist">Nutritionist
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="psychologist">Sports
+                                                                                                Psychologist
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="media_officer">Media
+                                                                                                Officer
+                                                                                            </option>
+                                                                                            <option
+                                                                                                value="kit_manager">Kit
+                                                                                                Manager
+                                                                                            </option>
+                                                                                        </select>
+                                                                                        {errors.staff?.[index]?.position &&
+                                                                                            <p className="text-danger">{errors.staff?.[index]?.position?.message}</p>}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                            </div>
+
 
                                                                         </div>
+
                                                                     </div>
                                                                 </>
 
@@ -983,197 +1232,120 @@ export default function AddTeam() {
                                                                  options={staff} optionLabel="name"
                                                                  filter placeholder="Select Staff Members"
                                                                  maxSelectedLabels={3}
-                                                                 virtualScrollerOptions={{itemSize: 40}}
                                                                  checkboxIcon filterIcon
+                                                                 showSelectAll={false}
                                                                  className="w-full md:w-20rem"/>
 
                                                 )}
 
-    </motion.div>
-)}
-
-
+                                            </motion.div>
+                                        )}
 
 
                                         {/* SPONSORSS CYRINE */}
                                         {currentStep === 3 && (
-                                            <motion.div
-                                                initial={{x: delta >= 0 ? "50%" : "-50%", opacity: 0}}
-                                                animate={{x: 0, opacity: 1}}
-                                                transition={{duration: 0.3, ease: "easeInOut"}}
-                                            >
-                                                <div className="flex items-center">
-                                                    <p className="mr-4 font-bold text-blue-800">
-                                                        Do you have a sponsor to add ?
-                                                    </p>
-                                                    <div className="flex">
-                                                        <input
-                                                            type="radio"
-                                                            id="yes"
-                                                            name="sponsorOption"
-                                                            value="yes"
-                                                            onClick={() => setShowForm(true)}
-                                                        />
-                                                        <label htmlFor="yes" className="mr-2">
-                                                            Yes
-                                                        </label>
-                                                        <input
-                                                            type="radio"
-                                                            id="no"
-                                                            name="sponsorOption"
-                                                            value="no"
-                                                            onClick={() => setShowForm(false)}
-                                                        />
-                                                        <label htmlFor="no" className="mr-4">
-                                                            No
-                                                        </label>
-                                                    </div>
-                                                </div>
+    <motion.div
+        initial={{x: delta >= 0 ? '50%' : '-50%', opacity: 0}}
+        animate={{x: 0, opacity: 1}}
+        transition={{duration: 0.3, ease: 'easeInOut'}}
+    >
+        <div className="flex items-center">
+        <p className="mr-4 font-bold text-blue-800">Do you have a sponsor to add ?</p>
+    <div className="flex">
+        <input type="radio" id="yes" name="sponsorOption" value="yes" onClick={() => setShowForm(true)} />
+        <label htmlFor="yes" className="mr-2">Yes</label>
+        <input type="radio" id="no" name="sponsorOption" value="no" onClick={() => setShowForm(false)} />
+        <label htmlFor="no" className="mr-4">No</label>
+    </div>
+</div>
 
 
-                                                {showForm && (
-                                                    <div
-                                                        className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11"
-                                                        data-wow-delay=".2s"
-                                                    >
-                                                        <div className="flex justify-center items-center mt-16">
-                                                            <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
-                                                                <form>
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="name"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Name:
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="name"
-                                                                            name="name"
-                                                                            value={sponsor.name}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.name && (
-                                                                            <div className="text-red-500">
-                                                                                {error.name}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+{showForm && (
+            <div className="wow fadeInUp relative z-10 rounded-md p-8 sm:p-11 lg:p-8 xl:p-11" data-wow-delay=".2s">
+                <div className="flex justify-center items-center mt-16">
+                    <div className="w-full px-4 lg:w-8/12 xl:w-6/12">
+                        <form>
+                            <div className="mb-4">
+                                <label htmlFor="name" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Name:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={sponsor.name}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.name && <div className="text-red-500">{error.name}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="description"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Description:
-                                                                        </label>
-                                                                        <textarea
-                                                                            id="description"
-                                                                            name="description"
-                                                                            value={sponsor.description}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.description && (
-                                                                            <div className="text-red-500">
-                                                                                {error.description}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="description" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Description:
+                                </label>
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    value={sponsor.description}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.description && <div className="text-red-500">{error.description}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="logo"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Logo:
-                                                                        </label>
-                                                                        <input
-                                                                            type="file"
-                                                                            name="logo"
-                                                                            accept="image/*"
-                                                                            onChange={(e) => handleLogoChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.logo && (
-                                                                            <div className="text-red-500">
-                                                                                {error.logo}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="logo" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Logo:
+                                </label>
+                                <input
+                                    type="file"
+                                    name={sponsor.logo}
+                                    accept="image/*"
+                                    onChange={(e) => handleLogoChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.logo && <div className="text-red-500">{error.logo}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="logo"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Logo:
-                                                                        </label>
-                                                                        <input
-                                                                            type="file"
-                                                                            name="logo"
-                                                                            accept="image/*"
-                                                                            onChange={(e) => handleLogoChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.logo && (
-                                                                            <div className="text-red-500">
-                                                                                {error.logo}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="contact" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Contact:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="contact"
+                                    name="contact"
+                                    value={sponsor.contact}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.contact && <div className="text-red-500">{error.contact}</div>}
+                            </div>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="contact"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Contact:
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="contact"
-                                                                            name="contact"
-                                                                            value={sponsor.contact}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.contact && (
-                                                                            <div className="text-red-500">
-                                                                                {error.contact}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                            <div className="mb-4">
+                                <label htmlFor="address" className="mb-3 block text-sm font-medium text-dark dark:text-white">
+                                    Adresse:
+                                </label>
+                                <input
+                                    type="text"
+                                    id="adresse"
+                                    name="adresse"
+                                    value={sponsor.adresse}
+                                    onChange={(e) => handleChange(e)}
+                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
+                                />
+                                {error.adresse && <div className="text-red-500">{error.adresse}</div>}
+                            </div>
+                        </form>
 
-                                                                    <div className="mb-4">
-                                                                        <label
-                                                                            htmlFor="address"
-                                                                            className="mb-3 block text-sm font-medium text-dark dark:text-white"
-                                                                        >
-                                                                            Adresse:
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="adresse"
-                                                                            name="adresse"
-                                                                            value={sponsor.adresse}
-                                                                            onChange={(e) => handleChange(e)}
-                                                                            className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
-                                                                        />
-                                                                        {error.adresse && (
-                                                                            <div className="text-red-500">
-                                                                                {error.adresse}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </motion.div>
-                                        )}
+                </div>
+            </div>
+        </div>
+         )}
+    </motion.div>
+)}
+
                                         {/* SPONSORSS CYRINE */}
 
 
@@ -1205,13 +1377,13 @@ export default function AddTeam() {
                                             data-wow-delay=".1s"
                                         >
                                                  <span
-                                                    onClick={() => setIsMonthly(true)}
-                                                    className={`${
-                                                      isMonthly
-                                                    ? "pointer-events-none text-primary"
-                                                    : "text-dark dark:text-white"
-                                                    } mr-4 cursor-pointer text-base font-semibold`}
-                                                    >
+                                                     onClick={() => setIsMonthly(true)}
+                                                     className={`${
+                                                         isMonthly
+                                                             ? "pointer-events-none text-primary"
+                                                             : "text-dark dark:text-white"
+                                                     } mr-4 cursor-pointer text-base font-semibold`}
+                                                 >
                                                      Monthly
                                                 </span>
                                             <div
@@ -1246,32 +1418,93 @@ export default function AddTeam() {
 
                                     <div
                                         className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
-                                        <PricingBox
-                                            packageName="Free"
-                                            price="0"
-                                            duration={isMonthly ? "mo" : "yr"}
-                                            subtitle="Enjoy essential features with our free plan."
-                                            type="free"
-                                            isSubmitting={isSubmitting}
-                                            formRef={formRef}
-                                        >
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Limited Team Management" status="active" />
-                                            <OfferList text="Basic Match Scheduling" status="active" />
-                                            <OfferList text="Access to Basic Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="inactive" />
-                                            <OfferList text="Historical Data" status="inactive" />
-                                            <OfferList text="Match Replays" status="inactive" />
+                                        <div className="w-full">
+                                            <div
+                                                className="wow fadeInUp relative z-10 rounded-md bg-white px-8 py-10 shadow-signUp dark:bg-[#1D2144]"
+                                                data-wow-delay=".1s"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="price mb-2 text-3xl font-bold text-black dark:text-white">
+                                                        <span className="amount">0د</span>
+                                                        <span className="time text-body-color">/mo</span>
+                                                    </h3>
+                                                    <h4 className="mb-2 text-xl font-bold text-dark dark:text-white">
+                                                        Free
+                                                    </h4>
+                                                </div>
+                                                <p className="mb-7 text-base text-body-color">Enjoy essential features
+                                                    with our free plan.</p>
+                                                <div
+                                                    className="mb-8 border-b border-body-color border-opacity-10 pb-8 dark:border-white dark:border-opacity-10">
 
-                                            <OfferList text="Access To All Tournaments" status="active"/>
-                                            <OfferList text="Limited Team Management" status="active"/>
-                                            <OfferList text="Basic Match Scheduling" status="active"/>
-                                            <OfferList text="Access to Basic Football Stats" status="active"/>
-                                            <OfferList text="Ad-Free Experience" status="inactive"/>
-                                            <OfferList text="Historical Data" status="inactive"/>
-                                            <OfferList text="Match Replays" status="inactive"/>
+                                                    <button
+                                                        className="flex w-full items-center justify-center rounded-md bg-primary p-3 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp">
+                                                        {isSubmitting ? "Loading..." : "Get Started"}</button>
 
-                                        </PricingBox>
+
+                                                </div>
+                                                <OfferList text="Access To All Tournaments" status="active"/>
+                                                <OfferList text="Limited Team Management" status="active"/>
+                                                <OfferList text="Basic Match Scheduling" status="active"/>
+                                                <OfferList text="Access to Basic Football Stats" status="active"/>
+                                                <OfferList text="Ad-Free Experience" status="inactive"/>
+                                                <OfferList text="Historical Data" status="inactive"/>
+                                                <OfferList text="Match Replays" status="inactive"/>
+
+                                                <OfferList text="Access To All Tournaments" status="active"/>
+                                                <OfferList text="Limited Team Management" status="active"/>
+                                                <OfferList text="Basic Match Scheduling" status="active"/>
+                                                <OfferList text="Access to Basic Football Stats" status="active"/>
+                                                <OfferList text="Ad-Free Experience" status="inactive"/>
+                                                <OfferList text="Historical Data" status="inactive"/>
+                                                <OfferList text="Match Replays" status="inactive"/>
+
+                                                <div className="absolute bottom-0 right-0 z-[-1]">
+                                                    <svg
+                                                        width="179"
+                                                        height="158"
+                                                        viewBox="0 0 179 158"
+                                                        fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            opacity="0.5"
+                                                            d="M75.0002 63.256C115.229 82.3657 136.011 137.496 141.374 162.673C150.063 203.47 207.217 197.755 202.419 167.738C195.393 123.781 137.273 90.3579 75.0002 63.256Z"
+                                                            fill="url(#paint0_linear_70:153)"
+                                                        />
+                                                        <path
+                                                            opacity="0.3"
+                                                            d="M178.255 0.150879C129.388 56.5969 134.648 155.224 143.387 197.482C157.547 265.958 65.9705 295.709 53.1024 246.401C34.2588 174.197 100.939 83.7223 178.255 0.150879Z"
+                                                            fill="url(#paint1_linear_70:153)"
+                                                        />
+                                                        <defs>
+                                                            <linearGradient
+                                                                id="paint0_linear_70:153"
+                                                                x1="69.6694"
+                                                                y1="29.9033"
+                                                                x2="196.108"
+                                                                y2="83.2919"
+                                                                gradientUnits="userSpaceOnUse"
+                                                            >
+                                                                <stop stopColor="#4A6CF7" stopOpacity="0.62"/>
+                                                                <stop offset="1" stopColor="#4A6CF7" stopOpacity="0"/>
+                                                            </linearGradient>
+                                                            <linearGradient
+                                                                id="paint1_linear_70:153"
+                                                                x1="165.348"
+                                                                y1="-75.4466"
+                                                                x2="-3.75136"
+                                                                y2="103.645"
+                                                                gradientUnits="userSpaceOnUse"
+                                                            >
+                                                                <stop stopColor="#4A6CF7" stopOpacity="0.62"/>
+                                                                <stop offset="1" stopColor="#4A6CF7" stopOpacity="0"/>
+                                                            </linearGradient>
+                                                        </defs>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         <PricingBox
                                             packageName="Basic"
@@ -1283,13 +1516,13 @@ export default function AddTeam() {
                                             formRef={formRef}
                                         >
 
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Full Team Management" status="active" />
-                                            <OfferList text="Full Match Scheduling" status="active" />
-                                            <OfferList text="Full Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="active" />
-                                            <OfferList text="Historical Data" status="inactive" />
-                                            <OfferList text="Match Replays" status="inactive" />
+                                            <OfferList text="Access To All Tournaments" status="active"/>
+                                            <OfferList text="Full Team Management" status="active"/>
+                                            <OfferList text="Full Match Scheduling" status="active"/>
+                                            <OfferList text="Full Football Stats" status="active"/>
+                                            <OfferList text="Ad-Free Experience" status="active"/>
+                                            <OfferList text="Historical Data" status="inactive"/>
+                                            <OfferList text="Match Replays" status="inactive"/>
 
                                             <OfferList text="Access To All Tournaments" status="active"/>
                                             <OfferList text="Full Team Management" status="active"/>
@@ -1301,6 +1534,7 @@ export default function AddTeam() {
 
                                         </PricingBox>
 
+
                                         <PricingBox
                                             packageName="Plus"
                                             price={isMonthly ? "199" : "2199"}
@@ -1311,13 +1545,13 @@ export default function AddTeam() {
                                             formRef={formRef}
                                         >
 
-                                            <OfferList text="Access To All Tournaments" status="active" />
-                                            <OfferList text="Full Team Management" status="active" />
-                                            <OfferList text="Full Match Scheduling" status="active" />
-                                            <OfferList text="Full Football Stats" status="active" />
-                                            <OfferList text="Ad-Free Experience" status="active" />
-                                            <OfferList text="Historical Data And Match Replays" status="active" />
-                                            <OfferList text="Dedicated Support Line " status="active" />
+                                            <OfferList text="Access To All Tournaments" status="active"/>
+                                            <OfferList text="Full Team Management" status="active"/>
+                                            <OfferList text="Full Match Scheduling" status="active"/>
+                                            <OfferList text="Full Football Stats" status="active"/>
+                                            <OfferList text="Ad-Free Experience" status="active"/>
+                                            <OfferList text="Historical Data And Match Replays" status="active"/>
+                                            <OfferList text="Dedicated Support Line " status="active"/>
 
                                             <OfferList text="Access To All Tournaments" status="active"/>
                                             <OfferList text="Full Team Management" status="active"/>
@@ -1442,144 +1676,142 @@ export default function AddTeam() {
                     )}
 
 
-            <div className="absolute top-0 left-0 z-[-1]">
-                <svg
-                    width="370"
-                    height="596"
-                    viewBox="0 0 370 596"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <mask
-                        id="mask0_88:141"
-                        style={{maskType: "alpha"}}
-                        maskUnits="userSpaceOnUse"
-                        x="0"
-                        y="0"
-                        width="370"
-                        height="596"
-                    >
-                        <rect width="370" height="596" rx="2" fill="#1D2144"/>
-                    </mask>
-                    <g mask="url(#mask0_88:141)">
-                        <path
-                            opacity="0.15"
-                            d="M15.4076 50.9571L54.1541 99.0711L71.4489 35.1605L15.4076 50.9571Z"
-                            fill="url(#paint0_linear_88:141)"
-                        />
-                        <path
-                            opacity="0.15"
-                            d="M20.7137 501.422L44.6431 474.241L6 470.624L20.7137 501.422Z"
-                            fill="url(#paint1_linear_88:141)"
-                        />
-                        <path
-                            opacity="0.1"
-                            d="M331.676 198.309C344.398 204.636 359.168 194.704 358.107 180.536C357.12 167.363 342.941 159.531 331.265 165.71C318.077 172.69 318.317 191.664 331.676 198.309Z"
-                            fill="url(#paint2_linear_88:141)"
-                        />
-                        <g opacity="0.3">
-                            <path
-                                d="M209 89.9999C216 77.3332 235.7 50.7999 258.5 45.9999C287 39.9999 303 41.9999 314 30.4999C325 18.9999 334 -3.50014 357 -3.50014C380 -3.50014 395 4.99986 408.5 -8.50014C422 -22.0001 418.5 -46.0001 452 -37.5001C478.8 -30.7001 515.167 -45 530 -53"
-                                stroke="url(#paint3_linear_88:141)"
-                            />
-                            <path
-                                d="M251 64.9999C258 52.3332 277.7 25.7999 300.5 20.9999C329 14.9999 345 16.9999 356 5.49986C367 -6.00014 376 -28.5001 399 -28.5001C422 -28.5001 437 -20.0001 450.5 -33.5001C464 -47.0001 460.5 -71.0001 494 -62.5001C520.8 -55.7001 557.167 -70 572 -78"
-                                stroke="url(#paint4_linear_88:141)"
-                            />
-                            <path
-                                d="M212 73.9999C219 61.3332 238.7 34.7999 261.5 29.9999C290 23.9999 306 25.9999 317 14.4999C328 2.99986 337 -19.5001 360 -19.5001C383 -19.5001 398 -11.0001 411.5 -24.5001C425 -38.0001 421.5 -62.0001 455 -53.5001C481.8 -46.7001 518.167 -61 533 -69"
-                                stroke="url(#paint5_linear_88:141)"
-                            />
-                            <path
-                                d="M249 40.9999C256 28.3332 275.7 1.79986 298.5 -3.00014C327 -9.00014 343 -7.00014 354 -18.5001C365 -30.0001 374 -52.5001 397 -52.5001C420 -52.5001 435 -44.0001 448.5 -57.5001C462 -71.0001 458.5 -95.0001 492 -86.5001C518.8 -79.7001 555.167 -94 570 -102"
-                                stroke="url(#paint6_linear_88:141)"
-                            />
-                        </g>
-                    </g>
-                    <defs>
-                        <linearGradient
-                            id="paint0_linear_88:141"
-                            x1="13.4497"
-                            y1="63.5059"
-                            x2="81.144"
-                            y2="41.5072"
-                            gradientUnits="userSpaceOnUse"
+                    <div className="absolute top-0 left-0 z-[-1]">
+                        <svg
+                            width="370"
+                            height="596"
+                            viewBox="0 0 370 596"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
                         >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint1_linear_88:141"
-                            x1="28.1579"
-                            y1="501.301"
-                            x2="8.69936"
-                            y2="464.391"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint2_linear_88:141"
-                            x1="338"
-                            y1="167"
-                            x2="349.488"
-                            y2="200.004"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint3_linear_88:141"
-                            x1="369.5"
-                            y1="-53"
-                            x2="369.5"
-                            y2="89.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint4_linear_88:141"
-                            x1="411.5"
-                            y1="-78"
-                            x2="411.5"
-                            y2="64.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint5_linear_88:141"
-                            x1="372.5"
-                            y1="-69"
-                            x2="372.5"
-                            y2="73.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
-                        <linearGradient
-                            id="paint6_linear_88:141"
-                            x1="409.5"
-                            y1="-102"
-                            x2="409.5"
-                            y2="40.9999"
-                            gradientUnits="userSpaceOnUse"
-                        >
-                            <stop stopColor="white"/>
-                            <stop offset="1" stopColor="white" stopOpacity="0"/>
-                        </linearGradient>
+                            <mask
+                                id="mask0_88:141"
+                                style={{maskType: "alpha"}}
+                                maskUnits="userSpaceOnUse"
+                                x="0"
+                                y="0"
+                                width="370"
+                                height="596"
+                            >
+                                <rect width="370" height="596" rx="2" fill="#1D2144"/>
+                            </mask>
+                            <g mask="url(#mask0_88:141)">
+                                <path
+                                    opacity="0.15"
+                                    d="M15.4076 50.9571L54.1541 99.0711L71.4489 35.1605L15.4076 50.9571Z"
+                                    fill="url(#paint0_linear_88:141)"
+                                />
+                                <path
+                                    opacity="0.15"
+                                    d="M20.7137 501.422L44.6431 474.241L6 470.624L20.7137 501.422Z"
+                                    fill="url(#paint1_linear_88:141)"
+                                />
+                                <path
+                                    opacity="0.1"
+                                    d="M331.676 198.309C344.398 204.636 359.168 194.704 358.107 180.536C357.12 167.363 342.941 159.531 331.265 165.71C318.077 172.69 318.317 191.664 331.676 198.309Z"
+                                    fill="url(#paint2_linear_88:141)"
+                                />
+                                <g opacity="0.3">
+                                    <path
+                                        d="M209 89.9999C216 77.3332 235.7 50.7999 258.5 45.9999C287 39.9999 303 41.9999 314 30.4999C325 18.9999 334 -3.50014 357 -3.50014C380 -3.50014 395 4.99986 408.5 -8.50014C422 -22.0001 418.5 -46.0001 452 -37.5001C478.8 -30.7001 515.167 -45 530 -53"
+                                        stroke="url(#paint3_linear_88:141)"
+                                    />
+                                    <path
+                                        d="M251 64.9999C258 52.3332 277.7 25.7999 300.5 20.9999C329 14.9999 345 16.9999 356 5.49986C367 -6.00014 376 -28.5001 399 -28.5001C422 -28.5001 437 -20.0001 450.5 -33.5001C464 -47.0001 460.5 -71.0001 494 -62.5001C520.8 -55.7001 557.167 -70 572 -78"
+                                        stroke="url(#paint4_linear_88:141)"
+                                    />
+                                    <path
+                                        d="M212 73.9999C219 61.3332 238.7 34.7999 261.5 29.9999C290 23.9999 306 25.9999 317 14.4999C328 2.99986 337 -19.5001 360 -19.5001C383 -19.5001 398 -11.0001 411.5 -24.5001C425 -38.0001 421.5 -62.0001 455 -53.5001C481.8 -46.7001 518.167 -61 533 -69"
+                                        stroke="url(#paint5_linear_88:141)"
+                                    />
+                                    <path
+                                        d="M249 40.9999C256 28.3332 275.7 1.79986 298.5 -3.00014C327 -9.00014 343 -7.00014 354 -18.5001C365 -30.0001 374 -52.5001 397 -52.5001C420 -52.5001 435 -44.0001 448.5 -57.5001C462 -71.0001 458.5 -95.0001 492 -86.5001C518.8 -79.7001 555.167 -94 570 -102"
+                                        stroke="url(#paint6_linear_88:141)"
+                                    />
+                                </g>
+                            </g>
+                            <defs>
+                                <linearGradient
+                                    id="paint0_linear_88:141"
+                                    x1="13.4497"
+                                    y1="63.5059"
+                                    x2="81.144"
+                                    y2="41.5072"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
+                                <linearGradient
+                                    id="paint1_linear_88:141"
+                                    x1="28.1579"
+                                    y1="501.301"
+                                    x2="8.69936"
+                                    y2="464.391"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
+                                <linearGradient
+                                    id="paint2_linear_88:141"
+                                    x1="338"
+                                    y1="167"
+                                    x2="349.488"
+                                    y2="200.004"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
+                                <linearGradient
+                                    id="paint3_linear_88:141"
+                                    x1="369.5"
+                                    y1="-53"
+                                    x2="369.5"
+                                    y2="89.9999"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
+                                <linearGradient
+                                    id="paint4_linear_88:141"
+                                    x1="411.5"
+                                    y1="-78"
+                                    x2="411.5"
+                                    y2="64.9999"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
+                                <linearGradient
+                                    id="paint5_linear_88:141"
+                                    x1="372.5"
+                                    y1="-69"
+                                    x2="372.5"
+                                    y2="73.9999"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
+                                <linearGradient
+                                    id="paint6_linear_88:141"
+                                    x1="409.5"
+                                    y1="-102"
+                                    x2="409.5"
+                                    y2="40.9999"
+                                    gradientUnits="userSpaceOnUse"
+                                >
+                                    <stop stopColor="white"/>
+                                    <stop offset="1" stopColor="white" stopOpacity="0"/>
+                                </linearGradient>
 
-                    </defs>
-                </svg>
-            </div>
-
-            <button type='submit'>Submit</button>
+                            </defs>
+                        </svg>
+                    </div>
                 </form>
             </section>
         </>

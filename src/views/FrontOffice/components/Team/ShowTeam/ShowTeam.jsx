@@ -41,7 +41,14 @@ export default function ShowTeam() {
             setTrophies(response.team.trophies)
         })
         getMatchesByTeam(id).then((response) => {
-            setMatches(response.matchList)
+            if(response?.matchList[0]) {
+                let matches = []
+                matches[0] = response?.matchList[0];
+                matches[1] = response?.matchList[1];
+                matches[2] = response?.matchList[2];
+                setMatches(matches)
+            }
+
         });
     }, [])
 
@@ -95,9 +102,9 @@ export default function ShowTeam() {
             }
         });
     };
-    
-      
-      
+
+
+
     function transformDate(date) {
         const dateObj = new Date(date);
         const options = {year: 'numeric', month: 'long', day: 'numeric'};
@@ -140,7 +147,7 @@ export default function ShowTeam() {
                                 <p className="text-gray-500 md:max-w-prose dark:text-gray-400">
                                     Description: {sponsor.description}
                                 </p>
-                             
+
                                 <p className="text-gray-500 md:max-w-prose dark:text-gray-400">
                                     Contact: {sponsor.contact}
                                 </p>
@@ -213,10 +220,10 @@ export default function ShowTeam() {
                                         <>
                                             <Link to="" key={index}
                                                   className="flex flex-col md:flex-row  items-center gap-4 p-3 md:gap-10 text-base font-bold text-gray-900 rounded-lg bg-white hover:bg-gray-100 group hover:shadow dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white">
-                                                <span className="flex-1 ms-3 whitespace-nowrap">{match.team1.name}
+                                                <span className="flex-1 ms-3 whitespace-nowrap">{match?.team1?.name}
                                                     <text className="text-xl">&nbsp;vs{' '}&nbsp;</text>
-                                                    {match.team2.name}</span>
-                                                <p className="text-center text-white bg-blue-400 rounded-2xl p-2 text-xs">{transformDate(match.matchDate)}</p>
+                                                    {match?.team2?.name}</span>
+                                                <p className="text-center text-white bg-blue-400 rounded-2xl p-2 text-xs">{transformDate(match?.matchDate)}</p>
                                             </Link>
                                         </>
                                     )
@@ -231,33 +238,30 @@ export default function ShowTeam() {
                             <h2 className="text-2xl font-bold">Recent Matches</h2>
                             <div className="flex flex-col gap-4">
                                 {matches.map((match, index) => {
-                                    if (match.team1._id === team._id) {
-                                        let currentTeam = match.team1;
-                                        let enemyTeam = match.team2;
+                                    if (match?.team1._id === team._id) {
+                                        let currentTeam = match?.team1;
+                                        let enemyTeam = match?.team2;
                                     } else {
-                                        let currentTeam = match.team2;
-                                        let enemyTeam = match.team1;
+                                        let currentTeam = match?.team2;
+                                        let enemyTeam = match?.team1;
                                     }
 
                                     let linkStyle = "flex w-[95%] md:w-full flex-col md:flex-row items-center gap-2 p-3 md:gap-10 text-base font-bold text-gray-900 rounded-lg  group hover:shadow dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
-                                    if (match.scoreTeam1 === 0 || match.scoreTeam2 === 0)
-                                        linkStyle += " bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600";
-                                    else if (match.team1._id === team._id && match.scoreTeam1 > match.scoreTeam2)
-                                        linkStyle += " bg-[#339900]  hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500";
-                                    else if (match.team2._id === team._id && match.scoreTeam1 < match.scoreTeam2)
-                                        linkStyle += " bg-[#339900] hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500";
+                                    if (match?.scoreTeam1 === 0 || match?.scoreTeam2 === 0)
+                                        linkStyle += " bg-gray-300 hover:bg-gray-400";
+                                    else if(match?.team1._id === team._id && match?.scoreTeam1 > match?.scoreTeam2)
+                                        linkStyle += " bg-green-500 hover:bg-green-600 ";
                                     else
-                                        linkStyle += " bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-400";
+                                        linkStyle += " bg-red-400 hover:bg-red-500 ";
 
-                                    return (
-                                        <Link to="" key={index} className={linkStyle}>
-                                                <span className="flex-1 md:flex-row ms-3 whitespace-nowrap">{match.team1.name}
-                                                    <text
-                                                        className="">&nbsp;{match.scoreTeam1} - {match.scoreTeam2}{' '}&nbsp;</text>
-                                                    {match.team2.name}</span>
-                                            <p className="text-center text-white bg-cyan-500 rounded-2xl p-2 text-xs">{match.tournament.name}</p>
-                                        </Link>
-                                    )
+                                        return (
+                                            <Link to="" key={index} className={linkStyle}>
+                                                <span className="flex-1 ms-3 whitespace-nowrap">{match?.team1?.name}
+                                                 <text className="">&nbsp;{match?.scoreTeam1} - {match?.scoreTeam2}{' '}&nbsp;</text>
+                                                 {match?.team2?.name}</span>
+                                                <p className="text-center text-white bg-blue-400 rounded-2xl p-2 text-xs">{match?.tournament?.name}</p>
+                                            </Link>
+                                        )
                                 })}
 
 

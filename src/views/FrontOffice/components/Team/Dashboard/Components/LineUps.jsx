@@ -70,14 +70,14 @@ export default function LineUps() {
             const decodedToken = jwtDecode(userToken);
             getUserData(decodedToken.userId).then((response) => {
                 setTeamManager(response.user)
+
                 getplayersbyteam(response.user.PlayingFor).then((response) => {
                     setPlayers(response)
                 })
                 getTeam(response.user.PlayingFor).then((response) => {
                     setTeam(response.team)
-
-
                 })
+
             })
         } catch (e) {
             console.log(e.message)
@@ -86,7 +86,7 @@ export default function LineUps() {
 
     }, [])
 
-    function getExistingLineup(){
+    function getExistingLineup() {
         let goalkeeper = {}
         let defenders = []
         let centralDefensiveMidfielders = []
@@ -118,7 +118,7 @@ export default function LineUps() {
         setSelectedAttackers(attackers)
 
         setSelectedPlayers([goalkeeper, ...defenders, ...centralDefensiveMidfielders, ...midfielders, ...centralAttackingMidfielders, ...attackers])
-       let CurrentSquad = {
+        let CurrentSquad = {
             gk: goalkeeper,
             df: defenders,
             cdm: centralDefensiveMidfielders,
@@ -483,6 +483,8 @@ export default function LineUps() {
                                                  panelFooterTemplate={DefenderspanelFooterTemplate}
                                                  className="w-full md:w-20rem py-1.5"
                                                  filter filterIcon
+                                                 selectionLimit={5}
+                                                 showSelectAll={false}
                                                  itemClassName={"flex items-center"}
                                                  display="chip"/>
                                 </div>
@@ -503,6 +505,7 @@ export default function LineUps() {
                                                  panelFooterTemplate={CentralDefensiveMidfieldersspanelFooterTemplate}
                                                  className="w-full md:w-20rem py-1.5"
                                                  filter filterIcon
+                                                 showSelectAll={false}
                                                  itemClassName={"flex items-center"}
                                                  display="chip"/>
                                 </div>
@@ -520,6 +523,7 @@ export default function LineUps() {
                                                  className="w-full md:w-20rem py-1.5"
                                                  dataKey={midfielders.id}
                                                  filter filterIcon
+                                                 showSelectAll={false}
                                                  itemClassName={"flex items-center"}
                                                  display="chip"/>
                                 </div>
@@ -540,6 +544,7 @@ export default function LineUps() {
                                                  panelFooterTemplate={CentralAttackingMidfieldersspanelFooterTemplate}
                                                  className="w-full md:w-20rem py-1.5"
                                                  filter filterIcon
+                                                 showSelectAll={false}
                                                  itemClassName={"flex items-center"}
                                                  display="chip"/>
                                 </div>
@@ -557,6 +562,7 @@ export default function LineUps() {
                                                  className="w-full md:w-20rem py-1.5"
                                                  dataKey={attackers.id}
                                                  filter filterIcon
+                                                 showSelectAll={false}
                                                  itemClassName={"flex items-center"}
                                                  display="chip"/>
                                 </div>
@@ -574,6 +580,7 @@ export default function LineUps() {
                                                  className="w-full md:w-20rem py-1.5"
                                                  dataKey={availableSubstitutes.id}
                                                  filter filterIcon
+                                                 showSelectAll={false}
                                                  itemClassName={"flex items-center"}
                                                  display="chip"/>
                                 </div>

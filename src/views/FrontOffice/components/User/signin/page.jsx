@@ -12,7 +12,6 @@ const SigninSchema = Yup.object().shape({
 });
 
 
-  
 
 function SigninPage() {
   const navigate = useNavigate();
@@ -112,7 +111,7 @@ function SigninPage() {
         // Valide les champs du formulaire en utilisant le schéma Yup
         await SigninSchema.validate(userData, { abortEarly: false });
         setErrors({}); // Réinitialiser les erreurs si la validation est réussie
-  
+
         // Vérifie si l'utilisateur existe avant de tenter la connexion
         const userExists = await getUserByEmail(email);
         if (!userExists) {
@@ -120,7 +119,7 @@ function SigninPage() {
           setErrors({ email: "Email does not exist" });
           return; // Stoppe l'exécution de la fonction ici
         }
-  
+
         // Tentative de connexion
         const response = await signin(userData);
       
@@ -287,23 +286,23 @@ function SigninPage() {
           return;
         }
         console.log('Token reçu de Google :', credential);
-    
+
         // Extrait le token de la propriété "credential"
-        const token = credential; 
+        const token = credential;
         console.log(token)// Assurez-vous que la propriété contient bien le token
-    
+
         // Appel de la fonction googleAuth avec le token
         const authResponse = await googleAuth(token);
-    
+
         if (authResponse && authResponse.user.role === "C") {
           console.log("Redirection vers /profile");
           navigate('/profile');
         }
         // Enregistrement du token dans le local storage
        // localStorage.setItem('token', authResponse.token);
-    
+
         console.log('Authentification Google réussie, réponse du backend :', authResponse);
-        
+
         // Effectuez des actions supplémentaires, comme la redirection ou la mise à jour de l'état du composant
       } catch (error) {
         console.error('Échec de l\'authentification Google :', error);
@@ -314,6 +313,8 @@ function SigninPage() {
     
     
 
+
+  
 
   return (
     <>
@@ -390,7 +391,7 @@ function SigninPage() {
                       className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      
+
                     />
                      {errors.email && (
           <p className="text-red-500 text-sm mt-2">{errors.email}</p>
@@ -416,7 +417,7 @@ function SigninPage() {
         )}
                   </div>
                   <div className="mb-8 flex flex-col justify-between sm:flex-row sm:items-center">
-                    
+
                   <div>
   <Link
     to="/forgotPassword"

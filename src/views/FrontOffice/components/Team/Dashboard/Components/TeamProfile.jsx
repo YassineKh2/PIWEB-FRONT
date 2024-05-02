@@ -1,9 +1,9 @@
 import {useCallback, useEffect, useState} from "react";
 import {jwtDecode} from "jwt-decode";
 import {getUserData} from "../../../../../../Services/apiUser.js";
-import {getTeam, updateTeam} from "../../../../../../Services/FrontOffice/apiTeam.js";
+import {getTeam, updateTeam, updateTeamImage} from "../../../../../../Services/FrontOffice/apiTeam.js";
 import {GetCitybyStateAndCountry, GetCountries, GetStateByCountry} from "../../../../../../Services/APis/CountryAPI.js";
-import {DatePickerDemo} from "../../AddTeam/DatePicker.jsx";
+import {DatePickerDemo} from "./DatePickerTeam.jsx";
 import {useDropzone} from "react-dropzone";
 
 
@@ -17,11 +17,26 @@ export default function TeamProfile() {
     const onDrop = useCallback(acceptedFiles => {
         try {
             setImage(URL.createObjectURL(acceptedFiles[0]));
-            console.log(acceptedFiles[0])
+            // setTeam({...Team, image: acceptedFiles[0]})
+            let teamData = {
+                _id: Team._id,
+                image: acceptedFiles[0],
+                imagename: acceptedFiles[0].name
+            }
+            updateTeamImage(teamData).then(() => {
+                setToast(true)
+                setToastMessage('Team Picture Updated Successfully')
+                setTimeout(() => {
+                    setToast(false)
+                }, 3000)
+            }).catch((error) => {
+                setErrorToast(true)
+                setToastMessage('Error Updating Profile', error.message)
+            })
         } catch (e) {
             console.log(e)
         }
-    }, [])
+    }, [Team])
 
     const {getRootProps, getInputProps, isDragActive} = useDropzone({
         onDrop,
@@ -41,6 +56,7 @@ export default function TeamProfile() {
                 getTeam(response.user.PlayingFor).then((response) => {
                     setTeam(response.team)
                     setDate(response.team.foundedIn)
+                    setImage(path + response.team.image)
                 })
             })
         } catch (e) {
@@ -89,37 +105,42 @@ export default function TeamProfile() {
 
 
     function saveProfile() {
+        try {
 
-        if (Team.name === '' || Team.nameAbbreviation === '' || Team.country === '' || Team.state === '' || Team.city === '' || Team.zipcode === '' || Team.founder === '' || Team.slogan === '' || date === '') {
-            setErrorToast(true)
-            setToastMessage('Please fill all the fields')
-            setTimeout(() => {
-                setErrorToast(false)
-            }, 3000)
-            return
+
+            if (Team.name === '' || Team.nameAbbreviation === '' || Team.country === '' || Team.state === '' || Team.city === '' || Team.zipcode === '' || Team.founder === '' || Team.slogan === '' || date === '') {
+                setErrorToast(true)
+                setToastMessage('Please fill all the fields')
+                setTimeout(() => {
+                    setErrorToast(false)
+                }, 3000)
+                return
+            }
+
+            if (Team.nameAbbreviation.length !== 3) {
+                setErrorToast(true)
+                setToastMessage('Team Abbreviation must be at least 3 characters')
+                setTimeout(() => {
+                    setErrorToast(false)
+                }, 3000)
+                return
+            }
+
+            Team.foundedIn = date
+
+            updateTeam(Team).then(() => {
+                setToast(true)
+                setToastMessage('Profile Updated Successfully')
+                setTimeout(() => {
+                    setToast(false)
+                }, 3000)
+            }).catch((error) => {
+                setToast(true)
+                setToastMessage('Error Updating Profile', error.message)
+            })
+        } catch (e) {
+            console.log(e.message)
         }
-
-        if (Team.nameAbbreviation.length !== 3) {
-            setErrorToast(true)
-            setToastMessage('Team Abbreviation must be at least 3 characters')
-            setTimeout(() => {
-                setErrorToast(false)
-            }, 3000)
-            return
-        }
-
-        Team.foundedIn = date
-
-        updateTeam(Team).then(() => {
-            setToast(true)
-            setToastMessage('Profile Updated Successfully')
-            setTimeout(() => {
-                setToast(false)
-            }, 3000)
-        }).catch((error) => {
-            setToast(true)
-            setToastMessage('Error Updating Profile', error.message)
-        })
     }
 
     return (
@@ -128,7 +149,7 @@ export default function TeamProfile() {
             <div
                 className="flex flex-col overflow-hidden rounded-xl sm:bg-gray-50 sm:px-8 sm:shadow dark:bg-neutral-900 w-5/6 md:w-full">
                 <div className="pt-4">
-                    <h1 className="py-2 text-2xl font-semibold">Team Profile</h1>
+                    <h1 className="py-2 text-2xl font-semibold ">Team Profile</h1>
                 </div>
                 <hr className="mt-4 mb-8"/>
 
@@ -141,14 +162,14 @@ export default function TeamProfile() {
                     Profile Picture{" "}
                 </label>
                 <div className="flex gap-10 items-center">
-                    <img src={path + Team.image} alt="team image" className="w-1/6 h-1/6 rounded"/>
+                    <img src={image} alt="team image" className="w-1/6 h-1/6 rounded"/>
 
                     <div className=" ">
 
                         <div
                             className="flex flex-col items-center justify-center w-full gap-6" {...getRootProps()} >
                             <label htmlFor="dropzone-file"
-                                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                                   className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-neutral-600 dark:bg-neutral-700   hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500">
                                 <div
                                     className="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg
@@ -183,13 +204,13 @@ export default function TeamProfile() {
                     <label htmlFor="login-password">
                         <span className="text-sm text-gray-500 dark:text-gray-400">Name</span>
                         <div
-                            className="relative flex overflow-hidden rounded-md border-2 transition focus-within:border-blue-600">
+                            className="relative flex overflow-hidden rounded-md border-2 transition dark:focus-within:border-blue-900 focus-within:border-blue-600">
                             <input type="text" id="login-currentpassword"
                                    value={Team.name}
                                    onChange={(e) => {
                                        setTeam({...Team, name: e.target.value})
                                    }}
-                                   className="w-full flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                   className="w-full dark:bg-neutral-700 dark:text-gray-100 flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                    placeholder="Team Name"/>
                         </div>
                     </label>
@@ -202,7 +223,7 @@ export default function TeamProfile() {
                                    onChange={(e) => {
                                        setTeam({...Team, nameAbbreviation: e.target.value})
                                    }}
-                                   className="w-full flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                   className="w-full dark:bg-neutral-700 dark:text-gray-100 flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                    placeholder="Team Abbreviation"/>
                         </div>
                     </label>
@@ -215,7 +236,7 @@ export default function TeamProfile() {
                                    onChange={(e) => {
                                        setTeam({...Team, nickname: e.target.value})
                                    }}
-                                   className="w-full flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                   className="w-full  dark:bg-neutral-700 dark:text-gray-100 flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                    placeholder="Team Nickname"/>
                         </div>
                     </label>
@@ -236,7 +257,7 @@ export default function TeamProfile() {
                                     onChange={(e) => {
                                         setTeam({...Team, country: e.target.value})
                                     }}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
+                                    className="w-full  dark:bg-neutral-700 dark:text-gray-100 rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:shadow-signUp">
                                     {Countries.map((country, index) => (
                                         <option key={index} value={country.iso2}>
                                             {country.name}
@@ -255,7 +276,7 @@ export default function TeamProfile() {
                                     onChange={(e) => {
                                         setTeam({...Team, state: e.target.value})
                                     }}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
+                                    className="w-full dark:bg-neutral-700 dark:text-gray-100 rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:shadow-signUp">
                                     {States.map((state, index) => (
                                         <option key={index} value={state.iso2}>
                                             {state.name}
@@ -275,7 +296,7 @@ export default function TeamProfile() {
                                     onChange={(e) => {
                                         setTeam({...Team, city: e.target.value})
                                     }}
-                                    className="w-full rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:bg-[#242B51] dark:shadow-signUp">
+                                    className="w-full  dark:bg-neutral-700 dark:text-gray-100 rounded-md border border-transparent py-3 px-6 text-base text-body-color placeholder-body-color shadow-one outline-none focus:border-primary focus-visible:shadow-none dark:shadow-signUp">
                                     {Cites.map((city, index) => (
                                         <option key={index} value={city.iso2}>
                                             {city.name}
@@ -294,7 +315,7 @@ export default function TeamProfile() {
                                        onChange={(e) => {
                                            setTeam({...Team, zipcode: e.target.value})
                                        }}
-                                       className="w-full  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                       className="w-full dark:bg-neutral-700 dark:text-gray-100  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                        placeholder="Postal Code"/>
                             </div>
                         </label>
@@ -317,14 +338,14 @@ export default function TeamProfile() {
                                        onChange={(e) => {
                                            setTeam({...Team, founder: e.target.value})
                                        }}
-                                       className="w-full  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                       className="w-full dark:bg-neutral-700 dark:text-gray-100  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                        placeholder="Team Founder"/>
                             </div>
                         </label>
                         <label htmlFor="">
                             <span className="text-sm text-gray-500 dark:text-gray-400">Founded In</span>
                             <div
-                                className="relative  flex overflow-hidden rounded-md border-2 transition focus-within:border-blue-600">
+                                className="relative dark:bg-neutral-700 dark:text-gray-100  flex overflow-hidden rounded-md border-2 transition focus-within:border-blue-600">
                                 <DatePickerDemo date={date} setDate={setDate}/>
                             </div>
                         </label>
@@ -337,7 +358,7 @@ export default function TeamProfile() {
                                        onChange={(e) => {
                                            setTeam({...Team, slogan: e.target.value})
                                        }}
-                                       className="w-full  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                       className="w-full dark:bg-neutral-700 dark:text-gray-100  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                        placeholder="Team Slogan"/>
                             </div>
                         </label>
@@ -350,7 +371,7 @@ export default function TeamProfile() {
                                           onChange={(e) => {
                                               setTeam({...Team, description: e.target.value})
                                           }}
-                                          className="w-full md:w-80  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
+                                          className="w-full dark:bg-neutral-700 dark:text-gray-100 md:w-80  flex-shrink appearance-none border-gray-300 bg-white py-3 px-4 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
                                           placeholder="Team Description"/>
                             </div>
                         </label>

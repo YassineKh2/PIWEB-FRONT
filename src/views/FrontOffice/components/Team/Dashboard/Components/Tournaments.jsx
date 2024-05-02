@@ -30,6 +30,10 @@ export default function TournamentCards() {
                 if (response.user.PlayingFor) {
                     getTeam(response.user.PlayingFor).then((response) => {
                         setTeam(response.team)
+                        let idTournaments = []
+                        response.team.tournaments.forEach((tournament) => {
+                            idTournaments.push(tournament.tournament)
+                        })
                         getTournaments(response.team.tournaments).then((response) => {
                             setTournament(response.Tournaments)
                             setTournamentCopy(response.Tournaments)
@@ -139,6 +143,7 @@ export default function TournamentCards() {
                         }
 
                     </div>
+
 
                     <div className="flex md:fixed md:right-15 mt-4 md:mt-0">
 

@@ -85,7 +85,7 @@ function SignupPage() {
    
     /*const handleSubmit = async (e) => {
       e.preventDefault();
-  
+
       // Tentative de validation des champs pour la première étape
       if (currentStep === 0) {
           try {
@@ -112,7 +112,7 @@ function SignupPage() {
               const formData = new FormData();
               Object.entries(User).forEach(([key, value]) => formData.append(key, value));
               if (certificate) formData.append("certificate", certificate, certificate.name);
-  
+
               const response = await addTM(formData);
               Swal.fire('Success!', 'Your account has been created successfully.', 'success');
               navigate('/signin');
@@ -259,7 +259,7 @@ const handleSubmit = async (e) => {
                               <p className="mb-11 text-center text-base font-medium text-body-color">
                                   It’s totally free and super easy.
                               </p>
-                              <form onSubmit={handleSubmit}>
+                              <form onSubmit={handleSubmit} noValidate>
                                   {currentStep === 0 ? (
                                       <>
                                              <div className="mb-8">
@@ -415,12 +415,12 @@ const handleSubmit = async (e) => {
                                   <div className="flex justify-between mt-4">
                                       {currentStep > 0 && (
                                           <button type="button" onClick={() => setCurrentStep(0)} className="back-btn "  >
-                                          <FontAwesomeIcon icon={faArrowLeft} /> 
+                                          <FontAwesomeIcon icon={faArrowLeft} />
                                         </button>
                                       )}
-                                     
 
-                                      <button 
+
+                                      <button
                       type="submit"
                       className="flex w-50 items-center justify-center rounded-md bg-primary py-4 px-9 text-base font-medium text-white transition duration-300 ease-in-out hover:bg-opacity-80 hover:shadow-signUp"
                     >

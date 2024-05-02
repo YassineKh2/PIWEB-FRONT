@@ -11,7 +11,7 @@ export default function Dashboard() {
                 <div className="flex h-screen overflow-hidden">
                     {/* <!-- ===== Sidebar Start ===== --> */}
                     <div className="hidden md:block">
-                    <Sidebar/>
+                        <Sidebar/>
                     </div>
                     {/* <!-- ===== Sidebar End ===== --> */}
 
@@ -33,4 +33,3 @@ export default function Dashboard() {
         </>
     );
 }
-
