@@ -33,7 +33,6 @@ import UpdatePassword from "./views/FrontOffice/components/User/profile/updatePa
 import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 
-import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 
 function RoutesPath() {
     return (
@@ -60,7 +59,7 @@ function RoutesPath() {
                 <Route path="/BTicket" element={<BTicket/>}/>
                 <Route path="/ticket" element={<AffTicket/>}/>
                 <Route path="/upres" element={<UpReservation/>}/>
-
+                
                 <Route path="signin" element={<SigninPage/>}/>
                 <Route path="signup" element={<SignupPage/>}/>
                 <Route path="about" element={<About/>}/>

@@ -101,6 +101,7 @@ function SignupPage() {
               // Si la validation réussit, procéder à la soumission
               const formData = new FormData();
               Object.entries(User).forEach(([key, value]) => formData.append(key, value));
+              
               if (certificate) formData.append("certificate", certificate, certificate.name);
   
               const response = await addTRM(formData);

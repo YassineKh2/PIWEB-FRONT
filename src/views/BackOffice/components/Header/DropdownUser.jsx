@@ -38,6 +38,7 @@ const DropdownUser = () => {
 
   const deleteToken = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userInfo");
     setTimeout(() =>  navigate('/signin'), 1000);
   
   };

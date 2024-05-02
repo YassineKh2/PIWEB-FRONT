@@ -55,6 +55,7 @@ const handleImageUpload = async (event) => {
         // Form the correct URL here, assuming result.user.image contains only the filename
         const newImageUrl = `${result.user.image}`;
         setUserData({ ...userData, image: newImageUrl });
+        window.location.reload();
       } else {
         console.error("Image path not found in the result:", result);
       }

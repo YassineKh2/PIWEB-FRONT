@@ -10,12 +10,16 @@ import SignupPageTRM from "./views/FrontOffice/components/User/signup/page1.jsx"
 import SignupPageTM from "./views/FrontOffice/components/User/signup/page2.jsx"
 import UserOptions from "./views/FrontOffice/components/User/signup/userOptions.jsx"
 import ForgotPassword from "./views/FrontOffice/components/User/signin/forgotPassword.jsx"
+import TwoFASettings from "./views/FrontOffice/components/User/signin/TwoFASettings.jsx"
+import FacialAuth from "./views/FrontOffice/components/User/signin/facialAuth.jsx"
 function PublicRoutes() {
   return (
     <div>
       <Routes>
       <Route path="/signin" element={<SigninPage />} />
         <Route path="/signup" element={<UserOptions />} />
+        <Route path="/qrcode" element={<TwoFASettings/>}/>
+        <Route path="/faceAuth" element={<FacialAuth/>}/>
         <Route path="/signupu" element ={<SignupPage/>} />
         <Route path="/signupTM" element={<SignupPageTM/>} />
         <Route path="/signupTRM" element ={<SignupPageTRM/>} />
