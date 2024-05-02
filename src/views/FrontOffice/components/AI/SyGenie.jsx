@@ -135,7 +135,12 @@ export default function SyGenie() {
         setTimeout(() => {
           navigate("/profile");
         }, 4000);
-      } else if (dialog.includes('SET NUMBER TO')) {
+      } else if (dialog.includes('NO THANK YOU')) {
+        setSpeech({
+          text: "welcome."
+        });
+      }
+       else if (dialog.includes('SET NUMBER TO')) {
         const numberIndex = dialog.indexOf('SET NUMBER TO') + 'SET NUMBER TO'.length;
         const number = parseInt(dialog.slice(numberIndex).trim(), 10);
         setNumber(number);
