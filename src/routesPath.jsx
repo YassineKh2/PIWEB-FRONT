@@ -29,6 +29,9 @@ import SignupPage from "./views/FrontOffice/components/User/signup/page.jsx";
 import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponsors.jsx";
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
+import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
+import LivePage from "./views/FrontOffice/components/LiveStreaming/LivePage.jsx";
+
 function RoutesPath() {
   return (
     <div>
@@ -53,7 +56,6 @@ function RoutesPath() {
         <Route path="/ticket" element={<AffTicket/>}/>
         <Route path="/upres" element={<UpReservation/>}/>
         <Route path="/upsp" element={<UpdateSponsors/>}/>
-        <Route path="/syGenie" element={<SyGenie/>}/>
         <Route path="/syGenie" element={<SyGenie/>}/>
         <Route path="signin" element={<SigninPage />} />
         <Route path="signup" element={<SignupPage />} />
@@ -84,6 +86,25 @@ function RoutesPath() {
               </>
             }
         />
+
+
+          <Route
+            path="staff/*"
+            element={
+              <>
+                <RoutingStaff/>
+              </>
+            }
+        />
+
+          <Route
+              path="player/*"
+              element={
+                  <>
+                      <RoutingPlayers/>
+                  </>
+              }
+          />
           <Route
               path="staff/*"
               element={
@@ -99,13 +120,22 @@ function RoutesPath() {
                             <RoutingHotels/>
                         </>
                     }
-                />
+          />
 
         <Route path="/" element={<Home />} />
 
         <Route element={<RequireAuth allowedRoles={['A']}/>}>
                         <Route path="backoffice" element={<RoutingBackOffice/>}/>
                         </Route>
+
+          <Route
+              path="stream/:id"
+              element={
+                  <>
+                      <LivePage/>
+                  </>
+              }
+          />
       </Routes>
     </div>
   );

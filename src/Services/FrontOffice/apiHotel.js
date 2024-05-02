@@ -35,4 +35,17 @@ export async function getHotelsByIdTournament(id) {
     throw error;
   }
 }
-export default {addHotel,getHotelIds,getHotelsByIdTournament};
+
+
+export async function deleteHotelsByTournamentAndCity(tournamentId,city) {
+  try {
+    const response = await axios.delete(
+      `${apiURL}/deleteHotelsByTournamentAndCity/${tournamentId}/${city}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+export default {addHotel,getHotelIds,getHotelsByIdTournament,deleteHotelsByTournamentAndCity};

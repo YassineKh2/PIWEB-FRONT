@@ -54,3 +54,23 @@ export async function getTournamentMatchesDraw(idTournament) {
     throw error;
   }
 }
+export async function deleteMatcheByTournament(id) {
+  try {
+    const response = await axios.delete(`${apiURL}/deleteMatches/${id}`);
+    console.log(response);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export async function getMatchInfo(id) {
+  try {
+    const response = await axios.get(`${apiURL}/getmatchinfo/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

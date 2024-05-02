@@ -1,11 +1,7 @@
-import { Button, Card, CardContent } from "@mui/material";
+
 import React, { useEffect, useState } from "react";
 import CloseIcon from "@mui/icons-material/Close";
-import {
-  getEmptyMatche,
-  updateMatchScore,
-} from "../../../../../Services/FrontOffice/apiMatch";
-import { io } from "socket.io-client";
+
 import {
   addPlayerStatsForTournament,
   getMatchGoalsForTournament,
@@ -13,7 +9,7 @@ import {
   updatePlayerStatsForTournament,
 } from "../../../../../Services/FrontOffice/apiGoalStats";
 
-function StatsPlayer({ match, onClose, Tournament, player, HomeAwayTeam }) {
+function StatsPlayer({ match, onClose, Tournament, player, HomeAwayTeam,socket }) {
   const [playerStats, setPlayerStats] = useState({});
   const [matchGoals, setMatchGoals] = useState([]);
   const [allGoals, setAllGoals] = useState(0);
@@ -30,6 +26,7 @@ function StatsPlayer({ match, onClose, Tournament, player, HomeAwayTeam }) {
   const [disableGoalsUpdate, setDisableGoalsUpdate] = useState(false);
   const [matchScoreTeam, setMatchScoreTeam] = useState(0);
   const [incrementClicked, setIncrementClicked] = useState(false);
+  const [saveClicked, setSaveClicked] = useState(false);
   const getPlayerStats = async () => {
     try {
       let forTeam;
@@ -153,13 +150,16 @@ function StatsPlayer({ match, onClose, Tournament, player, HomeAwayTeam }) {
   let updatedInputsValue = []; // Initialize state with a copy of goalInputs
 
   const handleGoalInputChange = (index, value) => {
-    if (playerStats.goalMinutes) {
-      updatedInputsValue = playerStats.goalMinutes;
-    }
-    updatedInputsValue[index] = value;
-    console.log((updatedInputsValue[index] = value));
-    setGoalInputsvalue(updatedInputsValue);
+    setGoalInputsvalue(prevInputs => {
+      const updatedInputs = [...prevInputs];
+      updatedInputs[index] = value;
+      return updatedInputs;
+    });
   };
+  
+  useEffect(() => {
+    console.log(goalInputsvalue);
+  }, [goalInputsvalue]);
   const handleYellowInputChange = (value) => {
     setYellowInputsvalue(value);
   };
@@ -195,7 +195,7 @@ function StatsPlayer({ match, onClose, Tournament, player, HomeAwayTeam }) {
             id={newGoalInputId} // Assign the unique ID
             onChange={(event) =>
               handleGoalInputChange(
-                newGoalInputId,
+                newIndex,
                 parseInt(event.target.value)
               )
             }
@@ -286,12 +286,17 @@ function StatsPlayer({ match, onClose, Tournament, player, HomeAwayTeam }) {
       } else {
         await addPlayerStatsForTournament(newPlayerStats);
       }
-    } catch (error) {
-      setError("root", {
-        message: error.message,
-      });
+      setSaveClicked(true)
+    } catch (err) {
+      console.log(err);
     }
   };
+  useEffect(() => {
+    if(saveClicked === true)
+    socket.emit("updateTournamentStats", saveClicked,Tournament._id);
+
+  
+},[saveClicked])
   return (
     <div>
       <div>

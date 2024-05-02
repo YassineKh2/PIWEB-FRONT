@@ -34,9 +34,8 @@ export default function TournamentCards() {
                         response.team.tournaments.forEach((tournament) => {
                             idTournaments.push(tournament.tournament)
                         })
-                        getTournaments(idTournaments).then((response) => {
+                        getTournaments(response.team.tournaments).then((response) => {
                             setTournament(response.Tournaments)
-                            console.log(response.Tournaments)
                             setTournamentCopy(response.Tournaments)
                         })
                     })
@@ -95,7 +94,7 @@ export default function TournamentCards() {
 
 
                 <div className="md:flex">
-                    <ul className="flex-column space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
+                    <ul className="flex-column  space-y space-y-4 text-sm font-medium text-gray-500 dark:text-gray-400 md:me-4 mb-4 md:mb-0">
                         <li>
                             <button onClick={all}
                                     className="gap-1 inline-flex items-center px-4 py-3 text-white bg-blue-700 rounded-lg active w-full dark:bg-blue-600"
@@ -144,6 +143,7 @@ export default function TournamentCards() {
                         }
 
                     </div>
+
 
                     <div className="flex md:fixed md:right-15 mt-4 md:mt-0">
 
