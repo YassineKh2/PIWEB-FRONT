@@ -3,14 +3,14 @@ import DisplayStadiums from "../../Stadiums/DisplayingStadiumsTournaments/Displa
 
 import {
   getAllTournaments,
-  getTournamentDetails,
+  getTournamentDetails, getTournamentsByUser,
 } from "../../../../../Services/FrontOffice/apiTournament";
 import {
   addMatch,
   getTournamentMatches,
   getTournamentMatchesDraw,
 } from "../../../../../Services/FrontOffice/apiMatch";
-import { useNavigate, useParams } from "react-router-dom";
+import {Link, useNavigate, useParams} from "react-router-dom";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -22,6 +22,7 @@ import { HiMagnifyingGlass as Loop } from "react-icons/hi2";
 import { BiFootball as Football } from "react-icons/bi";
 import { AiOutlineFieldTime as Active } from "react-icons/ai";
 import TvIcon from "@mui/icons-material/Tv";
+import { RiLiveFill as GoLive} from "react-icons/ri";
 import { GiSoccerField } from "react-icons/gi";
 import { MdGrade } from "react-icons/md";
 import {
@@ -68,6 +69,14 @@ function DisplayAllTournaments() {
   const [topScorer, setTopScorer] = useState();
   const [topYellowCards, setTopYellowCards] = useState();
   const [topRedCards, setTopRedCards] = useState();
+
+  const [ShowGoLivePopup, SetShowGoLivePopup] = useState({
+      isOpen: false,
+      match: null,
+  });
+
+
+  const [TournamentOwner, setTournamentOwner] = useState(false);
   const openModalInNewTab = (Allmatch) => {
     const match = selectedMatch;
     const state = { match, Tournament };
@@ -109,8 +118,24 @@ function DisplayAllTournaments() {
       getUserData(decodedToken.userId).then((response) => {
         setUser(response.user);
       });
+
+      getTournamentsByUser(decodedToken.userId)
+          .then((res) => {
+            let tournaments = res.tournaments;
+            tournaments.forEach((tournament) => {
+              if((tournament.creator === decodedToken.userId)&&(tournament._id === id))
+                  setTournamentOwner(true);
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
     }
   }, []);
+
+
+
+
   useEffect(() => {
     const numbergroup = Tournament.nbTeamPartipate / 4;
     setnumberOfGroups(numbergroup);
@@ -1035,6 +1060,13 @@ navigate('/addReservation');
       setTournamentId(fetchedTournamentId);
     };
 
+
+
+
+    useEffect(()=>{
+
+    },[])
+
     return (
       <div>
         <div className="flex flex-wrap justify-center -ml-24">
@@ -1146,6 +1178,13 @@ navigate('/addReservation');
       </div>
     );
   };
+
+
+    const copyToClipboard = (e) => {
+      e.target.select();
+      document.execCommand('copy');
+    };
+
   return (
     <div className="">
       {Tournament.tournamentType === "League" && (
@@ -1516,10 +1555,21 @@ navigate('/addReservation');
                                         size={18}
                                         className="mr-10 cursor-pointer"
                                       />
-                                      <TvIcon
-                                        className="mt-1"
-                                        style={{ fontSize: "small" }}
-                                      />
+                                        <Link to={"/stream/"+match._id}>
+                                            <TvIcon
+                                                className="mt-1"
+                                                style={{ fontSize: "small" }}
+                                            />
+                                        </Link>
+                                      {TournamentOwner && (
+                                          <GoLive size={20} className="ms-2 text-gray"
+                                                  onClick={() => SetShowGoLivePopup({
+                                                    isOpen: true,
+                                                    match: match,
+                                                  })}
+                                          >
+                                          </GoLive>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1655,10 +1705,21 @@ navigate('/addReservation');
                                           size={18}
                                           className="mr-10 cursor-pointer"
                                         />
-                                        <TvIcon
-                                          className="mt-1"
-                                          style={{ fontSize: "small" }}
-                                        />
+                                          <Link to={"/stream/"+match._id}>
+                                              <TvIcon
+                                                  className="mt-1"
+                                                  style={{ fontSize: "small" }}
+                                              />
+                                          </Link>
+                                        {TournamentOwner && (
+                                            <GoLive size={20} className="ms-2 text-gray"
+                                                    onClick={() => SetShowGoLivePopup({
+                                                      isOpen: true,
+                                                      match: match,
+                                                    })}
+                                            >
+                                            </GoLive>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -2238,10 +2299,21 @@ navigate('/addReservation');
                                         size={18}
                                         className="mr-10 cursor-pointer"
                                       />
-                                      <TvIcon
-                                        className="mt-1"
-                                        style={{ fontSize: "small" }}
-                                      />
+                                        <Link to={"/stream/"+match._id}>
+                                            <TvIcon
+                                                className="mt-1"
+                                                style={{ fontSize: "small" }}
+                                            />
+                                        </Link>
+                                      {TournamentOwner && (
+                                          <GoLive size={20} className="ms-2 text-gray"
+                                                  onClick={() => SetShowGoLivePopup({
+                                                    isOpen: true,
+                                                    match: match,
+                                                  })}
+                                          >
+                                          </GoLive>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -2363,10 +2435,21 @@ navigate('/addReservation');
                                             size={18}
                                             className="mr-10 cursor-pointer"
                                           />
-                                          <TvIcon
-                                            className="mt-1"
-                                            style={{ fontSize: "small" }}
-                                          />
+                                            <Link to={"/stream/"+match._id}>
+                                                <TvIcon
+                                                    className="mt-1"
+                                                    style={{ fontSize: "small" }}
+                                                />
+                                            </Link>
+                                          {TournamentOwner && (
+                                              <GoLive size={20} className="ms-2 text-gray"
+                                                      onClick={() => SetShowGoLivePopup({
+                                                        isOpen: true,
+                                                        match: match,
+                                                      })}
+                                              >
+                                              </GoLive>
+                                          )}
                                         </div>
                                       </div>
                                     </div>
@@ -2711,10 +2794,21 @@ navigate('/addReservation');
                                               size={18}
                                               className="mr-10 cursor-pointer"
                                             />
-                                            <TvIcon
-                                              className="mt-1"
-                                              style={{ fontSize: "small" }}
-                                            />
+                                              <Link to={"/stream/"+match._id}>
+                                                  <TvIcon
+                                                      className="mt-1"
+                                                      style={{ fontSize: "small" }}
+                                                  />
+                                              </Link>
+                                            {TournamentOwner && (
+                                                <GoLive size={20} className="ms-2 text-gray"
+                                                        onClick={() => SetShowGoLivePopup({
+                                                          isOpen: true,
+                                                          match: match,
+                                                        })}
+                                                >
+                                                </GoLive>
+                                            )}
                                           </div>
                                         </div>
                                       </div>
@@ -3205,10 +3299,21 @@ navigate('/addReservation');
                                           size={18}
                                           className="mr-10 cursor-pointer"
                                         />
-                                        <TvIcon
-                                          className="mt-1"
-                                          style={{ fontSize: "small" }}
-                                        />
+                                          <Link to={"/stream/"+match._id}>
+                                              <TvIcon
+                                                  className="mt-1"
+                                                  style={{ fontSize: "small" }}
+                                              />
+                                          </Link>
+                                      {TournamentOwner && (
+                                          <GoLive size={20} className="ms-2 text-gray"
+                                                  onClick={() => SetShowGoLivePopup({
+                                                    isOpen: true,
+                                                    match: match,
+                                                  })}
+                                          >
+                                          </GoLive>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -3345,10 +3450,21 @@ navigate('/addReservation');
                                           size={18}
                                           className="mr-10 cursor-pointer"
                                         />
-                                        <TvIcon
-                                          className="mt-1"
-                                          style={{ fontSize: "small" }}
-                                        />
+                                          <Link to={"/stream/"+match._id}>
+                                              <TvIcon
+                                                  className="mt-1"
+                                                  style={{ fontSize: "small" }}
+                                              />
+                                          </Link>
+                                       {TournamentOwner && (
+                                           <GoLive size={20} className="ms-2 text-gray"
+                                                   onClick={() => SetShowGoLivePopup({
+                                                     isOpen: true,
+                                                     match: match,
+                                                   })}
+                                           >
+                                           </GoLive>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -3367,11 +3483,69 @@ navigate('/addReservation');
             </div>
             <div></div>
           </div>
+
+          {
+              ShowGoLivePopup.isOpen && (
+                  <div
+                      className="justify-center bg-gray-400 bg-opacity-60 dark:bg-opacity-10  items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
+                  >
+                    <div
+                        className="m-10 dark:bg-neutral-900 dark:text-gray-100  bg-white flex max-w-lg flex-col items-center rounded-md border px-8 py-10 text-gray-800 shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100"
+                           viewBox="0 0 50 50">
+                        <path
+                            d="M 8.0136719 7.0292969 A 1.0001 1.0001 0 0 0 7.3222656 7.3222656 C 2.7995047 11.846068 -1.1842379e-15 18.102792 0 25 C 0 31.897208 2.7995047 38.153932 7.3222656 42.677734 A 1.0001 1.0001 0 0 0 8.7363281 42.677734 L 11.570312 39.84375 A 1.0001 1.0001 0 0 0 11.570312 38.429688 C 8.1286602 34.987084 6 30.242812 6 25 C 6 19.757188 8.1297921 15.013788 11.572266 11.572266 A 1.0001 1.0001 0 0 0 11.572266 10.158203 L 8.7363281 7.3222656 A 1.0001 1.0001 0 0 0 8.0136719 7.0292969 z M 41.957031 7.0292969 A 1.0001 1.0001 0 0 0 41.263672 7.3222656 L 38.427734 10.158203 A 1.0001 1.0001 0 0 0 38.427734 11.572266 C 41.870208 15.013788 44 19.757188 44 25 C 44 30.242812 41.870208 34.986212 38.427734 38.427734 A 1.0001 1.0001 0 0 0 38.427734 39.841797 L 41.263672 42.677734 A 1.0001 1.0001 0 0 0 42.677734 42.677734 C 47.201645 38.154865 50 31.897208 50 25 C 50 18.102792 47.200495 11.846068 42.677734 7.3222656 A 1.0001 1.0001 0 0 0 41.957031 7.0292969 z M 8.0976562 9.5117188 L 9.5195312 10.933594 C 6.1269359 14.664061 4 19.575176 4 25 C 4 30.424712 6.1260807 35.337173 9.5175781 39.068359 L 8.0976562 40.488281 C 4.3450168 36.394537 2 30.995061 2 25 C 2 19.004939 4.3450168 13.605463 8.0976562 9.5117188 z M 41.902344 9.5117188 C 45.654983 13.605463 48 19.004939 48 25 C 48 30.995061 45.655695 36.395442 41.902344 40.488281 L 40.480469 39.066406 C 43.873064 35.335939 46 30.424824 46 25 C 46 19.575176 43.873064 14.664061 40.480469 10.933594 L 41.902344 9.5117188 z M 14.382812 13.398438 A 1.0001 1.0001 0 0 0 13.691406 13.691406 C 10.796092 16.587786 9 20.593819 9 25 C 9 29.406181 10.796092 33.412214 13.691406 36.308594 A 1.0001 1.0001 0 0 0 15.105469 36.308594 L 17.931641 33.482422 A 1.0001 1.0001 0 0 0 17.931641 32.068359 C 16.119902 30.255711 15 27.761761 15 25 C 15 22.238239 16.119902 19.744289 17.931641 17.931641 A 1.0001 1.0001 0 0 0 17.931641 16.517578 L 15.105469 13.691406 A 1.0001 1.0001 0 0 0 14.382812 13.398438 z M 35.587891 13.398438 A 1.0001 1.0001 0 0 0 34.894531 13.691406 L 32.068359 16.517578 A 1.0001 1.0001 0 0 0 32.068359 17.931641 C 33.880098 19.744289 35 22.238239 35 25 C 35 27.761761 33.880098 30.255711 32.068359 32.068359 A 1.0001 1.0001 0 0 0 32.068359 33.482422 L 34.894531 36.308594 A 1.0001 1.0001 0 0 0 36.308594 36.308594 C 39.203908 33.412214 41 29.406181 41 25 C 41 20.593819 39.203908 16.587786 36.308594 13.691406 A 1.0001 1.0001 0 0 0 35.587891 13.398438 z M 14.466797 15.880859 L 15.947266 17.361328 C 14.184764 19.450917 13 22.061346 13 25 C 13 27.938654 14.184764 30.549083 15.947266 32.638672 L 14.466797 34.119141 C 12.335969 31.66133 11 28.50273 11 25 C 11 21.49727 12.335969 18.33867 14.466797 15.880859 z M 35.533203 15.880859 C 37.664031 18.33867 39 21.49727 39 25 C 39 28.50273 37.664031 31.66133 35.533203 34.119141 L 34.052734 32.638672 C 35.815236 30.549083 37 27.938654 37 25 C 37 22.061346 35.815236 19.450917 34.052734 17.361328 L 35.533203 15.880859 z M 25 18 C 21.134 18 18 21.134 18 25 C 18 28.866 21.134 32 25 32 C 28.866 32 32 28.866 32 25 C 32 21.134 28.866 18 25 18 z M 25 20 C 27.757 20 30 22.243 30 25 C 30 27.757 27.757 30 25 30 C 22.243 30 20 27.757 20 25 C 20 22.243 22.243 20 25 20 z"></path>
+                      </svg>
+
+                      <p className="mt-4 text-center text-xl font-bold">Stream this match !</p>
+                      <p className="mt-2 text-center text-lg"><span className="truncate font-medium">Go to OBS and insert this in the stream key</span>
+                        <div className="flex flex-col items-start justify-start mt-4">
+                          <label className="font-semibold ">Server Adress : </label>
+                          <input
+                              type="text"
+                              value="rtmp://127.0.0.1:1935/live"
+                              onClick={copyToClipboard}
+                              className=""
+                              readOnly
+                          />
+                        </div>
+                        <div className="flex flex-col items-start justify-start">
+                          <label className="font-semibold ">Stream Key :</label>
+                          <input
+                              type="text"
+                              value={ShowGoLivePopup.match._id}
+                              onClick={copyToClipboard}
+                              readOnly
+                          />
+                        </div>
+                        <p className="mt-2 text-center text-sm">(Click To Copy)</p>
+                      </p>
+                      <div
+                          className="mt-8 flex flex-col justify-center space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
+                      </div>
+                      <button
+                          className="whitespace-nowrap rounded-md bg-gray-200 px-4 py-3 font-medium dark:bg-gray-800"
+                          onClick={() => {
+                            SetShowGoLivePopup({
+                              isOpen: false,
+                              match: null
+                            })
+                          }}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+              )
+          }
         </>
       )}
     </div>
+
+
   );
 }
+
 function formatDate(startDate) {
   const date = new Date(startDate);
   const day = String(date.getDate()).padStart(2, "0");
@@ -3380,6 +3554,7 @@ function formatDate(startDate) {
   const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${day}.${month}. ${hours}:${minutes}`;
 }
+
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

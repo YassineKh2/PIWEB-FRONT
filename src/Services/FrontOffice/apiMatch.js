@@ -64,3 +64,13 @@ export async function deleteMatcheByTournament(id) {
     throw error;
   }
 }
+
+export async function getMatchInfo(id) {
+  try {
+    const response = await axios.get(`${apiURL}/getmatchinfo/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

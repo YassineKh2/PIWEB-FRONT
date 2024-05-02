@@ -144,6 +144,7 @@ export default function TournamentCards() {
 
                     </div>
 
+
                     <div className="flex md:fixed md:right-15 mt-4 md:mt-0">
 
                         <a href="#"

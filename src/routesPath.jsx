@@ -30,6 +30,8 @@ import UpdateSponsors from "./views/FrontOffice/components/Sponsors/UpdateSponso
 import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
+import LivePage from "./views/FrontOffice/components/LiveStreaming/LivePage.jsx";
+
 function RoutesPath() {
   return (
     <div>
@@ -104,18 +106,36 @@ function RoutesPath() {
               }
           />
           <Route
+              path="staff/*"
+              element={
+                  <>
+                      <RoutingStaff/>
+                  </>
+              }
+          />
+          <Route
                     path="hotels/*"
                     element={
                         <>
                             <RoutingHotels/>
                         </>
                     }
-                />
+          />
+
         <Route path="/" element={<Home />} />
 
         <Route element={<RequireAuth allowedRoles={['A']}/>}>
                         <Route path="backoffice" element={<RoutingBackOffice/>}/>
                         </Route>
+
+          <Route
+              path="stream/:id"
+              element={
+                  <>
+                      <LivePage/>
+                  </>
+              }
+          />
       </Routes>
     </div>
   );

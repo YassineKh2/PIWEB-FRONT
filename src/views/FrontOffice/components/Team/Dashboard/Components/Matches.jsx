@@ -131,10 +131,10 @@ export default function Matches() {
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
 
                 <div
-                    className="flex flex-column sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between pb-4">
+                    className="flex flex-column flex-wrap space-y-4 sm:space-y-0 items-center justify-between pb-4">
                     <Dropdown value={filteroptions} onChange={(e) => setfilteroptions(e.value)} options={options}
                               optionLabel="name"
-                              placeholder="Select a Date" className="w-full md:w-14rem"/>
+                              placeholder="Select a Date" className="w-full md:w-40" />
                     <label htmlFor="table-search" className="sr-only">Search</label>
                     <div className="relative">
                         <div

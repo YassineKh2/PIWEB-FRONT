@@ -133,11 +133,11 @@ export default function LineUps() {
         )
     }
 
-    // useEffect(() => {
-    //     if (team.currentLineup) {
-    //         getExistingLineup()
-    //     }
-    // }, [team])
+    useEffect(() => {
+        if (team.currentLineup) {
+            getExistingLineup()
+        }
+    }, [team])
 
 
     useEffect(() => {

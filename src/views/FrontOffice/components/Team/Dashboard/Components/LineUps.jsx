@@ -70,14 +70,14 @@ export default function LineUps() {
             const decodedToken = jwtDecode(userToken);
             getUserData(decodedToken.userId).then((response) => {
                 setTeamManager(response.user)
+
                 getplayersbyteam(response.user.PlayingFor).then((response) => {
                     setPlayers(response)
                 })
                 getTeam(response.user.PlayingFor).then((response) => {
                     setTeam(response.team)
-
-
                 })
+
             })
         } catch (e) {
             console.log(e.message)
@@ -86,7 +86,7 @@ export default function LineUps() {
 
     }, [])
 
-    function getExistingLineup(){
+    function getExistingLineup() {
         let goalkeeper = {}
         let defenders = []
         let centralDefensiveMidfielders = []
@@ -118,7 +118,7 @@ export default function LineUps() {
         setSelectedAttackers(attackers)
 
         setSelectedPlayers([goalkeeper, ...defenders, ...centralDefensiveMidfielders, ...midfielders, ...centralAttackingMidfielders, ...attackers])
-       let CurrentSquad = {
+        let CurrentSquad = {
             gk: goalkeeper,
             df: defenders,
             cdm: centralDefensiveMidfielders,
