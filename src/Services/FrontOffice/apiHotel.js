@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const apiURL = "http://localhost:3000/hotel";
+const apiURLOffline = "http://localhost:3000/hotel";
+const apiURL = "https://piweb-back.onrender.com/hotel";
 
 
 const addHotel = async (hotel)=> {
@@ -17,7 +18,7 @@ const addHotel = async (hotel)=> {
 export async function getHotelIds(idTournament) {
   try {
     const response = await axios.get(`${apiURL}/getHotelIds/${idTournament}`);
-    console.log("Response:", response.data); 
+    console.log("Response:", response.data);
     return response.data;
   } catch (error) {
     console.error(error);

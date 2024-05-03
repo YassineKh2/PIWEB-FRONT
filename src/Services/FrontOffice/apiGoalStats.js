@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const apiURL = "http://localhost:3000/goal";
+const apiURLOffline = "http://localhost:3000/goal";
+const apiURL = "https://piweb-back.onrender.com/goal";
 
 export async function addPlayerStatsForTournament(playerStats) {
   try {

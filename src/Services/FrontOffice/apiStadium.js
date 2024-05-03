@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const apiURL = "http://localhost:3000/stadium";
+const apiURLOffline = "http://localhost:3000/stadium";
+const apiURL = "https://piweb-back.onrender.com/stadium";
 
 
 const addStadium = async (stadium)=> {

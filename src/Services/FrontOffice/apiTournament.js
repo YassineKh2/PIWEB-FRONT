@@ -1,7 +1,8 @@
 import { config } from "@fortawesome/fontawesome-svg-core";
 import axios from "axios";
 
-const apiURL = "http://localhost:3000/tournament";
+const apiURLOffline = "http://localhost:3000/tournament";
+const apiURL = "https://piweb-back.onrender.com/tournament";
 
 export async function addTournament(tournamentData) {
   try {
@@ -24,6 +25,7 @@ export async function updateTournament(tournamentData) {
     throw error;
   }
 }
+
 export async function getAllTournaments() {
   try {
     const response = await axios.get(`${apiURL}/getTournaments`);
