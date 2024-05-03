@@ -31,6 +31,9 @@ import SyGenie from "./views/FrontOffice/components/AI/SyGenie.jsx";
 import RoutingHotels from "./views/FrontOffice/components/Hotels/RoutingHotels.jsx";
 import RoutingPlayers from "./views/FrontOffice/components/Players/RoutingPlayers.jsx";
 import LivePage from "./views/FrontOffice/components/LiveStreaming/LivePage.jsx";
+import Chatbot from "../src/views/FrontOffice/HomePage/components/chatbot/chatbot.jsx";
+import Help from "./views/FrontOffice/components/AI/Help.jsx";
+
 
 function RoutesPath() {
   return (
@@ -57,6 +60,8 @@ function RoutesPath() {
         <Route path="/upres" element={<UpReservation/>}/>
         <Route path="/upsp" element={<UpdateSponsors/>}/>
         <Route path="/syGenie" element={<SyGenie/>}/>
+        <Route path="/chat" element={<Chatbot/>}/>
+        <Route path="/help" element={<Help/>} />
         <Route path="signin" element={<SigninPage />} />
         <Route path="signup" element={<SignupPage />} />
         <Route path="about" element={<About />} />

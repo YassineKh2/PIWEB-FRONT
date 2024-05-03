@@ -18,12 +18,12 @@ function SigninPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState("");
- 
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'email') setEmail(value);
     if (name === 'password') setPassword(value);
-   
+
     // Supprime l'erreur spécifique pour le champ qui vient d'être modifié
     const newErrors = { ...errors };
     delete newErrors[name];
@@ -38,16 +38,16 @@ function SigninPage() {
       const userData = { email, password };
       const response = await signin(userData);
 
-      
-     
+
+
       if (response.token) {
-       
+
         localStorage.setItem('token', response.token);
 
 
-        
+
         if (response.user.role === 'A') {
-        
+
           navigate('/backoffice', { replace: true });
         } else if (response.user.role !== 'A') {
           navigate('/profile');
@@ -62,11 +62,11 @@ function SigninPage() {
           //console.log(localStorage);
         }
       } else {
-        
+
         setErro
         r("Token not found");
       } }
-    
+
 
     } catch (error) {
       // Si `error.response` et `error.response.data` existent, alors utiliser le message d'erreur de l'API
@@ -89,10 +89,10 @@ function SigninPage() {
           text: errorMessage || 'This Account is banned',
         });
       }
-  
 
 
-          
+
+
       }
 
 
@@ -105,8 +105,8 @@ function SigninPage() {
     /*const handleSignin = async (e) => {
       e.preventDefault();
       const userData = { email, password };
-      
-  
+
+
       try {
         // Valide les champs du formulaire en utilisant le schéma Yup
         await SigninSchema.validate(userData, { abortEarly: false });
@@ -122,7 +122,7 @@ function SigninPage() {
 
         // Tentative de connexion
         const response = await signin(userData);
-      
+
 
         if (response.token) {
           const userDetailsResponse = await getUserByEmail(email);
@@ -133,9 +133,9 @@ function SigninPage() {
             window.location.reload();
           } else if(response.user.role === "TM" && !userDetailsResponse.user.PlayingFor ){
             console.log(userDetailsResponse.user.PlayingFor);
-           
+
             navigate("/team/add");
-            
+
           }else{
             navigate("/");
             window.location.reload();
@@ -169,11 +169,11 @@ function SigninPage() {
     };*/
 
 
-  
-  
-  
-  
-    
+
+
+
+
+
       const handleSignin = async (e) => {
         e.preventDefault();
         try {
@@ -188,7 +188,7 @@ function SigninPage() {
           }
           const response = await signin(userData);
           console.log(response);
-         
+
 
           if (response.blocked) {
             Swal.fire({
@@ -198,9 +198,9 @@ function SigninPage() {
             });
             return;
           }
-    
+
           localStorage.setItem('userInfo', JSON.stringify(response));
-    
+
           // Check 2FA status and redirect accordingly
           if (!response.twoFactorRequired) {
             navigate('/qrcode'); // Redirect to 2FA setup page
@@ -218,7 +218,7 @@ function SigninPage() {
           handleSignInErrors(error);
         }
       };
-    
+
      /* const handleSignInErrors = (error) => {
         if (error instanceof Yup.ValidationError) {
           const newErrors = error.inner.reduce((acc, cur) => ({ ...acc, [cur.path]: cur.message }), {});
@@ -262,8 +262,8 @@ function SigninPage() {
           });
         }
       };
-      
-    
+
+
 
   /*const navigateBasedOnRole = (role) => {
     if (role === "A") {
@@ -275,7 +275,7 @@ function SigninPage() {
     }
   };*/
 
- 
+
 
     const handleGoogleSignIn = async (response) => {
       try {
@@ -310,11 +310,11 @@ function SigninPage() {
       }
     };
 
-    
-    
 
 
-  
+
+
+
 
   return (
     <>
@@ -425,6 +425,14 @@ function SigninPage() {
   >
     Forgot Password?
   </Link>
+</div>
+                    <div>
+                      <Link
+                          to="/faceAuth"
+                          className="text-sm font-medium text-primary hover:underline"
+                      >
+                        Use face recognition
+                      </Link>
 </div>
                   </div>
                   <div className="mb-6">

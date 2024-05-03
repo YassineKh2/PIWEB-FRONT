@@ -55,7 +55,7 @@ function AffTicket() {
         try {
             // Charger Stripe avec votre clé publique
             const stripe = await loadStripe("pk_test_51OuG1RHMTmfPbZ2rJc8v3BKFGgsr01wD723Z1diicQ1qCFZ4NybLceC75F1XuqRaOmwCnkuYrm8KWWOmAUB1M7uM00KaXkEGCZ");
-    
+
             // Envoyer une requête POST à votre backend pour créer une session de paiement
             const response = await fetch("http://localhost:3000/payment/create-checkout-session", {
                 method: "POST",
@@ -66,15 +66,15 @@ function AffTicket() {
                     amount: '20', // Montant à payer
                 }),
             });
-    
+
             const session = await response.json();
-    
-          
+
+
             const result = await stripe.redirectToCheckout({
                 sessionId: session.sessionId,
             });
-    
-           
+
+
             if (result.error) {
                 console.error(result.error.message);
             } else {
@@ -83,21 +83,17 @@ function AffTicket() {
         } catch (error) {
             console.error('Erreur lors du paiement:', error);
         }
-    
-  
+
+
         Swal.fire({
             title: 'Thank you for finishing the payment!',
             icon: 'success',
             showConfirmButton: false,
-            timer: 5000 
+            timer: 5000
         }).then(() => {
             window.location.href = '/tournament/showAll';
         });
     };
-    
-       
-    
-
 
     // Classnames for buttons
     const modifierButtonClass = classnames(
@@ -125,6 +121,30 @@ function AffTicket() {
 
     const payerButtonClass = classnames(
         "ml-7",
+        "duration-80",
+        "cursor-pointer",
+        "rounded-md",
+        "border",
+        "border-transparent",
+        "bg-green-500",
+        "py-2",
+        "px-4",
+        "sm:py-3",
+        "sm:px-6",
+        "text-center",
+        "text-base",
+        "font-medium",
+        "text-white",
+        "outline-none",
+        "transition",
+        "ease-in-out",
+        "hover:bg-opacity-80",
+        "hover:shadow-signUp",
+        "focus-visible:shadow-none",
+    );
+
+    const deleteButtonClass = classnames(
+
         "duration-80",
         "cursor-pointer",
         "rounded-md",
@@ -177,7 +197,7 @@ function AffTicket() {
                                     }
                                 });
                             }}
-                            className="duration-80 cursor-pointer rounded-md border border-transparent bg-green-500 py-2 px-4 sm:py-3 sm:px-6 text-center text-base font-medium text-white outline-none transition ease-in-out hover:bg-opacity-80 hover:shadow-signUp focus-visible:shadow-none"
+                            className={deleteButtonClass}
                         />
                         <div>
                             <button className={modifierButtonClass} onClick={handleModifyTicket}>Update</button>
@@ -186,9 +206,8 @@ function AffTicket() {
                     </div>
                     {/* Affichage du QR Code ici */}
                     <div style={{ position: "absolute", top: "100px", left: "570px"}}>
-                        <QRCode value={JSON.stringify(ticket)} />
+                        <QRCode value={`La ticket est bien réservée: ${ticket.reservation.team1} vs ${ticket.reservation.team2} pour la place ${ticket.reservation.nbplace} `} renderAs="svg" />
                         <p style={{ position: "absolute", top: "140px", left: "0px", color: "black", fontSize: "20px",fontWeight: "bold" }}>{formatDate(ticket.reservation.date)}</p>
-
                     </div>
                 </div>
             )}

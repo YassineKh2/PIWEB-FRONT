@@ -810,7 +810,7 @@ function DisplayAllTournaments() {
   };
   const handleReservationClick = (matchs) => {
     localStorage.setItem('selectedMatch', JSON.stringify(matchs));
-navigate('/addReservation');
+    navigate('/addReservation');
 
   };
 
@@ -1081,38 +1081,38 @@ navigate('/addReservation');
                 <CardContent className="p-4 grid gap-3 text-center">
                   <div className="flex flex-row items-center gap-2 text-sm justify-center">
                     <img
-                      alt="Team A logo"
-                      className="rounded-full overflow-hidden border object-cover w-8 h-8 ml-2"
-                      height="30"
-                      src={path + match.team1?.image}
-                      style={{
-                        aspectRatio: "30/30",
-                        objectFit: "cover",
-                      }}
-                      width="30"
+                        alt="Team A logo"
+                        className="rounded-full overflow-hidden border object-cover w-8 h-8 ml-2"
+                        height="30"
+                        src={path + match.team1?.image}
+                        style={{
+                          aspectRatio: "30/30",
+                          objectFit: "cover",
+                        }}
+                        width="30"
                     />
                     <div className="font-semibold">{match.team1?.name}</div>
                     <div className="text-4xl font-bold mx-2">vs</div>
                     <img
-                      alt="Team B logo"
-                      className="rounded-full overflow-hidden border object-cover w-8 h-8"
-                      height="30"
-                      src={path + match.team2?.image}
-                      style={{
-                        aspectRatio: "30/30",
-                        objectFit: "cover",
-                      }}
-                      width="30"
+                        alt="Team B logo"
+                        className="rounded-full overflow-hidden border object-cover w-8 h-8"
+                        height="30"
+                        src={path + match.team2?.image}
+                        style={{
+                          aspectRatio: "30/30",
+                          objectFit: "cover",
+                        }}
+                        width="30"
                     />
                     <div className="font-semibold">{match.team2?.name}</div>
                   </div>
                   <div className="flex items-center justify-center mb-4">
                     {match.scoreTeam1 === "" && match.scoreTeam2 === "" ? (
-                      <p>Not Played</p>
+                        <p>Not Played</p>
                     ) : (
-                      <div className="text-xl font-bold">
-                        {match.scoreTeam1} - {match.scoreTeam2}
-                      </div>
+                        <div className="text-xl font-bold">
+                          {match.scoreTeam1} - {match.scoreTeam2}
+                        </div>
                     )}
                   </div>
 
@@ -1121,6 +1121,7 @@ navigate('/addReservation');
                     <div>{match.matchTime}</div>
                     <div>{match.location}</div>
                   </div>
+                  <button onClick={() => handleReservationClick(match)}>Reserver</button>
                 </CardContent>
               </Card>
             ))}

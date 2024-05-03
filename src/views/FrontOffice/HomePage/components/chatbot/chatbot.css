@@ -1,0 +1,179 @@
+
+
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.chat-window {
+    display: flex;
+    flex-direction: column;
+    width: 350px;
+    height: 400px; /* Adjust the height as needed */
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #fcfcfc;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    background-color: #3e3cd0; /* Orange color for header */
+    color: #fff;
+}
+input::placeholder {
+    color: #ccc; /* Utilisez une teinte de gris plus claire pour le placeholder */
+}
+
+
+.avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.bot-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.bot-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.bot-status {
+    font-size: 12px;
+    color: #bbb;
+}
+
+.chat-messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column-reverse; /* Reverse the order of messages */
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.user-message {
+    align-self: flex-end; /* Align user's messages to the right */
+    padding: 10px;
+    background-color: #6ea0f7; /* Orange color for user messages */
+    color: #fff;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.bot-message {
+    align-self: flex-start; /* Align bot's messages to the left */
+    padding: 10px;
+    background-color: #a3bcd5; /* Blue color for bot messages */
+    color: #fff;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.chat-input {
+    display: flex;
+    align-items: flex-end;
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+input {
+    flex: 1;
+    padding: 10px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+button {
+    background-color: #2523b4;
+    color: #5d0606;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+
+.suggested-questions {
+    padding: 10px;
+    border-top: 1px solid #8a8383;
+}
+
+.suggested-question {
+    padding: 10px;
+    background-color: #908d8d;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.suggested-question:hover {
+    background-color: #7b7676;
+    box-shadow: 0 0 5px rgba(84, 83, 83, 0.1);
+}
+
+.suggested-question-text {
+    font-size: 14px;
+    color: #454343;
+}
+
+.suggested-question-icon {
+    margin-right: 8px;
+}
+
+.close-button {
+    background-color: transparent;
+    color: #fff;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 20px;
+    margin-left: auto;
+    margin-right: 10px;
+}
+
+.chatbot-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #2523b4;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 1001;
+}
+.btn-color {
+    background-color: rgb(51, 93, 232);
+    color: white; 
+}
+
+.chatbot-button img {
+    width: 60px; /* Ajustez la taille de l'image selon vos besoins */
+    height: 60px; /* Ajustez la taille de l'image selon vos besoins */
+    object-fit: cover;
+    border-radius: 50%; /* Assurez-vous que l'image est également arrondie */
+}
+
+
+.chatbot-button:hover {
+    background-color: #26ff00;
+}

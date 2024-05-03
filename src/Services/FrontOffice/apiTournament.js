@@ -24,6 +24,7 @@ export async function updateTournament(tournamentData) {
     throw error;
   }
 }
+
 export async function getAllTournaments() {
   try {
     const response = await axios.get(`${apiURL}/getTournaments`);
