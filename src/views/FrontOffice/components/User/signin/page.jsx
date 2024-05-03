@@ -202,18 +202,18 @@ function SigninPage() {
           localStorage.setItem('userInfo', JSON.stringify(response));
 
           // Check 2FA status and redirect accordingly
-          if (!response.twoFactorRequired) {
-            navigate('/qrcode'); // Redirect to 2FA setup page
-          } else {
-            // Redirect based on role after 2FA has been verified
-            if (role === "A") {
-              navigate("/backoffice", { replace: true });
-            } else if (response.user.role === "TM" && !userDetailsResponse.user.PlayingFor) {
-              navigate("/team/add");
-            } else {
-              navigate("/");
-            }
-          }
+          // if (!response.twoFactorRequired) {
+          //   navigate('/qrcode'); // Redirect to 2FA setup page
+          // } else {
+          //   // Redirect based on role after 2FA has been verified
+          //   if (role === "A") {
+          //     navigate("/backoffice", { replace: true });
+          //   } else if (response.user.role === "TM" && !userDetailsResponse.user.PlayingFor) {
+          //     navigate("/team/add");
+          //   } else {
+          //     navigate("/");
+          //   }
+          // }
         } catch (error) {
           handleSignInErrors(error);
         }
