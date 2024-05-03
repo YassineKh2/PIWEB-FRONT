@@ -56,7 +56,7 @@ export default EnableTwoFactorAuth;*/
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import {getUserByEmail } from "../../../../../Services/apiUser"; 
+import {getUserByEmail } from "../../../../../Services/apiUser";
 import { jwtDecode } from 'jwt-decode';
 
 const TwoFactorAuthSetup = () => {
@@ -88,7 +88,7 @@ const TwoFactorAuthSetup = () => {
     const enable2FA = async () => {
       if (userId && !qrCode) {
         try {
-          const response = await axios.post('http://localhost:3000/user/enable-2fa', { userId });
+          const response = await axios.post('https://piweb-back.onrender.com/user/enable-2fa', { userId });
           setQrCode(response.data.qrcode);
         } catch (err) {
           setError(err.response?.data?.message || 'Could not enable 2FA.');
@@ -105,7 +105,7 @@ const TwoFactorAuthSetup = () => {
         userId,
         token
       });
-      
+
       if (response.data.success) {
         const userDetailsResponse = await getUserByEmail(email);
         // Update local userInfo with 2FA enabled status
@@ -216,7 +216,7 @@ const verifyToken = async () => {
     <div className="flex justify-center items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-800">
       <div className="flex flex-col items-center p-8 bg-white dark:bg-gray-900 rounded-lg shadow-lg transition-opacity duration-500">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Set Up Two-Factor Authentication</h3>
-        
+
         {error && (
           <div className="bg-red-500 text-white p-3 rounded-md mt-4 w-full">
             {error}
