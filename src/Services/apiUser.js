@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:3000/user";
+const BASE_URLOffline = "http://localhost:3000/user";
+const BASE_URL = "https://piweb-back.onrender.com/user";
 
 export async function signup(userData) {
   try {
@@ -51,7 +52,7 @@ export async function signin(userData) {
   try {
     const response = await axios.post(`${BASE_URL}/signin`, userData);
     // Stockage du token JWT dans le localStorage
-   
+
     //console.log(localStorage.getItem('token'));
     return response.data;
   } catch (error) {
