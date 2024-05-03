@@ -1,7 +1,9 @@
 import axios from "axios";
 
-const apiURL = "http://localhost:3000/team";
-const apiURLUser = "http://localhost:3000/user";
+const apiURLOffline = "http://localhost:3000/team";
+const apiURLUserOffline = "http://localhost:3000/user";
+const apiURL = "https://piweb-back.onrender.com/team";
+const apiURLUser = "https://piweb-back.onrender.com/user";
 
 export async function addTeam(teamData) {
     try {

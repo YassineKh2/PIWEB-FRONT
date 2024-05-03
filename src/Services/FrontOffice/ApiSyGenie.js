@@ -1,9 +1,13 @@
 import axios from "axios";
 
+const urloffline = "http://localhost:3000/gem";
+const url ="https://piweb-back.onrender.com/gem"
+
+
 export async function gemini(trans) {
     try {
         const res = await axios.post(
-            `http://localhost:3000/gem/gemini`,
+            `${url}/gemini`,
             {
                 text: 'give me a response without any * or special caractere i want a simple text now answer this :' + trans
             }
@@ -19,7 +23,7 @@ export async function gemini(trans) {
 
 export async function sendEmailToAdmin(userEmail, message, clientName) {
     try {
-        const apiUrl = 'http://localhost:3000/gem/sendemail';
+        const apiUrl = `${url}/sendemail`;
         const apiPayload = {
             userEmail: userEmail,
             message: message,

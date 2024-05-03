@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const apiURL = "http://localhost:3000/sponsors";
+const apiURLOffline = "http://localhost:3000/sponsors";
+const apiURL = "https://piweb-back.onrender.com/sponsors";
 
 export async function addSponsors(spData) {
   try {
@@ -13,7 +14,7 @@ export async function addSponsors(spData) {
 }
 export async function updateSp(id, newData) {
   try {
-    const response = await axios.put(`${apiURL}/update/${id}`, newData); 
+    const response = await axios.put(`${apiURL}/update/${id}`, newData);
     console.log(response.data);
     return response.data;
   } catch (error) {
@@ -44,7 +45,7 @@ export async function getAllSponsors() {
 export async function getbyName(name) {
   try {
     const response = await axios.get(`${apiURL}/getbyname/${name}`);
-    console.log("Response:", response.data); 
+    console.log("Response:", response.data);
     return response.data;
   } catch (error) {
     console.error(error);
@@ -54,7 +55,7 @@ export async function getbyName(name) {
 export async function triDesc() {
   try {
     const response = await axios.get(`${apiURL}/tridesc`);
-    console.log("Response:", response.data); 
+    console.log("Response:", response.data);
     return response.data;
   } catch (error) {
     console.error(error);
@@ -65,7 +66,7 @@ export async function triDesc() {
 export async function triAsc() {
   try {
     const response = await axios.get(`${apiURL}/triasc`);
-    console.log("Response:", response.data); 
+    console.log("Response:", response.data);
     return response.data;
   } catch (error) {
     console.error(error);
